@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Activate Account</h2>
+    <hr>
+    {% if validlink %}
+        <p>Your account has been successfully activated! You can now <a href="{% url 'login' %}">login</a>.</p>
+    {% else %}
+        <div class="alert alert-danger">
+            Activation link is invalid or has expired.
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

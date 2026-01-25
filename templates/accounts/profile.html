@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Settings · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="padding:22px;position:relative;overflow:hidden;">
+
+  <!-- glow decor -->
+  <div style="
+    position:absolute; inset:-160px -220px auto auto;
+    width:520px;height:520px;border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(236,72,153,.55), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(34,211,238,.45), transparent 60%);
+    filter: blur(18px);
+    opacity:.7;
+    pointer-events:none;
+  "></div>
+
+  <div style="position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">My Profile</h1>
+        <p class="muted" style="margin:0;">Update your avatar, description and preferred currency.</p>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="btn btn--ghost" href="/app/">Back to Dashboard</a>
+        <a class="btn btn--ghost" href="{% url 'accounts:logout' %}">Logout</a>
+      </div>
+    </div>
+
+    {% if messages %}
+      <div style="display:grid;gap:10px;margin-top:14px;">
+        {% for message in messages %}
+          <div style="
+            padding:12px 14px;border-radius:16px;
+            background: rgba(255,255,255,.06);
+            border: 1px solid rgba(255,255,255,.14);
+            box-shadow: 0 18px 45px rgba(0,0,0,.25);
+          ">
+            <div style="font-weight:900;">{{ message }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div style="margin-top:18px;display:grid;grid-template-columns: 360px 1fr;gap:18px;align-items:start;">
+      <!-- LEFT: avatar card -->
+      <div class="glass-card" style="padding:18px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="
+            width:92px;height:92px;border-radius:24px;overflow:hidden;
+            border:1px solid rgba(255,255,255,.16);
+            background: rgba(255,255,255,.06);
+            box-shadow: 0 22px 70px rgba(0,0,0,.35);
+            flex: 0 0 auto;
+          ">
+            {% if user.image %}
+              <img src="{{ user.image.url }}" alt="Profile" style="width:100%;height:100%;object-fit:cover;display:block;">
+            {% else %}
+              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:34px;">
+                👤
+              </div>
+            {% endif %}
+          </div>
+
+          <div style="min-width:0;">
+            <div style="font-weight:950;font-size:18px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ user.username }}
+            </div>
+            <div class="muted" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ user.email }}
+            </div>
+
+            <div style="margin-top:10px;display:inline-flex;align-items:center;gap:8px;
+                        padding:8px 10px;border-radius:999px;
+                        background: rgba(255,255,255,.06);
+                        border: 1px solid rgba(255,255,255,.14);
+                        font-weight:900;">
+              <span style="opacity:.8;">Currency:</span>
+              <span style="
+                background: linear-gradient(135deg, rgba(99,102,241,.95), rgba(236,72,153,.9), rgba(34,211,238,.85));
+                -webkit-background-clip:text; background-clip:text; color:transparent;
+              ">
+                {{ user.currency }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="muted" style="margin-top:14px;font-size:13px;">
+          Tip: keep a short description — it can be shown in your future “account badge”.
+        </div>
+      </div>
+
+      <!-- RIGHT: form -->
+      <div class="glass-card" style="padding:18px;">
+        <form method="POST" enctype="multipart/form-data" style="display:grid;gap:12px;">
+          {% csrf_token %}
+          {{ form.non_field_errors }}
+
+          {% for field in form %}
+            <div style="display:grid;gap:6px;">
+              <label for="{{ field.id_for_label }}" style="font-weight:900;color:rgba(255,255,255,.86);">
+                {{ field.label }}
+              </label>
+
+              {{ field }}
+
+              <style>
+  input, select, textarea{
+    width:100%;
+    padding:12px 12px;
+    border-radius:16px;
+    border:1px solid rgba(255,255,255,.16);
+    background: rgba(10,12,24,.55);          /* mai dark */
+    color: rgba(255,255,255,.92);
+    outline:none;
+    box-shadow: 0 16px 40px rgba(0,0,0,.18);
+  }
+
+  /* IMPORTANT: dropdown options */
+  select{
+    appearance: none;
+    background-image:
+      linear-gradient(45deg, transparent 50%, rgba(255,255,255,.75) 50%),
+      linear-gradient(135deg, rgba(255,255,255,.75) 50%, transparent 50%);
+    background-position:
+      calc(100% - 18px) calc(1em + 2px),
+      calc(100% - 13px) calc(1em + 2px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
+    padding-right: 42px;
+  }
+
+  select option{
+    background: #0b102a;   /* fundal închis în lista de opțiuni */
+    color: #ffffff;        /* text alb */
+  }
+
+  textarea{min-height:110px; resize:vertical}
+  input[type="file"]{padding:10px}
+
+  input::placeholder, textarea::placeholder{color: rgba(255,255,255,.55)}
+  input:focus, select:focus, textarea:focus{
+    box-shadow: 0 0 0 4px rgba(99,102,241,.28), 0 18px 55px rgba(0,0,0,.25);
+    border-color: rgba(99,102,241,.45);
+  }
+</style>
+
+
+              {% for error in field.errors %}
+                <div style="
+                  padding:10px 12px;border-radius:14px;
+                  background: rgba(236,72,153,.14);
+                  border: 1px solid rgba(236,72,153,.25);
+                  color: rgba(255,255,255,.92);
+                  font-weight:800;
+                ">
+                  {{ error }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:6px;">
+            <button type="submit" class="btn">
+              Save changes <span style="margin-left:10px;opacity:.75">→</span>
+            </button>
+            <a class="btn btn--ghost" href="/app/">Cancel</a>
+          </div>
+
+          <div class="muted" style="font-size:13px;margin-top:6px;">
+            Your currency will be used across dashboard, transactions and charts.
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @media (max-width: 920px){
+      section.glass-card > div > div[style*="grid-template-columns"]{
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
+</section>
+{% endblock %}
+

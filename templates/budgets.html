@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Budgets · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="padding:22px;position:relative;overflow:hidden;">
+
+  <div style="
+    position:absolute; inset:-160px -220px auto auto;
+    width:520px;height:520px;border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(34,211,238,.50), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(99,102,241,.45), transparent 60%);
+    filter: blur(18px); opacity:.75; pointer-events:none;"></div>
+
+  <div style="position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Monthly Budgets</h1>
+        <p class="muted" style="margin:6px 0 0;">Set limits per category and track progress.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
+        <a class="btn" href="{% url 'budget_add' %}">+ Add limit</a>
+      </div>
+    </div>
+
+    <!-- Month picker -->
+    <form method="GET" class="glass-card" style="margin-top:14px;padding:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
+      <div style="display:grid;gap:6px;min-width:260px;">
+        <label style="font-weight:900;color:rgba(255,255,255,.86);">Month</label>
+        <input type="date" name="month" value="{{ month|date:'Y-m-d' }}">
+      </div>
+      <button class="btn" type="submit">Apply →</button>
+
+      <div class="muted" style="margin-left:auto;">
+        Total spent: <b style="color:rgba(255,255,255,.86)">{{ total_spent }} {{ currency }}</b>
+        {% if total_limit %}
+          · Total limits: <b style="color:rgba(255,255,255,.86)">{{ total_limit }} {{ currency }}</b>
+        {% endif %}
+      </div>
+
+      <style>
+        input{
+          width:100%;
+          padding:12px 12px;
+          border-radius:16px;
+          border:1px solid rgba(255,255,255,.16);
+          background: rgba(10,12,24,.55);
+          color: rgba(255,255,255,.92);
+          outline:none;
+          box-shadow: 0 16px 40px rgba(0,0,0,.18);
+        }
+        input:focus{
+          box-shadow: 0 0 0 4px rgba(99,102,241,.28), 0 18px 55px rgba(0,0,0,.25);
+          border-color: rgba(99,102,241,.45);
+        }
+      </style>
+    </form>
+
+    <!-- Budget rows -->
+    <div style="margin-top:14px;display:grid;gap:10px;">
+      {% for r in rows %}
+        <div class="glass-card" style="padding:14px;display:grid;gap:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+              <div style="
+                width:40px;height:40px;border-radius:16px;
+                background: rgba(255,255,255,.08);
+                border:1px solid rgba(255,255,255,.14);
+                display:flex;align-items:center;justify-content:center;
+                font-size:18px;">
+                {{ r.category.icon|default:"🏷️" }}
+              </div>
+              <div style="min-width:0;">
+                <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  {{ r.category.name }}
+                </div>
+                <div class="muted" style="font-size:13px;">
+                  Spent: <b style="color:rgba(255,255,255,.86)">{{ r.spent }} {{ currency }}</b>
+                  {% if r.limit != None %}
+                    · Limit: <b style="color:rgba(255,255,255,.86)">{{ r.limit }} {{ currency }}</b>
+                  {% else %}
+                    · <span class="muted">No limit set</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              {% if r.budget %}
+                <a class="btn btn--ghost" href="{% url 'budget_edit' r.budget.id %}">Edit</a>
+                <a class="btn btn--ghost" href="{% url 'budget_delete' r.budget.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+              {% else %}
+                <a class="btn btn--ghost" href="{% url 'budget_add' %}">Set limit</a>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Progress bar -->
+          {% if r.limit != None and r.limit > 0 %}
+            <div style="height:14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);overflow:hidden;">
+              <div style="
+                height:100%;
+                width: {{ r.pct }}%;
+                background: {% if r.is_over %}linear-gradient(90deg, rgba(239,68,68,.95), rgba(236,72,153,.85)){% else %}linear-gradient(90deg, rgba(34,197,94,.95), rgba(34,211,238,.75), rgba(99,102,241,.65)){% endif %};
+                box-shadow: 0 12px 30px rgba(0,0,0,.25);
+              "></div>
+            </div>
+
+            <div class="muted" style="font-size:13px;display:flex;justify-content:space-between;gap:10px;">
+              <span>{{ r.pct }}%</span>
+              {% if r.is_over %}
+                <span style="color:#fca5a5;font-weight:900;">Over budget</span>
+              {% else %}
+                <span style="color:#86efac;font-weight:900;">On track</span>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

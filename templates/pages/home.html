@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Welcome · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="
+  position:relative;
+  overflow:hidden;
+  padding:28px;
+">
+
+  <!-- Decorative glow blobs -->
+  <div style="
+    position:absolute; inset:-120px -180px auto auto;
+    width:520px; height:520px; border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(236,72,153,.55), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(99,102,241,.55), transparent 55%);
+    filter: blur(18px);
+    opacity:.75;
+    pointer-events:none;
+  "></div>
+
+  <div style="
+    position:absolute; inset:auto auto -160px -200px;
+    width:560px; height:560px; border-radius:999px;
+    background: radial-gradient(circle at 35% 35%, rgba(34,211,238,.50), transparent 60%),
+                radial-gradient(circle at 65% 65%, rgba(99,102,241,.45), transparent 58%);
+    filter: blur(18px);
+    opacity:.7;
+    pointer-events:none;
+  "></div>
+
+  <div style="display:grid;grid-template-columns: 1.15fr .85fr;gap:18px;align-items:center;position:relative;">
+    <!-- LEFT: copy + actions -->
+    <div>
+      <div style="
+        display:inline-flex;align-items:center;gap:10px;
+        padding:8px 12px;border-radius:999px;
+        border:1px solid rgba(255,255,255,.16);
+        background: rgba(255,255,255,.06);
+        box-shadow: 0 14px 35px rgba(0,0,0,.20);
+        font-weight:800;
+      ">
+        <span style="
+          width:10px;height:10px;border-radius:999px;
+          background: linear-gradient(135deg, rgba(99,102,241,.95), rgba(236,72,153,.9), rgba(34,211,238,.85));
+          box-shadow: 0 0 0 4px rgba(255,255,255,.06);
+        "></span>
+        <span style="color:rgba(255,255,255,.86);font-size:13px;">Your money, your control</span>
+      </div>
+
+      <h1 style="
+        margin:14px 0 10px;
+        font-size:52px;
+        line-height:1.02;
+        letter-spacing:-.03em;
+      ">
+        MyBudget
+        <span style="
+          display:inline-block;
+          background: linear-gradient(135deg, rgba(99,102,241,.95), rgba(236,72,153,.9), rgba(34,211,238,.85));
+          -webkit-background-clip:text;
+          background-clip:text;
+          color:transparent;
+        ">.</span>
+      </h1>
+
+      <p class="muted" style="margin:0 0 18px;max-width:60ch;font-size:16px;">
+        Track <b style="color:rgba(255,255,255,.92)">income</b> and <b style="color:rgba(255,255,255,.92)">expenses</b>,
+        see your monthly balance, and stay in control — with a clean dashboard and category budgets.
+      </p>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:8px;">
+        <a class="btn" href="{% url 'accounts:register' %}">
+          Create account
+          <span style="margin-left:10px;opacity:.75">→</span>
+        </a>
+        <a class="btn btn--ghost" href="{% url 'accounts:login' %}">Login</a>
+
+        <span style="display:inline-flex;align-items:center;gap:8px;color:rgba(255,255,255,.70);font-weight:700;">
+          <span style="width:8px;height:8px;border-radius:999px;background:rgba(34,211,238,.85);box-shadow:0 0 0 4px rgba(34,211,238,.12);"></span>
+          Private per user
+        </span>
+      </div>
+
+      <!-- Pills -->
+      <div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;">
+        <span style="padding:10px 12px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.78);font-weight:800;">
+          Monthly dashboard
+        </span>
+        <span style="padding:10px 12px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.78);font-weight:800;">
+          Budgets by category
+        </span>
+        <span style="padding:10px 12px;border:1px solid rgba(255,255,255,.16);border-radius:999px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.78);font-weight:800;">
+          Statistics
+        </span>
+      </div>
+
+      <!-- Trust row -->
+      <div style="margin-top:18px;display:flex;gap:14px;flex-wrap:wrap;">
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="width:34px;height:34px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;">🔒</div>
+          <div>
+            <div style="font-weight:900;">Private</div>
+            <div class="muted" style="font-size:13px;">Only you see your data</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="width:34px;height:34px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;">⚡</div>
+          <div>
+            <div style="font-weight:900;">Fast</div>
+            <div class="muted" style="font-size:13px;">Add transactions in seconds</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div style="width:34px;height:34px;border-radius:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;">📊</div>
+          <div>
+            <div style="font-weight:900;">Clear</div>
+            <div class="muted" style="font-size:13px;">Charts & budgets</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: fake phone mockup -->
+    <div style="display:flex;justify-content:center;">
+      <div style="
+        width:min(340px, 100%);
+        aspect-ratio: 10/18;
+        border-radius: 36px;
+        padding: 14px;
+        background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+        border: 1px solid rgba(255,255,255,.18);
+        box-shadow: 0 28px 80px rgba(0,0,0,.45);
+        position:relative;
+      ">
+        <div style="
+          position:absolute; top:14px; left:50%;
+          transform:translateX(-50%);
+          width:44%; height:18px;
+          border-radius:999px;
+          background: rgba(0,0,0,.35);
+          border: 1px solid rgba(255,255,255,.10);
+        "></div>
+
+        <div style="
+          height:100%;
+          border-radius: 28px;
+          overflow:hidden;
+          background:
+            radial-gradient(260px 160px at 30% 20%, rgba(99,102,241,.45), transparent 70%),
+            radial-gradient(220px 160px at 75% 35%, rgba(236,72,153,.40), transparent 70%),
+            linear-gradient(180deg, rgba(8,10,22,.92), rgba(10,14,30,.92));
+          border: 1px solid rgba(255,255,255,.10);
+          padding: 18px;
+          display:flex;
+          flex-direction:column;
+          gap:12px;
+        ">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-weight:950;letter-spacing:-.02em;">MyBudget</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.68);font-weight:800;">{{ user.currency|default:"RON" }}</div>
+          </div>
+
+          <div style="display:grid;gap:10px;">
+            <div style="padding:12px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:rgba(255,255,255,.72);font-weight:800;">Income</span>
+                <span style="font-weight:950;">+ 5,200</span>
+              </div>
+            </div>
+
+            <div style="padding:12px;border-radius:18px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:rgba(255,255,255,.72);font-weight:800;">Expenses</span>
+                <span style="font-weight:950;">- 3,450</span>
+              </div>
+            </div>
+
+            <div style="padding:12px;border-radius:18px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.14);">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:rgba(255,255,255,.72);font-weight:800;">Balance</span>
+                <span style="font-weight:950;">1,750</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="
+            margin-top:4px;
+            padding:14px;
+            border-radius: 22px;
+            background: rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.10);
+          ">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+              <span style="font-weight:900;">Quick actions</span>
+              <span style="font-size:12px;color:rgba(255,255,255,.65);font-weight:800;">tap</span>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div style="flex:1;padding:10px;border-radius:16px;background:rgba(34,211,238,.16);border:1px solid rgba(34,211,238,.22);text-align:center;font-weight:950;">
+                + Income
+              </div>
+              <div style="flex:1;padding:10px;border-radius:16px;background:rgba(236,72,153,.16);border:1px solid rgba(236,72,153,.22);text-align:center;font-weight:950;">
+                - Expense
+              </div>
+            </div>
+          </div>
+
+          <div style="
+            margin-top:auto;
+            display:flex;gap:10px;justify-content:space-between;
+            color:rgba(255,255,255,.65);
+            font-weight:800;
+            font-size:12px;
+          ">
+            <span>Dashboard</span>
+            <span>History</span>
+            <span>Stats</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- responsive fallback -->
+  <style>
+    @media (max-width: 920px){
+      section[style*="grid-template-columns"] > div{min-width:0;}
+    }
+    @media (max-width: 860px){
+      .glass-card > div{grid-template-columns: 1fr !important;}
+      .glass-card{padding:20px !important;}
+    }
+  </style>
+</section>
+{% endblock %}
+

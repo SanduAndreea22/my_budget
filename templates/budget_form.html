@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "edit" %}Edit Limit{% else %}Add Limit{% endif %} · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="max-width:620px;margin:auto;padding:22px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+    <div>
+      <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">
+        {% if mode == "edit" %}Edit limit{% else %}Add limit{% endif %}
+      </h1>
+      <p class="muted" style="margin:6px 0 0;">Choose category, month and limit amount.</p>
+    </div>
+    <a class="btn btn--ghost" href="{% url 'budgets' %}">← Back</a>
+  </div>
+
+  <form method="POST" style="margin-top:14px;display:grid;gap:12px;">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+      <div style="display:grid;gap:6px;">
+        <label style="font-weight:900;color:rgba(255,255,255,.86);">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}
+          <div style="padding:10px 12px;border-radius:14px;background: rgba(236,72,153,.14);border: 1px solid rgba(236,72,153,.25);font-weight:800;">
+            {{ error }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
+      <button class="btn" type="submit">Save →</button>
+      {% if mode == "edit" %}
+        <a class="btn btn--ghost" href="{% url 'budget_delete' budget.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+      {% endif %}
+    </div>
+
+    <style>
+      input, select{
+        width:100%;
+        padding:12px 12px;
+        border-radius:16px;
+        border:1px solid rgba(255,255,255,.16);
+        background: rgba(10,12,24,.55);
+        color: rgba(255,255,255,.92);
+        outline:none;
+        box-shadow: 0 16px 40px rgba(0,0,0,.18);
+      }
+      input:focus, select:focus{
+        box-shadow: 0 0 0 4px rgba(99,102,241,.28), 0 18px 55px rgba(0,0,0,.25);
+        border-color: rgba(99,102,241,.45);
+      }
+      select option{ background:#0b102a; color:#fff; }
+    </style>
+  </form>
+</section>
+{% endblock %}

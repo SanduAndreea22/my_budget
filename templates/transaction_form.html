@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Edit Transaction · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="max-width:620px;margin:auto;padding:22px;position:relative;overflow:hidden;">
+  <div style="
+    position:absolute; inset:-150px -220px auto auto;
+    width:520px;height:520px;border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(34,211,238,.45), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(99,102,241,.45), transparent 60%);
+    filter: blur(18px); opacity:.7; pointer-events:none;"></div>
+
+  <div style="position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Edit transaction</h1>
+        <p class="muted" style="margin:6px 0 0;">Update amount, date, type, category or note.</p>
+      </div>
+      <a class="btn btn--ghost" href="{% url 'transactions' %}">← Back</a>
+    </div>
+
+    <form method="POST" style="margin-top:14px;display:grid;gap:12px;">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      {% for field in form %}
+        <div style="display:grid;gap:6px;">
+          <label style="font-weight:900;color:rgba(255,255,255,.86);">{{ field.label }}</label>
+          {{ field }}
+          {% for error in field.errors %}
+            <div style="padding:10px 12px;border-radius:14px;background: rgba(236,72,153,.14);border: 1px solid rgba(236,72,153,.25);font-weight:800;">
+              {{ error }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn" type="submit">Save changes →</button>
+        <a class="btn btn--ghost" href="{% url 'transaction_delete' tx.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+      </div>
+
+      <style>
+        input, select, textarea{
+          width:100%;
+          padding:12px 12px;
+          border-radius:16px;
+          border:1px solid rgba(255,255,255,.16);
+          background: rgba(10,12,24,.55);
+          color: rgba(255,255,255,.92);
+          outline:none;
+          box-shadow: 0 16px 40px rgba(0,0,0,.18);
+        }
+        textarea{min-height:110px; resize:vertical}
+        input:focus, select:focus, textarea:focus{
+          box-shadow: 0 0 0 4px rgba(99,102,241,.28), 0 18px 55px rgba(0,0,0,.25);
+          border-color: rgba(99,102,241,.45);
+        }
+        select option{ background:#0b102a; color:#fff; }
+      </style>
+    </form>
+  </div>
+</section>
+{% endblock %}

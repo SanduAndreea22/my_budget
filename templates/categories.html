@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Categories · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="padding:22px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+    <div>
+      <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Categories</h1>
+      <p class="muted" style="margin:6px 0 0;">Used for both income and expenses.</p>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a class="btn btn--ghost" href="{% url 'dashboard' %}">Back</a>
+      <a class="btn" href="{% url 'category_add' %}">+ Add category</a>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:12px;">
+    {% for c in categories %}
+      <div class="glass-card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+          <div style="
+            width:40px;height:40px;border-radius:16px;
+            background: rgba(255,255,255,.08);
+            border:1px solid rgba(255,255,255,.14);
+            display:flex;align-items:center;justify-content:center;
+            font-size:18px;
+          ">{{ c.icon|default:"🏷️" }}</div>
+
+          <div style="min-width:0;">
+            <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ c.name }}
+            </div>
+            <div class="muted" style="font-size:12px;">
+              {{ c.color|default:"" }}
+            </div>
+          </div>
+        </div>
+
+        <div style="
+          width:14px;height:14px;border-radius:999px;
+          background: {{ c.color|default:"rgba(255,255,255,.35)" }};
+          border:1px solid rgba(255,255,255,.18);
+          box-shadow: 0 12px 30px rgba(0,0,0,.25);
+        "></div>
+      </div>
+    {% empty %}
+      <div class="muted" style="grid-column:1/-1;padding:14px;">
+        No categories yet. Create your first one.
+      </div>
+    {% endfor %}
+  </div>
+
+  <style>
+    @media (max-width: 980px){
+      div[style*="grid-template-columns:repeat(3"]{grid-template-columns:repeat(2, minmax(0, 1fr)) !important;}
+    }
+    @media (max-width: 640px){
+      div[style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr !important;}
+    }
+  </style>
+</section>
+{% endblock %}

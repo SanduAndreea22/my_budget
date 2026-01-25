@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Add Category · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="max-width:520px;margin:auto;padding:22px;">
+  <h1 style="margin:0 0 6px;font-size:32px;letter-spacing:-.03em;">Add Category</h1>
+  <p class="muted" style="margin:0 0 14px;">Used for both income and expenses.</p>
+
+  {% if messages %}
+    <div style="display:grid;gap:10px;margin-bottom:12px;">
+      {% for message in messages %}
+        <div style="padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);">
+          <b>{{ message }}</b>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <form method="POST" style="display:grid;gap:12px;">
+    {% csrf_token %}
+    <input name="name" placeholder="Category name (e.g. Salary, Food)" required>
+    <input name="icon" placeholder="Icon (emoji) e.g. 💼 🍔 (optional)">
+    <input name="color" placeholder="Color hex e.g. #22c55e (optional)">
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
+      <button class="btn" type="submit">Create →</button>
+      <a class="btn btn--ghost" href="{% url 'categories' %}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

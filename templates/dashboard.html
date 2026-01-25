@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="padding:22px;position:relative;overflow:hidden;">
+
+  <!-- glow -->
+  <div style="
+    position:absolute; inset:-140px -200px auto auto;
+    width:480px;height:480px;border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(99,102,241,.55), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(34,211,238,.45), transparent 60%);
+    filter: blur(20px);
+    opacity:.7;
+    pointer-events:none;">
+  </div>
+
+  <div style="position:relative;">
+    <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">
+      Hello, {{ user.username }} 👋
+    </h1>
+    <p class="muted" style="margin-top:4px;">Here is your current budget overview.</p>
+
+    <!-- TOP CARDS -->
+    <div style="margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+
+      <div class="glass-card" style="padding:16px;">
+        <div class="muted">Total Income</div>
+        <div style="font-size:26px;font-weight:900;">
+          {{ total_income }} {{ currency }}
+        </div>
+      </div>
+
+      <div class="glass-card" style="padding:16px;">
+        <div class="muted">Total Expense</div>
+        <div style="font-size:26px;font-weight:900;">
+          {{ total_expense }} {{ currency }}
+        </div>
+      </div>
+
+      <div class="glass-card" style="padding:16px;">
+        <div class="muted">Balance</div>
+        <div style="
+          font-size:26px;font-weight:900;
+          color:{% if balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};
+        ">
+          {{ balance }} {{ currency }}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ACTION BUTTONS -->
+<div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+  <a class="btn" href="{% url 'add_income' %}">+ Add income</a>
+  <a class="btn btn--ghost" href="{% url 'add_expense' %}">- Add expense</a>
+  <a class="btn btn--ghost" href="{% url 'categories' %}">Categories</a>
+  <a class="btn btn--ghost" href="{% url 'transactions' %}">Transactions</a>
+  <a class="btn btn--ghost" href="{% url 'accounts:profile' username=user.username %}">Profile</a>
+    <a class="btn btn--ghost" href="{% url 'budgets' %}">Budgets</a>
+    <a class="btn btn--ghost" href="{% url 'charts' %}">📊 Charts</a>
+
+
+</div>
+
+
+    <!-- LAST TRANSACTIONS -->
+    <div style="margin-top:22px;">
+      <h2 style="margin:0 0 10px;font-size:22px;">Recent transactions</h2>
+
+      <div style="display:grid;gap:10px;">
+        {% for t in transactions %}
+          <div class="glass-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-weight:900;">
+                {{ t.category.name }}
+              </div>
+              <div class="muted" style="font-size:13px;">
+                {{ t.date }} · {{ t.note }}
+              </div>
+            </div>
+
+            <div style="
+              font-weight:900;
+              color:{% if t.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};
+            ">
+              {% if t.type == 'income' %}+{% else %}-{% endif %}
+              {{ t.amount }} {{ currency }}
+            </div>
+          </div>
+        {% empty %}
+          <div class="muted">No transactions yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+@media(max-width:900px){
+  div[style*="grid-template-columns:repeat(3"]{
+    grid-template-columns:1fr !important;
+  }
+}
+</style>
+{% endblock %}
+

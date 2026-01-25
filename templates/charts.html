@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Charts · MyBudget{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<section class="glass-card" style="padding:22px;position:relative;overflow:hidden;">
+
+  <div style="
+    position:absolute; inset:-160px -220px auto auto;
+    width:520px;height:520px;border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(34,211,238,.40), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(99,102,241,.40), transparent 60%);
+    filter: blur(18px); opacity:.75; pointer-events:none;"></div>
+
+  <div style="position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Charts</h1>
+        <p class="muted" style="margin:6px 0 0;">Visual overview of your money.</p>
+      </div>
+      <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
+    </div>
+
+    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;">
+
+      <div class="glass-card" style="padding:16px;position:relative;overflow:hidden;min-height:430px;">
+        <div style="position:absolute; inset:-140px -200px auto auto;width:420px;height:420px;border-radius:999px;
+          background: radial-gradient(circle at 30% 30%, rgba(34,211,238,.35), transparent 60%),
+                      radial-gradient(circle at 70% 70%, rgba(236,72,153,.22), transparent 60%);
+          filter: blur(18px); opacity:.7; pointer-events:none;"></div>
+
+        <div style="position:relative;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+            <h2 style="margin:0;font-size:22px;">Expenses by category</h2>
+            <span class="muted">{{ month_label }}</span>
+          </div>
+
+          {% if pie_values %}
+            <div style="margin-top:20px;height:300px;">
+              <canvas id="pieChart"></canvas>
+            </div>
+          {% else %}
+            <div style="height:300px; display:flex; align-items:center; justify-content:center;">
+                <p class="muted">No expense data this month.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="glass-card" style="padding:16px;position:relative;overflow:hidden;min-height:430px;">
+        <div style="position:absolute; inset:-140px -200px auto auto;width:420px;height:420px;border-radius:999px;
+          background: radial-gradient(circle at 30% 30%, rgba(34,197,94,.25), transparent 60%),
+                      radial-gradient(circle at 70% 70%, rgba(99,102,241,.25), transparent 60%);
+          filter: blur(18px); opacity:.7; pointer-events:none;"></div>
+
+        <div style="position:relative;">
+          <h2 style="margin:0;font-size:22px;">Income vs Expense</h2>
+          <p class="muted" style="margin:6px 0 10px;">Monthly trend</p>
+
+          {% if chart_labels %}
+            <div style="height:300px;">
+              <canvas id="lineChart"></canvas>
+            </div>
+          {% else %}
+            <div style="height:300px; display:flex; align-items:center; justify-content:center;">
+                <p class="muted">No transaction history yet.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+
+    <style>
+      @media(max-width:1000px){
+        div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important;}
+      }
+    </style>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // 1. Pie Chart Logic
+      {% if pie_values %}
+      (function(){
+        const labels = {{ pie_labels|safe }};
+        const values = {{ pie_values|safe }};
+        const colors = {{ pie_colors|safe }};
+
+        const ctxPie = document.getElementById("pieChart");
+        if (ctxPie) {
+          new Chart(ctxPie, {
+            type: "doughnut",
+            data: {
+              labels: labels,
+              datasets: [{
+                data: values,
+                backgroundColor: colors,
+                borderWidth: 2,
+                borderColor: 'rgba(255,255,255,0.1)'
+              }]
+            },
+            options: {
+              responsive:true,
+              maintainAspectRatio:false,
+              cutout:"70%",
+              plugins:{
+                legend:{ position:"bottom", labels:{ color:"rgba(255,255,255,.85)", boxWidth:12, padding:15, font:{size: 14} } },
+                tooltip:{ backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+              }
+            }
+          });
+        }
+      })();
+      {% endif %}
+
+      // 2. Line Chart Logic
+      {% if chart_labels %}
+      (function(){
+        const labels = {{ chart_labels|safe }};
+        const income = {{ chart_income|safe }};
+        const expense = {{ chart_expense|safe }};
+
+        const ctxLine = document.getElementById("lineChart");
+        if (ctxLine) {
+          new Chart(ctxLine, {
+            type: "line",
+            data: {
+              labels: labels,
+              datasets: [
+                {
+                  label: "Income",
+                  data: income,
+                  tension: 0.4,
+                  borderColor: "#22c55e",
+                  backgroundColor: "rgba(34,197,94,0.1)",
+                  fill: true,
+                  pointRadius: 4
+                },
+                {
+                  label: "Expense",
+                  data: expense,
+                  tension: 0.4,
+                  borderColor: "#ef4444",
+                  backgroundColor: "rgba(239,68,68,0.1)",
+                  fill: true,
+                  pointRadius: 4
+                }
+              ]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { display: false } },
+                y: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { color: "rgba(255,255,255,0.1)" } }
+              },
+              plugins: {
+                legend: { labels: { color: "rgba(255,255,255,0.85)", font: {size: 14} } }
+              }
+            }
+          });
+        }
+      })();
+      {% endif %}
+    });
+    </script>
+  </div>
+</section>
+{% endblock %}
