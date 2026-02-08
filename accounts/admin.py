@@ -5,12 +5,10 @@ from django.utils.translation import gettext_lazy as _
 
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
-    # câmpurile care apar în lista din admin
     list_display = ('username', 'email', 'is_staff', 'is_active')
     list_filter = ('is_staff', 'is_active')
     search_fields = ('username', 'email')
     ordering = ('username',)
-    # câmpurile din formularul de editare user
     fieldsets = (
         (None, {'fields': ('username', 'email', 'password')}),
         (_('Personal info'), {'fields': ('first_name', 'last_name', 'description', 'image')}),
@@ -24,6 +22,5 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
 
-# Înregistrează modelul în admin
 admin.site.register(CustomUser, CustomUserAdmin)
 

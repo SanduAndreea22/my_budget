@@ -1,21 +1,11 @@
-from calendar import monthrange
 from decimal import Decimal
 from .models import BudgetLimit
 from .forms import BudgetLimitForm
 from django.contrib.auth.decorators import login_required
-
-from datetime import date
 from calendar import monthrange
 from datetime import date
 from django.db import models
-from django.db.models import Sum
 from django.db.models.functions import TruncMonth
-
-
-@login_required
-def dashboard_view(request):
-    return render(request, "dashboard.html")
-
 
 @login_required
 def dashboard_view(request):
@@ -36,7 +26,6 @@ def dashboard_view(request):
     }
 
     return render(request, "dashboard.html", context)
-
 
 
 @login_required
@@ -74,8 +63,6 @@ def add_expense_view(request):
 
     return render(request, "expense_add.html", {"categories": categories})
 
-from django.contrib import messages
-
 @login_required
 def categories_view(request):
     cats = Category.objects.filter(user=request.user).order_by("name")
@@ -110,12 +97,10 @@ from .models import Category, Transaction
 @login_required
 def transactions_list_view(request):
     qs = Transaction.objects.filter(user=request.user).select_related("category")
-
-    # Filters from GET
-    t_type = request.GET.get("type", "").strip()         # income/expense
-    cat_id = request.GET.get("category", "").strip()     # category id
-    date_from = request.GET.get("from", "").strip()      # YYYY-MM-DD
-    date_to = request.GET.get("to", "").strip()          # YYYY-MM-DD
+    t_type = request.GET.get("type", "").strip()
+    cat_id = request.GET.get("category", "").strip()
+    date_from = request.GET.get("from", "").strip()
+    date_to = request.GET.get("to", "").strip()
 
     if t_type in (Transaction.INCOME, Transaction.EXPENSE):
         qs = qs.filter(type=t_type)
@@ -136,7 +121,7 @@ def transactions_list_view(request):
     categories = Category.objects.filter(user=request.user).order_by("name")
 
     context = {
-        "transactions": qs[:200],  # limit for now (later pagination)
+        "transactions": qs[:200],
         "categories": categories,
         "filters": {"type": t_type, "category": cat_id, "from": date_from, "to": date_to},
         "total_income": total_income,
@@ -178,6 +163,7 @@ def transaction_delete_view(request, pk):
 def _month_start(d: date) -> date:
     return d.replace(day=1)
 
+
 def _month_end(d: date) -> date:
     last_day = monthrange(d.year, d.month)[1]
     return d.replace(day=last_day)
@@ -185,7 +171,6 @@ def _month_end(d: date) -> date:
 
 @login_required
 def budgets_view(request):
-    # month picker: expects YYYY-MM-DD (we use first day)
     month_str = request.GET.get("month", "").strip()
     if month_str:
         try:
@@ -200,7 +185,6 @@ def budgets_view(request):
 
     categories = Category.objects.filter(user=request.user).order_by("name")
 
-    # total spent per category in this month (expenses only)
     spent_map = {
         row["category_id"]: (row["total"] or Decimal("0"))
         for row in (
@@ -297,9 +281,9 @@ def budget_delete_view(request, pk):
 
     return render(request, "budget_confirm_delete.html", {"budget": b})
 
+
 @login_required
 def charts_view(request):
-    # PIE: current month expenses by category
     today = date.today()
     month_start = today.replace(day=1)
     last_day = monthrange(today.year, today.month)[1]
@@ -325,7 +309,6 @@ def charts_view(request):
         pie_values.append(float(r["total"] or 0))
         pie_colors.append(r["category__color"] or "#6366f1")
 
-    # LINE: income vs expense by month
     monthly = (
         Transaction.objects.filter(user=request.user)
         .annotate(month=TruncMonth("date"))

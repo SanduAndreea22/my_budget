@@ -4,8 +4,8 @@ from django.db import models
 class Category(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="categories")
     name = models.CharField(max_length=50)
-    icon = models.CharField(max_length=10, blank=True, default="")   # optional (emoji)
-    color = models.CharField(max_length=20, blank=True, default="")  # optional (hex)
+    icon = models.CharField(max_length=10, blank=True, default="")
+    color = models.CharField(max_length=20, blank=True, default="")
 
     class Meta:
         unique_together = ("user", "name")
@@ -30,7 +30,6 @@ class Transaction(models.Model):
     date = models.DateField()
     note = models.CharField(max_length=120, blank=True, default="")
 
-    # Category for BOTH income and expense
     category = models.ForeignKey(
         Category,
         on_delete=models.CASCADE,
@@ -52,7 +51,6 @@ class BudgetLimit(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="budget_limits")
     category = models.ForeignKey("Category", on_delete=models.CASCADE, related_name="budget_limits")
 
-    # store the month as first day of month (e.g. 2026-01-01)
     month = models.DateField()
     limit = models.DecimalField(max_digits=12, decimal_places=2)
 
