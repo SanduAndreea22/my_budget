@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block title %}Dashboard · MyBudget{% endblock %}
 
 {% block content %}
@@ -19,61 +20,74 @@
     <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">
       Hello, {{ user.username }} 👋
     </h1>
-    <p class="muted" style="margin-top:4px;">Here is your current budget overview.</p>
+    <p class="muted" style="margin-top:4px;">
+      Here’s an overview of your current budget.
+    </p>
 
-
+    <!-- SUMMARY -->
     <div style="margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Total Income</div>
         <div style="font-size:26px;font-weight:900;">
-          {{ total_income }} {{ currency }}
+          {{ total_income|floatformat:2|intcomma }} {{ currency }}
         </div>
       </div>
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Total Expense</div>
         <div style="font-size:26px;font-weight:900;">
-          {{ total_expense }} {{ currency }}
+          {{ total_expense|floatformat:2|intcomma }} {{ currency }}
         </div>
       </div>
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Balance</div>
         <div style="
-          font-size:26px;font-weight:900;
+          font-size:26px;
+          font-weight:900;
           color:{% if balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};
         ">
-          {{ balance }} {{ currency }}
+          {{ balance|floatformat:2|intcomma }} {{ currency }}
         </div>
       </div>
 
     </div>
 
-<div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
-  <a class="btn" href="{% url 'add_income' %}">+ Add income</a>
-  <a class="btn btn--ghost" href="{% url 'add_expense' %}">- Add expense</a>
-  <a class="btn btn--ghost" href="{% url 'categories' %}">Categories</a>
-  <a class="btn btn--ghost" href="{% url 'transactions' %}">Transactions</a>
-  <a class="btn btn--ghost" href="{% url 'accounts:profile' username=user.username %}">Profile</a>
-    <a class="btn btn--ghost" href="{% url 'budgets' %}">Budgets</a>
-    <a class="btn btn--ghost" href="{% url 'charts' %}">📊 Charts</a>
+    <!-- ACTIONS -->
+    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+      <a class="btn" href="{% url 'add_income' %}">+ Add income</a>
+      <a class="btn btn--ghost" href="{% url 'add_expense' %}">- Add expense</a>
+      <a class="btn btn--ghost" href="{% url 'categories' %}">Categories</a>
+      <a class="btn btn--ghost" href="{% url 'transactions' %}">Transactions</a>
+      <a class="btn btn--ghost" href="{% url 'budgets' %}">Budgets</a>
+      <a class="btn btn--ghost" href="{% url 'charts' %}">📊 Charts</a>
+      <a class="btn btn--ghost" href="{% url 'accounts:profile' username=user.username %}">
+        Profile
+      </a>
+    </div>
 
-
-</div>
-
+    <!-- RECENT TRANSACTIONS -->
     <div style="margin-top:22px;">
-      <h2 style="margin:0 0 10px;font-size:22px;">Recent transactions</h2>
+      <h2 style="margin:0 0 10px;font-size:22px;">
+        Recent transactions
+      </h2>
 
       <div style="display:grid;gap:10px;">
         {% for t in transactions %}
-          <div class="glass-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;">
+          <div class="glass-card" style="
+            padding:14px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:12px;
+          ">
             <div>
               <div style="font-weight:900;">
                 {{ t.category.name }}
               </div>
               <div class="muted" style="font-size:13px;">
-                {{ t.date }} · {{ t.note }}
+                {{ t.date|date:"M d, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
               </div>
             </div>
 
@@ -82,11 +96,13 @@
               color:{% if t.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};
             ">
               {% if t.type == 'income' %}+{% else %}-{% endif %}
-              {{ t.amount }} {{ currency }}
+              {{ t.amount|floatformat:2|intcomma }} {{ currency }}
             </div>
           </div>
         {% empty %}
-          <div class="muted">No transactions yet.</div>
+          <div class="muted">
+            No transactions yet.
+          </div>
         {% endfor %}
       </div>
     </div>
@@ -95,11 +111,12 @@
 </section>
 
 <style>
-@media(max-width:900px){
+@media (max-width:900px){
   div[style*="grid-template-columns:repeat(3"]{
     grid-template-columns:1fr !important;
   }
 }
 </style>
 {% endblock %}
+
 

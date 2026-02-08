@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "accounts",
     "pages",
     "budget",
+    "django.contrib.humanize",
 ]
 
 MIDDLEWARE = [
