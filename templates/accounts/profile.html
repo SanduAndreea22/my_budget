@@ -92,18 +92,8 @@
               {{ field }}
 
               <style>
-  input, select, textarea{
-    width:100%;
-    padding:12px 12px;
-    border-radius:16px;
-    border:1px solid rgba(255,255,255,.16);
-    background: rgba(10,12,24,.55);          /* mai dark */
-    color: rgba(255,255,255,.92);
-    outline:none;
-    box-shadow: 0 16px 40px rgba(0,0,0,.18);
-  }
-
-  /* IMPORTANT: dropdown options */
+  /* Custom dropdown chevron for the currency select — the only
+     page-specific override left; base.html covers everything else. */
   select{
     appearance: none;
     background-image:
@@ -115,20 +105,6 @@
     background-size: 6px 6px, 6px 6px;
     background-repeat: no-repeat;
     padding-right: 42px;
-  }
-
-  select option{
-    background: #0b102a;   /* fundal închis în lista de opțiuni */
-    color: #ffffff;        /* text alb */
-  }
-
-  textarea{min-height:110px; resize:vertical}
-  input[type="file"]{padding:10px}
-
-  input::placeholder, textarea::placeholder{color: rgba(255,255,255,.55)}
-  input:focus, select:focus, textarea:focus{
-    box-shadow: 0 0 0 4px rgba(99,102,241,.28), 0 18px 55px rgba(0,0,0,.25);
-    border-color: rgba(99,102,241,.45);
   }
 </style>
 

@@ -78,27 +78,7 @@
         <a class="btn btn--ghost" href="{% url 'add_expense' %}">Add expense instead</a>
       </div>
 
-      <!-- Local input styling (keeps your wow look even if forms change) -->
       <style>
-        input, select{
-          width:100%;
-          padding:12px 12px;
-          border-radius:16px;
-          border:1px solid rgba(255,255,255,.16);
-          background: rgba(10,12,24,.55);
-          color: rgba(255,255,255,.92);
-          outline:none;
-          box-shadow: 0 16px 40px rgba(0,0,0,.18);
-        }
-        input::placeholder{color: rgba(255,255,255,.55)}
-        input:focus, select:focus{
-          box-shadow: 0 0 0 4px rgba(99,102,241,.28), 0 18px 55px rgba(0,0,0,.25);
-          border-color: rgba(99,102,241,.45);
-        }
-        select option{
-          background:#0b102a;
-          color:#fff;
-        }
         @media(max-width:720px){
           div[style*="grid-template-columns: 1fr 1fr"]{grid-template-columns:1fr !important;}
         }
