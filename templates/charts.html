@@ -78,14 +78,21 @@
       }
     </style>
 
+    {{ pie_labels|json_script:"pie-labels-data" }}
+    {{ pie_values|json_script:"pie-values-data" }}
+    {{ pie_colors|json_script:"pie-colors-data" }}
+    {{ chart_labels|json_script:"chart-labels-data" }}
+    {{ chart_income|json_script:"chart-income-data" }}
+    {{ chart_expense|json_script:"chart-expense-data" }}
+
     <script>
     document.addEventListener("DOMContentLoaded", function() {
       // 1. Pie Chart Logic
       {% if pie_values %}
       (function(){
-        const labels = {{ pie_labels|safe }};
-        const values = {{ pie_values|safe }};
-        const colors = {{ pie_colors|safe }};
+        const labels = JSON.parse(document.getElementById("pie-labels-data").textContent);
+        const values = JSON.parse(document.getElementById("pie-values-data").textContent);
+        const colors = JSON.parse(document.getElementById("pie-colors-data").textContent);
 
         const ctxPie = document.getElementById("pieChart");
         if (ctxPie) {
@@ -117,9 +124,9 @@
       // 2. Line Chart Logic
       {% if chart_labels %}
       (function(){
-        const labels = {{ chart_labels|safe }};
-        const income = {{ chart_income|safe }};
-        const expense = {{ chart_expense|safe }};
+        const labels = JSON.parse(document.getElementById("chart-labels-data").textContent);
+        const income = JSON.parse(document.getElementById("chart-income-data").textContent);
+        const expense = JSON.parse(document.getElementById("chart-expense-data").textContent);
 
         const ctxLine = document.getElementById("lineChart");
         if (ctxLine) {

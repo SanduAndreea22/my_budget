@@ -40,12 +40,13 @@ class Transaction(models.Model):
 
     class Meta:
         ordering = ["-date", "-created_at"]
+        indexes = [
+            models.Index(fields=["user", "date"]),
+        ]
 
     def __str__(self):
         return f"{self.user} - {self.type} - {self.amount}"
 
-from django.conf import settings
-from django.db import models
 
 class BudgetLimit(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="budget_limits")

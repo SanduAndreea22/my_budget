@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.sites.shortcuts import get_current_site
+from .decorators import ratelimit_post, user_not_authenticated
 from .forms import UserRegistrationForm, UserLoginForm, UserUpdateForm
 from .tokens import account_activation_token
 
@@ -16,6 +17,8 @@ User = get_user_model()
 
 resend.api_key = os.environ.get('RESEND_API_KEY')
 
+@user_not_authenticated(redirect_url='dashboard')
+@ratelimit_post('register', limit=5, period_seconds=3600)
 def register_view(request):
     if request.method == 'POST':
         form = UserRegistrationForm(request.POST)
@@ -58,6 +61,8 @@ def register_view(request):
         form = UserRegistrationForm()
     return render(request, 'accounts/register.html', {'form': form})
 
+@user_not_authenticated(redirect_url='dashboard')
+@ratelimit_post('login', limit=10, period_seconds=300)
 def login_view(request):
     if request.method == 'POST':
         form = UserLoginForm(request, data=request.POST)

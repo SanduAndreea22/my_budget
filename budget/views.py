@@ -1,21 +1,32 @@
-from decimal import Decimal
-from .models import BudgetLimit
-from .forms import BudgetLimitForm
-from django.contrib.auth.decorators import login_required
 from calendar import monthrange
 from datetime import date
+from decimal import Decimal, InvalidOperation
+
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.db import models
+from django.db.models import Sum
 from django.db.models.functions import TruncMonth
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .forms import BudgetLimitForm, CategoryForm, TransactionForm
+from .models import BudgetLimit, Category, Transaction
+
 
 @login_required
 def dashboard_view(request):
     transactions = Transaction.objects.filter(user=request.user)
 
-    total_income = transactions.filter(type=Transaction.INCOME).aggregate(Sum("amount"))["amount__sum"] or 0
-    total_expense = transactions.filter(type=Transaction.EXPENSE).aggregate(Sum("amount"))["amount__sum"] or 0
+    totals = transactions.aggregate(
+        income=Sum("amount", filter=models.Q(type=Transaction.INCOME)),
+        expense=Sum("amount", filter=models.Q(type=Transaction.EXPENSE)),
+    )
+    total_income = totals["income"] or Decimal("0")
+    total_expense = totals["expense"] or Decimal("0")
     balance = total_income - total_expense
 
-    last_transactions = transactions.order_by("-date")[:5]
+    last_transactions = transactions.select_related("category").order_by("-date")[:5]
 
     context = {
         "total_income": total_income,
@@ -28,70 +39,87 @@ def dashboard_view(request):
     return render(request, "dashboard.html", context)
 
 
-@login_required
-def add_income_view(request):
-    categories = Category.objects.filter(user=request.user)
+def _parse_amount(raw_amount):
+    try:
+        amount = Decimal(str(raw_amount).strip())
+    except (InvalidOperation, ValueError, AttributeError):
+        return None
+    if amount <= 0:
+        return None
+    return amount
+
+
+def _parse_date(raw_date):
+    try:
+        return date.fromisoformat(str(raw_date).strip())
+    except (TypeError, ValueError):
+        return None
+
+
+def _add_transaction_view(request, tx_type, template_name):
+    categories = Category.objects.filter(user=request.user).order_by("name")
 
     if request.method == "POST":
+        amount = _parse_amount(request.POST.get("amount"))
+        tx_date = _parse_date(request.POST.get("date"))
+        category = categories.filter(pk=request.POST.get("category")).first()
+        note = request.POST.get("note", "").strip()
+
+        errors = []
+        if amount is None:
+            errors.append("Please enter a valid amount greater than zero.")
+        if tx_date is None:
+            errors.append("Please enter a valid date.")
+        if category is None:
+            errors.append("Please choose one of your categories.")
+
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            return render(request, template_name, {"categories": categories})
+
         Transaction.objects.create(
             user=request.user,
-            type=Transaction.INCOME,
-            amount=request.POST["amount"],
-            date=request.POST["date"],
-            note=request.POST.get("note", ""),
-            category_id=request.POST["category"]
+            type=tx_type,
+            amount=amount,
+            date=tx_date,
+            note=note,
+            category=category,
         )
+        messages.success(request, "Transaction saved.")
         return redirect("dashboard")
 
-    return render(request, "income_add.html", {"categories": categories})
+    return render(request, template_name, {"categories": categories})
+
+
+@login_required
+def add_income_view(request):
+    return _add_transaction_view(request, Transaction.INCOME, "income_add.html")
 
 
 @login_required
 def add_expense_view(request):
-    categories = Category.objects.filter(user=request.user)
+    return _add_transaction_view(request, Transaction.EXPENSE, "expense_add.html")
 
-    if request.method == "POST":
-        Transaction.objects.create(
-            user=request.user,
-            type=Transaction.EXPENSE,
-            amount=request.POST["amount"],
-            date=request.POST["date"],
-            note=request.POST.get("note", ""),
-            category_id=request.POST["category"]
-        )
-        return redirect("dashboard")
-
-    return render(request, "expense_add.html", {"categories": categories})
 
 @login_required
 def categories_view(request):
     cats = Category.objects.filter(user=request.user).order_by("name")
     return render(request, "categories.html", {"categories": cats})
 
+
 @login_required
 def category_add_view(request):
     if request.method == "POST":
-        name = request.POST.get("name", "").strip()
-        icon = request.POST.get("icon", "").strip()
-        color = request.POST.get("color", "").strip()
+        form = CategoryForm(request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Category created!")
+            return redirect("categories")
+    else:
+        form = CategoryForm(user=request.user)
 
-        if not name:
-            messages.error(request, "Category name is required.")
-            return render(request, "category_add.html")
-
-        Category.objects.create(user=request.user, name=name, icon=icon, color=color)
-        messages.success(request, "Category created!")
-        return redirect("categories")
-
-    return render(request, "category_add.html")
-
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from django.shortcuts import get_object_or_404, redirect, render
-
-from .forms import TransactionForm
-from .models import Category, Transaction
+    return render(request, "category_add.html", {"form": form})
 
 
 @login_required
@@ -120,8 +148,12 @@ def transactions_list_view(request):
 
     categories = Category.objects.filter(user=request.user).order_by("name")
 
+    paginator = Paginator(qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
     context = {
-        "transactions": qs[:200],
+        "transactions": page_obj,
+        "page_obj": page_obj,
         "categories": categories,
         "filters": {"type": t_type, "category": cat_id, "from": date_from, "to": date_to},
         "total_income": total_income,
