@@ -1,8 +1,11 @@
+import csv
+import io
 from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from openpyxl import load_workbook
 
 from .models import Category, Transaction
 
@@ -103,3 +106,100 @@ class TransactionsPaginationTests(TestCase):
         response = self.client.get(reverse("transactions"))
         self.assertEqual(len(response.context["page_obj"]), 50)
         self.assertTrue(response.context["page_obj"].has_next())
+
+
+class CompareViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Food")
+        self.client.force_login(self.user)
+        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=1000, date=date(2025, 1, 15), category=self.category)
+        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=300, date=date(2025, 1, 20), category=self.category)
+        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=1200, date=date(2026, 2, 5), category=self.category)
+        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=400, date=date(2026, 2, 10), category=self.category)
+
+    def test_defaults_to_most_recent_year(self):
+        response = self.client.get(reverse("compare"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["selected_year"], 2026)
+        self.assertEqual(response.context["year_total_income"], 1200)
+        self.assertEqual(response.context["year_total_expense"], 400)
+
+    def test_can_select_a_specific_year(self):
+        response = self.client.get(reverse("compare"), {"year": "2025"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["selected_year"], 2025)
+        self.assertEqual(response.context["year_total_income"], 1000)
+        self.assertEqual(response.context["year_total_expense"], 300)
+
+    def test_year_over_year_totals(self):
+        response = self.client.get(reverse("compare"))
+        year_rows = {r["year"]: r for r in response.context["year_rows"]}
+        self.assertEqual(year_rows[2025]["income"], 1000)
+        self.assertEqual(year_rows[2026]["income"], 1200)
+
+    def test_invalid_year_param_does_not_crash(self):
+        response = self.client.get(reverse("compare"), {"year": "not-a-year"})
+        self.assertEqual(response.status_code, 200)
+
+    def test_only_sees_own_transactions(self):
+        other = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
+        other_category = Category.objects.create(user=other, name="Rent")
+        Transaction.objects.create(user=other, type=Transaction.INCOME, amount=99999, date=date(2026, 3, 1), category=other_category)
+
+        response = self.client.get(reverse("compare"), {"year": "2026"})
+        self.assertEqual(response.context["year_total_income"], 1200)
+
+
+class ExportTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.other_user = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Food")
+        other_category = Category.objects.create(user=self.other_user, name="Secret")
+        self.client.force_login(self.user)
+        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=500, date=date(2026, 1, 10), category=self.category, note="Salary")
+        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=75, date=date(2026, 1, 12), category=self.category, note="Groceries")
+        Transaction.objects.create(user=self.other_user, type=Transaction.INCOME, amount=9999, date=date(2026, 1, 10), category=other_category, note="Not mine")
+
+    def test_csv_export_contains_only_own_rows(self):
+        response = self.client.get(reverse("export_transactions_csv"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv")
+        rows = list(csv.reader(io.StringIO(response.content.decode())))
+        self.assertEqual(rows[0], ["Date", "Type", "Category", "Amount", "Currency", "Note"])
+        notes = [r[5] for r in rows[1:]]
+        self.assertIn("Salary", notes)
+        self.assertIn("Groceries", notes)
+        self.assertNotIn("Not mine", notes)
+
+    def test_csv_export_respects_type_filter(self):
+        response = self.client.get(reverse("export_transactions_csv"), {"type": "income"})
+        rows = list(csv.reader(io.StringIO(response.content.decode())))
+        notes = [r[5] for r in rows[1:]]
+        self.assertEqual(notes, ["Salary"])
+
+    def test_xlsx_export_contains_only_own_rows(self):
+        response = self.client.get(reverse("export_transactions_xlsx"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        wb = load_workbook(io.BytesIO(response.content))
+        ws = wb.active
+        notes = [row[5].value for row in ws.iter_rows(min_row=2)]
+        self.assertIn("Salary", notes)
+        self.assertIn("Groceries", notes)
+        self.assertNotIn("Not mine", notes)
+
+    def test_pdf_export_returns_pdf(self):
+        response = self.client.get(reverse("export_transactions_pdf"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_export_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("export_transactions_csv"))
+        self.assertEqual(response.status_code, 302)

@@ -1,3 +1,4 @@
+import csv
 from calendar import monthrange
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -7,8 +8,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import Sum
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, TruncYear
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.loader import render_to_string
+from django.utils import timezone
 
 from .forms import BudgetLimitForm, CategoryForm, TransactionForm
 from .models import BudgetLimit, Category, Transaction
@@ -122,8 +126,9 @@ def category_add_view(request):
     return render(request, "category_add.html", {"form": form})
 
 
-@login_required
-def transactions_list_view(request):
+def _filtered_transactions(request):
+    """Shared filter parsing for the transactions list and the export views,
+    so both stay in sync with the same type/category/date-range filters."""
     qs = Transaction.objects.filter(user=request.user).select_related("category")
     t_type = request.GET.get("type", "").strip()
     cat_id = request.GET.get("category", "").strip()
@@ -142,6 +147,14 @@ def transactions_list_view(request):
     if date_to:
         qs = qs.filter(date__lte=date_to)
 
+    filters = {"type": t_type, "category": cat_id, "from": date_from, "to": date_to}
+    return qs, filters
+
+
+@login_required
+def transactions_list_view(request):
+    qs, filters = _filtered_transactions(request)
+
     total_income = qs.filter(type=Transaction.INCOME).aggregate(Sum("amount"))["amount__sum"] or 0
     total_expense = qs.filter(type=Transaction.EXPENSE).aggregate(Sum("amount"))["amount__sum"] or 0
     balance = total_income - total_expense
@@ -155,13 +168,94 @@ def transactions_list_view(request):
         "transactions": page_obj,
         "page_obj": page_obj,
         "categories": categories,
-        "filters": {"type": t_type, "category": cat_id, "from": date_from, "to": date_to},
+        "filters": filters,
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": balance,
         "currency": request.user.currency,
     }
     return render(request, "transactions_list.html", context)
+
+
+@login_required
+def export_transactions_csv_view(request):
+    qs, _ = _filtered_transactions(request)
+    qs = qs.order_by("-date")
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="transactions.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(["Date", "Type", "Category", "Amount", "Currency", "Note"])
+    for t in qs:
+        writer.writerow([
+            t.date.isoformat(),
+            t.get_type_display(),
+            t.category.name,
+            t.amount,
+            request.user.currency,
+            t.note,
+        ])
+    return response
+
+
+@login_required
+def export_transactions_xlsx_view(request):
+    from openpyxl import Workbook
+    from openpyxl.utils import get_column_letter
+
+    qs, _ = _filtered_transactions(request)
+    qs = qs.order_by("-date")
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Transactions"
+    ws.append(["Date", "Type", "Category", "Amount", "Currency", "Note"])
+    for t in qs:
+        ws.append([
+            t.date.isoformat(),
+            t.get_type_display(),
+            t.category.name,
+            float(t.amount),
+            request.user.currency,
+            t.note,
+        ])
+    for i, width in enumerate([12, 10, 24, 12, 10, 36], start=1):
+        ws.column_dimensions[get_column_letter(i)].width = width
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="transactions.xlsx"'
+    wb.save(response)
+    return response
+
+
+@login_required
+def export_transactions_pdf_view(request):
+    from weasyprint import HTML
+
+    qs, _ = _filtered_transactions(request)
+    qs = qs.order_by("-date")
+
+    total_income = qs.filter(type=Transaction.INCOME).aggregate(Sum("amount"))["amount__sum"] or 0
+    total_expense = qs.filter(type=Transaction.EXPENSE).aggregate(Sum("amount"))["amount__sum"] or 0
+
+    html_string = render_to_string("exports/transactions_pdf.html", {
+        "transactions": qs,
+        "currency": request.user.currency,
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "balance": total_income - total_expense,
+        "generated_at": timezone.now(),
+        "username": request.user.username,
+    })
+
+    pdf_bytes = HTML(string=html_string).write_pdf()
+
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="transactions.pdf"'
+    return response
 
 
 @login_required
@@ -368,4 +462,87 @@ def charts_view(request):
         "chart_labels": chart_labels,
         "chart_income": chart_income,
         "chart_expense": chart_expense,
+    })
+
+
+@login_required
+def compare_view(request):
+    available_years = [
+        d.year for d in Transaction.objects.filter(user=request.user).dates("date", "year", order="DESC")
+    ]
+
+    year_str = request.GET.get("year", "").strip()
+    try:
+        selected_year = int(year_str) if year_str else (available_years[0] if available_years else date.today().year)
+    except ValueError:
+        selected_year = available_years[0] if available_years else date.today().year
+
+    if selected_year not in available_years:
+        available_years = sorted(set(available_years) | {selected_year}, reverse=True)
+
+    monthly = (
+        Transaction.objects.filter(user=request.user, date__year=selected_year)
+        .annotate(month=TruncMonth("date"))
+        .values("month")
+        .annotate(
+            income=Sum("amount", filter=models.Q(type=Transaction.INCOME)),
+            expense=Sum("amount", filter=models.Q(type=Transaction.EXPENSE)),
+        )
+    )
+    month_map = {m["month"].month: m for m in monthly if m["month"]}
+
+    raw_rows = []
+    for month_num in range(1, 13):
+        data = month_map.get(month_num)
+        income = (data["income"] or Decimal("0")) if data else Decimal("0")
+        expense = (data["expense"] or Decimal("0")) if data else Decimal("0")
+        raw_rows.append({
+            "label": date(selected_year, month_num, 1).strftime("%b"),
+            "income": income,
+            "expense": expense,
+            "balance": income - expense,
+        })
+
+    year_total_income = sum((r["income"] for r in raw_rows), Decimal("0"))
+    year_total_expense = sum((r["expense"] for r in raw_rows), Decimal("0"))
+
+    max_amount = max([r["income"] for r in raw_rows] + [r["expense"] for r in raw_rows] + [Decimal("1")])
+    month_rows = []
+    for r in raw_rows:
+        month_rows.append({
+            **r,
+            "income_pct": int(min(r["income"] / max_amount * 100, 100)),
+            "expense_pct": int(min(r["expense"] / max_amount * 100, 100)),
+        })
+
+    yearly = (
+        Transaction.objects.filter(user=request.user)
+        .annotate(year=TruncYear("date"))
+        .values("year")
+        .annotate(
+            income=Sum("amount", filter=models.Q(type=Transaction.INCOME)),
+            expense=Sum("amount", filter=models.Q(type=Transaction.EXPENSE)),
+        )
+        .order_by("-year")
+    )
+    year_rows = []
+    for y in yearly:
+        income = y["income"] or Decimal("0")
+        expense = y["expense"] or Decimal("0")
+        year_rows.append({
+            "year": y["year"].year,
+            "income": income,
+            "expense": expense,
+            "balance": income - expense,
+        })
+
+    return render(request, "compare.html", {
+        "currency": request.user.currency,
+        "available_years": available_years,
+        "selected_year": selected_year,
+        "month_rows": month_rows,
+        "year_total_income": year_total_income,
+        "year_total_expense": year_total_expense,
+        "year_total_balance": year_total_income - year_total_expense,
+        "year_rows": year_rows,
     })

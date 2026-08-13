@@ -27,6 +27,14 @@
       </div>
     </div>
 
+    <!-- Export -->
+    <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+      <span class="muted" style="font-size:13px;font-weight:800;">Export (current filters):</span>
+      <a class="btn btn--ghost" href="{% url 'export_transactions_csv' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">CSV</a>
+      <a class="btn btn--ghost" href="{% url 'export_transactions_xlsx' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">Excel</a>
+      <a class="btn btn--ghost" href="{% url 'export_transactions_pdf' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">PDF</a>
+    </div>
+
     <!-- Totals -->
     <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
       <div class="glass-card" style="padding:14px;">

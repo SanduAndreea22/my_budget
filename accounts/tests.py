@@ -25,6 +25,19 @@ class AuthenticatedRedirectTests(TestCase):
         response = self.client.get(reverse("accounts:login"))
         self.assertEqual(response.status_code, 200)
 
+    def test_anonymous_user_is_redirected_to_login_from_protected_page(self):
+        # Regression test: LOGIN_URL used to be the unnamespaced "login",
+        # which doesn't exist (the URL is namespaced "accounts:login"),
+        # so @login_required crashed with NoReverseMatch instead of
+        # redirecting anonymous users to the login page.
+        response = self.client.get(reverse("dashboard"))
+        self.assertRedirects(response, f"{reverse('accounts:login')}?next={reverse('dashboard')}")
+
+    def test_logout_redirects_to_login(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("accounts:logout"))
+        self.assertRedirects(response, reverse("accounts:login"))
+
 
 class LoginRateLimitTests(TestCase):
     def setUp(self):
