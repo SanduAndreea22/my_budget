@@ -11,12 +11,15 @@
     {{ form.non_field_errors }}
 
     {% for field in form %}
-      {{ field }}
-      {% for error in field.errors %}
-        <div style="padding:10px 12px;border-radius:14px;background: rgba(236,72,153,.14);border: 1px solid rgba(236,72,153,.25);font-weight:800;">
-          {{ error }}
-        </div>
-      {% endfor %}
+      <div style="display:grid;gap:6px;">
+        <label style="font-weight:900;color:rgba(255,255,255,.86);">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}
+          <div style="padding:10px 12px;border-radius:14px;background: rgba(236,72,153,.14);border: 1px solid rgba(236,72,153,.25);font-weight:800;">
+            {{ error }}
+          </div>
+        {% endfor %}
+      </div>
     {% endfor %}
 
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">

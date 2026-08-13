@@ -87,6 +87,19 @@ class CategoryFormTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Category.objects.count(), 0)
 
+    def test_color_field_renders_as_a_color_picker(self):
+        response = self.client.get(reverse("category_add"))
+        self.assertContains(response, 'type="color"')
+
+    def test_color_field_has_a_sensible_default_for_new_categories(self):
+        response = self.client.get(reverse("category_add"))
+        self.assertEqual(response.context["form"].initial.get("color"), "#6366f1")
+
+    def test_can_create_category_with_a_picked_color(self):
+        response = self.client.post(reverse("category_add"), {"name": "Fun", "icon": "", "color": "#ff00aa"})
+        self.assertRedirects(response, reverse("categories"))
+        self.assertEqual(Category.objects.get(name="Fun").color, "#ff00aa")
+
 
 class TransactionsPaginationTests(TestCase):
     def setUp(self):

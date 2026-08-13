@@ -9,12 +9,14 @@ class CategoryForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "Category name (e.g. Salary, Food)"}),
             "icon": forms.TextInput(attrs={"placeholder": "Icon (emoji) e.g. 💼 🍔 (optional)"}),
-            "color": forms.TextInput(attrs={"placeholder": "Color hex e.g. #22c55e (optional)"}),
+            "color": forms.TextInput(attrs={"type": "color"}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
+        if not self.instance.pk and not self.initial.get("color"):
+            self.initial["color"] = "#6366f1"
 
     def clean_name(self):
         name = self.cleaned_data["name"].strip()

@@ -164,6 +164,7 @@ input, select, textarea{
 }
 textarea{min-height:110px; resize:vertical}
 input[type="file"]{padding:10px}
+input[type="color"]{width:64px; height:48px; padding:4px; cursor:pointer;}
 input::placeholder, textarea::placeholder{color: rgba(255,255,255,.55)}
 select option{background:#0b102a; color:#fff} /* dropdown readable on dark bg */
 input:focus, select:focus, textarea:focus{box-shadow: var(--focus)}
