@@ -14,8 +14,8 @@
 
   <form method="POST" style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;">
     {% csrf_token %}
-    <button class="btn btn--ghost" type="submit" style="border-color: rgba(236,72,153,.28);">Yes, delete →</button>
-    <a class="btn" href="{% url 'budgets' %}">Cancel</a>
+    <button class="btn btn--danger" type="submit">Yes, delete →</button>
+    <a class="btn btn--ghost" href="{% url 'budgets' %}">Cancel</a>
   </form>
 </section>
 {% endblock %}
