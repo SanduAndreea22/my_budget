@@ -37,6 +37,7 @@
         <th>Date</th>
         <th>Type</th>
         <th>Category</th>
+        <th>Wallet</th>
         <th>Note</th>
         <th style="text-align:right;">Amount</th>
       </tr>
@@ -47,13 +48,14 @@
           <td>{{ t.date|date:"Y-m-d" }}</td>
           <td>{{ t.get_type_display }}</td>
           <td>{{ t.category.name }}</td>
+          <td>{{ t.wallet.name }}</td>
           <td>{{ t.note }}</td>
           <td style="text-align:right;" class="{% if t.type == 'income' %}income{% else %}expense{% endif %}">
             {% if t.type == 'income' %}+{% else %}-{% endif %}{{ t.amount|floatformat:2 }} {{ currency }}
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="5" class="muted">No transactions found.</td></tr>
+        <tr><td colspan="6" class="muted">No transactions found.</td></tr>
       {% endfor %}
     </tbody>
   </table>

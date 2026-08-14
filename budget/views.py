@@ -14,8 +14,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from .forms import BudgetLimitForm, CategoryForm, SavingsGoalForm, TransactionForm
-from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction
+from .forms import BudgetLimitForm, CategoryForm, SavingsGoalForm, TransactionForm, WalletForm
+from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction, Wallet
 
 
 def _log_activity(user, action, model_name, object_repr):
@@ -28,7 +28,7 @@ def _log_activity(user, action, model_name, object_repr):
 
 
 def _transaction_repr(tx, currency):
-    return f"{tx.get_type_display()} · {tx.category.name} · {tx.amount} {currency}"
+    return f"{tx.get_type_display()} · {tx.category.name} · {tx.wallet.name} · {tx.amount} {currency}"
 
 
 def _budget_limit_repr(b, currency):
@@ -79,11 +79,13 @@ def _parse_date(raw_date):
 
 def _add_transaction_view(request, tx_type, template_name):
     categories = Category.objects.filter(user=request.user).order_by("name")
+    wallets = Wallet.objects.filter(user=request.user).order_by("name")
 
     if request.method == "POST":
         amount = _parse_amount(request.POST.get("amount"))
         tx_date = _parse_date(request.POST.get("date"))
         category = categories.filter(pk=request.POST.get("category")).first()
+        wallet = wallets.filter(pk=request.POST.get("wallet")).first()
         note = request.POST.get("note", "").strip()
 
         errors = []
@@ -93,16 +95,20 @@ def _add_transaction_view(request, tx_type, template_name):
             errors.append("Please enter a valid date.")
         if category is None:
             errors.append("Please choose one of your categories.")
+        if wallet is None:
+            errors.append("Please choose one of your wallets.")
 
         if errors:
             for error in errors:
                 messages.error(request, error)
             return render(request, template_name, {
                 "categories": categories,
+                "wallets": wallets,
                 "values": {
                     "amount": request.POST.get("amount", ""),
                     "date": request.POST.get("date", ""),
                     "category": request.POST.get("category", ""),
+                    "wallet": request.POST.get("wallet", ""),
                     "note": note,
                 },
             })
@@ -114,12 +120,13 @@ def _add_transaction_view(request, tx_type, template_name):
             date=tx_date,
             note=note,
             category=category,
+            wallet=wallet,
         )
         _log_activity(request.user, ActivityLog.CREATE, "Transaction", _transaction_repr(tx, request.user.currency))
         messages.success(request, "Transaction saved.")
         return redirect("dashboard")
 
-    return render(request, template_name, {"categories": categories})
+    return render(request, template_name, {"categories": categories, "wallets": wallets})
 
 
 @login_required
@@ -152,12 +159,48 @@ def category_add_view(request):
     return render(request, "category_add.html", {"form": form})
 
 
+@login_required
+def wallets_view(request):
+    wallets = Wallet.objects.filter(user=request.user).order_by("name")
+
+    balances = {
+        row["wallet_id"]: (row["income"] or Decimal("0")) - (row["expense"] or Decimal("0"))
+        for row in (
+            Transaction.objects.filter(user=request.user)
+            .values("wallet_id")
+            .annotate(
+                income=Sum("amount", filter=models.Q(type=Transaction.INCOME)),
+                expense=Sum("amount", filter=models.Q(type=Transaction.EXPENSE)),
+            )
+        )
+    }
+
+    rows = [{"wallet": w, "balance": balances.get(w.id, Decimal("0"))} for w in wallets]
+
+    return render(request, "wallets.html", {"rows": rows, "currency": request.user.currency})
+
+
+@login_required
+def wallet_add_view(request):
+    if request.method == "POST":
+        form = WalletForm(request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Wallet created!")
+            return redirect("wallets")
+    else:
+        form = WalletForm(user=request.user)
+
+    return render(request, "wallet_add.html", {"form": form})
+
+
 def _filtered_transactions(request):
     """Shared filter parsing for the transactions list and the export views,
-    so both stay in sync with the same type/category/date-range filters."""
-    qs = Transaction.objects.filter(user=request.user).select_related("category")
+    so both stay in sync with the same type/category/wallet/date-range filters."""
+    qs = Transaction.objects.filter(user=request.user).select_related("category", "wallet")
     t_type = request.GET.get("type", "").strip()
     cat_id = request.GET.get("category", "").strip()
+    wallet_id = request.GET.get("wallet", "").strip()
     date_from = request.GET.get("from", "").strip()
     date_to = request.GET.get("to", "").strip()
 
@@ -167,13 +210,16 @@ def _filtered_transactions(request):
     if cat_id.isdigit():
         qs = qs.filter(category_id=int(cat_id))
 
+    if wallet_id.isdigit():
+        qs = qs.filter(wallet_id=int(wallet_id))
+
     if date_from:
         qs = qs.filter(date__gte=date_from)
 
     if date_to:
         qs = qs.filter(date__lte=date_to)
 
-    filters = {"type": t_type, "category": cat_id, "from": date_from, "to": date_to}
+    filters = {"type": t_type, "category": cat_id, "wallet": wallet_id, "from": date_from, "to": date_to}
     return qs, filters
 
 
@@ -186,6 +232,7 @@ def transactions_list_view(request):
     balance = total_income - total_expense
 
     categories = Category.objects.filter(user=request.user).order_by("name")
+    wallets = Wallet.objects.filter(user=request.user).order_by("name")
 
     paginator = Paginator(qs, 50)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -194,6 +241,7 @@ def transactions_list_view(request):
         "transactions": page_obj,
         "page_obj": page_obj,
         "categories": categories,
+        "wallets": wallets,
         "filters": filters,
         "total_income": total_income,
         "total_expense": total_expense,
@@ -212,12 +260,13 @@ def export_transactions_csv_view(request):
     response["Content-Disposition"] = 'attachment; filename="transactions.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(["Date", "Type", "Category", "Amount", "Currency", "Note"])
+    writer.writerow(["Date", "Type", "Category", "Wallet", "Amount", "Currency", "Note"])
     for t in qs:
         writer.writerow([
             t.date.isoformat(),
             t.get_type_display(),
             t.category.name,
+            t.wallet.name,
             t.amount,
             request.user.currency,
             t.note,
@@ -236,17 +285,18 @@ def export_transactions_xlsx_view(request):
     wb = Workbook()
     ws = wb.active
     ws.title = "Transactions"
-    ws.append(["Date", "Type", "Category", "Amount", "Currency", "Note"])
+    ws.append(["Date", "Type", "Category", "Wallet", "Amount", "Currency", "Note"])
     for t in qs:
         ws.append([
             t.date.isoformat(),
             t.get_type_display(),
             t.category.name,
+            t.wallet.name,
             float(t.amount),
             request.user.currency,
             t.note,
         ])
-    for i, width in enumerate([12, 10, 24, 12, 10, 36], start=1):
+    for i, width in enumerate([12, 10, 24, 18, 12, 10, 36], start=1):
         ws.column_dimensions[get_column_letter(i)].width = width
 
     response = HttpResponse(

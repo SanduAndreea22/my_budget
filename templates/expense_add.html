@@ -39,7 +39,7 @@
       ">- amount</div>
     </div>
 
-    {% if categories %}
+    {% if categories and wallets %}
       <form method="POST" style="display:grid;gap:12px;margin-top:14px;">
         {% csrf_token %}
 
@@ -67,6 +67,16 @@
           </div>
         </div>
 
+        <!-- Wallet -->
+        <div style="display:grid;gap:6px;">
+          <label style="font-weight:900;color:rgba(255,255,255,.86);">Wallet</label>
+          <select name="wallet" required>
+            {% for w in wallets %}
+              <option value="{{ w.id }}" {% if values.wallet == w.id|stringformat:"s" %}selected{% endif %}>{{ w.icon|default:"💳" }} {{ w.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
         <!-- Note -->
         <div style="display:grid;gap:6px;">
           <label style="font-weight:900;color:rgba(255,255,255,.86);">Note (optional)</label>
@@ -90,13 +100,21 @@
           }
         </style>
       </form>
-    {% else %}
+    {% elif not categories %}
       <div class="glass-card" style="margin-top:14px;padding:22px;text-align:center;">
         <div style="font-weight:900;font-size:16px;margin-bottom:8px;">You don't have any categories yet</div>
         <p class="muted" style="margin:0 0 16px;">
           Create a category first (e.g. Salary, Food, Rent) — you'll use it to organize this and future transactions.
         </p>
         <a class="btn" href="{% url 'category_add' %}">+ Create a category</a>
+      </div>
+    {% else %}
+      <div class="glass-card" style="margin-top:14px;padding:22px;text-align:center;">
+        <div style="font-weight:900;font-size:16px;margin-bottom:8px;">You don't have any wallets yet</div>
+        <p class="muted" style="margin:0 0 16px;">
+          Create a wallet first (e.g. Card, Cash, Savings) — you'll use it to track where this money is.
+        </p>
+        <a class="btn" href="{% url 'wallet_add' %}">+ Create a wallet</a>
       </div>
     {% endif %}
   </div>

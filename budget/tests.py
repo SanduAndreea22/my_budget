@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from openpyxl import load_workbook
 
-from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction
+from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction, Wallet
 
 User = get_user_model()
 
@@ -18,6 +18,8 @@ class TransactionSecurityTests(TestCase):
         self.other_user = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
         self.own_category = Category.objects.create(user=self.user, name="Food")
         self.foreign_category = Category.objects.create(user=self.other_user, name="Rent")
+        self.own_wallet = Wallet.objects.create(user=self.user, name="Cash")
+        self.foreign_wallet = Wallet.objects.create(user=self.other_user, name="Card")
         self.client.force_login(self.user)
 
     def test_cannot_attach_transaction_to_another_users_category(self):
@@ -25,6 +27,18 @@ class TransactionSecurityTests(TestCase):
             "amount": "50",
             "date": "2026-01-10",
             "category": self.foreign_category.id,
+            "wallet": self.own_wallet.id,
+            "note": "",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_cannot_attach_transaction_to_another_users_wallet(self):
+        response = self.client.post(reverse("add_expense"), {
+            "amount": "50",
+            "date": "2026-01-10",
+            "category": self.own_category.id,
+            "wallet": self.foreign_wallet.id,
             "note": "",
         })
         self.assertEqual(response.status_code, 200)
@@ -35,12 +49,14 @@ class TransactionSecurityTests(TestCase):
             "amount": "50",
             "date": "2026-01-10",
             "category": self.own_category.id,
+            "wallet": self.own_wallet.id,
             "note": "Groceries",
         })
         self.assertRedirects(response, reverse("dashboard"))
         tx = Transaction.objects.get()
         self.assertEqual(tx.user, self.user)
         self.assertEqual(tx.category, self.own_category)
+        self.assertEqual(tx.wallet, self.own_wallet)
         self.assertEqual(tx.type, Transaction.EXPENSE)
 
     def test_rejects_non_numeric_amount(self):
@@ -48,6 +64,7 @@ class TransactionSecurityTests(TestCase):
             "amount": "not-a-number",
             "date": "2026-01-10",
             "category": self.own_category.id,
+            "wallet": self.own_wallet.id,
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Transaction.objects.count(), 0)
@@ -57,6 +74,7 @@ class TransactionSecurityTests(TestCase):
             "amount": "-10",
             "date": "2026-01-10",
             "category": self.own_category.id,
+            "wallet": self.own_wallet.id,
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Transaction.objects.count(), 0)
@@ -66,6 +84,7 @@ class TransactionSecurityTests(TestCase):
             "amount": "10",
             "date": "not-a-date",
             "category": self.own_category.id,
+            "wallet": self.own_wallet.id,
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Transaction.objects.count(), 0)
@@ -75,12 +94,14 @@ class TransactionSecurityTests(TestCase):
             "amount": "-10",
             "date": "2026-01-10",
             "category": self.own_category.id,
+            "wallet": self.own_wallet.id,
             "note": "Coffee",
         })
         self.assertContains(response, 'value="-10"')
         self.assertContains(response, 'value="2026-01-10"')
         self.assertContains(response, 'value="Coffee"')
         self.assertContains(response, f'value="{self.own_category.id}" selected')
+        self.assertContains(response, f'value="{self.own_wallet.id}" selected')
 
 
 class CategoryFormTests(TestCase):
@@ -131,6 +152,7 @@ class TransactionsPaginationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
         self.category = Category.objects.create(user=self.user, name="Food")
+        self.wallet = Wallet.objects.create(user=self.user, name="Cash")
         self.client.force_login(self.user)
         for i in range(60):
             Transaction.objects.create(
@@ -139,6 +161,7 @@ class TransactionsPaginationTests(TestCase):
                 amount=10,
                 date=date(2026, 1, 1),
                 category=self.category,
+                wallet=self.wallet,
             )
 
     def test_list_is_paginated(self):
@@ -151,11 +174,12 @@ class CompareViewTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
         self.category = Category.objects.create(user=self.user, name="Food")
+        self.wallet = Wallet.objects.create(user=self.user, name="Cash")
         self.client.force_login(self.user)
-        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=1000, date=date(2025, 1, 15), category=self.category)
-        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=300, date=date(2025, 1, 20), category=self.category)
-        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=1200, date=date(2026, 2, 5), category=self.category)
-        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=400, date=date(2026, 2, 10), category=self.category)
+        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=1000, date=date(2025, 1, 15), category=self.category, wallet=self.wallet)
+        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=300, date=date(2025, 1, 20), category=self.category, wallet=self.wallet)
+        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=1200, date=date(2026, 2, 5), category=self.category, wallet=self.wallet)
+        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=400, date=date(2026, 2, 10), category=self.category, wallet=self.wallet)
 
     def test_defaults_to_most_recent_year(self):
         response = self.client.get(reverse("compare"))
@@ -184,7 +208,8 @@ class CompareViewTests(TestCase):
     def test_only_sees_own_transactions(self):
         other = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
         other_category = Category.objects.create(user=other, name="Rent")
-        Transaction.objects.create(user=other, type=Transaction.INCOME, amount=99999, date=date(2026, 3, 1), category=other_category)
+        other_wallet = Wallet.objects.create(user=other, name="Card")
+        Transaction.objects.create(user=other, type=Transaction.INCOME, amount=99999, date=date(2026, 3, 1), category=other_category, wallet=other_wallet)
 
         response = self.client.get(reverse("compare"), {"year": "2026"})
         self.assertEqual(response.context["year_total_income"], 1200)
@@ -205,19 +230,21 @@ class ExportTests(TestCase):
         self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
         self.other_user = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
         self.category = Category.objects.create(user=self.user, name="Food")
+        self.wallet = Wallet.objects.create(user=self.user, name="Cash")
         other_category = Category.objects.create(user=self.other_user, name="Secret")
+        other_wallet = Wallet.objects.create(user=self.other_user, name="Card")
         self.client.force_login(self.user)
-        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=500, date=date(2026, 1, 10), category=self.category, note="Salary")
-        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=75, date=date(2026, 1, 12), category=self.category, note="Groceries")
-        Transaction.objects.create(user=self.other_user, type=Transaction.INCOME, amount=9999, date=date(2026, 1, 10), category=other_category, note="Not mine")
+        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=500, date=date(2026, 1, 10), category=self.category, wallet=self.wallet, note="Salary")
+        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=75, date=date(2026, 1, 12), category=self.category, wallet=self.wallet, note="Groceries")
+        Transaction.objects.create(user=self.other_user, type=Transaction.INCOME, amount=9999, date=date(2026, 1, 10), category=other_category, wallet=other_wallet, note="Not mine")
 
     def test_csv_export_contains_only_own_rows(self):
         response = self.client.get(reverse("export_transactions_csv"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/csv")
         rows = list(csv.reader(io.StringIO(response.content.decode())))
-        self.assertEqual(rows[0], ["Date", "Type", "Category", "Amount", "Currency", "Note"])
-        notes = [r[5] for r in rows[1:]]
+        self.assertEqual(rows[0], ["Date", "Type", "Category", "Wallet", "Amount", "Currency", "Note"])
+        notes = [r[6] for r in rows[1:]]
         self.assertIn("Salary", notes)
         self.assertIn("Groceries", notes)
         self.assertNotIn("Not mine", notes)
@@ -225,8 +252,18 @@ class ExportTests(TestCase):
     def test_csv_export_respects_type_filter(self):
         response = self.client.get(reverse("export_transactions_csv"), {"type": "income"})
         rows = list(csv.reader(io.StringIO(response.content.decode())))
-        notes = [r[5] for r in rows[1:]]
+        notes = [r[6] for r in rows[1:]]
         self.assertEqual(notes, ["Salary"])
+
+    def test_csv_export_respects_wallet_filter(self):
+        other_wallet = Wallet.objects.create(user=self.user, name="Savings")
+        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=20, date=date(2026, 1, 15), category=self.category, wallet=other_wallet, note="From savings")
+
+        response = self.client.get(reverse("export_transactions_csv"), {"wallet": self.wallet.id})
+        rows = list(csv.reader(io.StringIO(response.content.decode())))
+        notes = [r[6] for r in rows[1:]]
+        self.assertIn("Salary", notes)
+        self.assertNotIn("From savings", notes)
 
     def test_xlsx_export_contains_only_own_rows(self):
         response = self.client.get(reverse("export_transactions_xlsx"))
@@ -237,7 +274,7 @@ class ExportTests(TestCase):
         )
         wb = load_workbook(io.BytesIO(response.content))
         ws = wb.active
-        notes = [row[5].value for row in ws.iter_rows(min_row=2)]
+        notes = [row[6].value for row in ws.iter_rows(min_row=2)]
         self.assertIn("Salary", notes)
         self.assertIn("Groceries", notes)
         self.assertNotIn("Not mine", notes)
@@ -270,11 +307,22 @@ class EmptyCategoriesStateTests(TestCase):
         self.assertContains(response, "You don't have any categories yet")
         self.assertNotContains(response, "<select name=\"category\"")
 
-    def test_add_income_shows_form_once_a_category_exists(self):
+    def test_add_income_shows_wallet_prompt_once_a_category_exists_but_no_wallet(self):
         Category.objects.create(user=self.user, name="Salary")
         response = self.client.get(reverse("add_income"))
         self.assertNotContains(response, "You don't have any categories yet")
+        self.assertContains(response, "You don't have any wallets yet")
+        self.assertContains(response, reverse("wallet_add"))
+        self.assertNotContains(response, "<select name=\"category\"")
+
+    def test_add_income_shows_form_once_a_category_and_wallet_exist(self):
+        Category.objects.create(user=self.user, name="Salary")
+        Wallet.objects.create(user=self.user, name="Cash")
+        response = self.client.get(reverse("add_income"))
+        self.assertNotContains(response, "You don't have any categories yet")
+        self.assertNotContains(response, "You don't have any wallets yet")
         self.assertContains(response, "<select name=\"category\"")
+        self.assertContains(response, "<select name=\"wallet\"")
 
 
 class BudgetLimitFormTests(TestCase):
@@ -389,11 +437,12 @@ class ActivityLogTests(TestCase):
         self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
         self.other_user = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
         self.category = Category.objects.create(user=self.user, name="Food")
+        self.wallet = Wallet.objects.create(user=self.user, name="Cash")
         self.client.force_login(self.user)
 
     def test_adding_a_transaction_is_logged(self):
         self.client.post(reverse("add_expense"), {
-            "amount": "50", "date": "2026-01-10", "category": self.category.id, "note": "Groceries",
+            "amount": "50", "date": "2026-01-10", "category": self.category.id, "wallet": self.wallet.id, "note": "Groceries",
         })
         entry = ActivityLog.objects.get()
         self.assertEqual(entry.user, self.user)
@@ -402,15 +451,15 @@ class ActivityLogTests(TestCase):
         self.assertIn("Food", entry.object_repr)
 
     def test_editing_a_transaction_is_logged(self):
-        tx = Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=50, date="2026-01-10", category=self.category)
+        tx = Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=50, date="2026-01-10", category=self.category, wallet=self.wallet)
         self.client.post(reverse("transaction_edit", args=[tx.id]), {
-            "type": "expense", "amount": "75", "date": "2026-01-10", "category": self.category.id, "note": "",
+            "type": "expense", "amount": "75", "date": "2026-01-10", "category": self.category.id, "wallet": self.wallet.id, "note": "",
         })
         entry = ActivityLog.objects.filter(action=ActivityLog.UPDATE).get()
         self.assertEqual(entry.model_name, "Transaction")
 
     def test_deleting_a_transaction_is_logged(self):
-        tx = Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=50, date="2026-01-10", category=self.category)
+        tx = Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=50, date="2026-01-10", category=self.category, wallet=self.wallet)
         self.client.post(reverse("transaction_delete", args=[tx.id]))
         entry = ActivityLog.objects.filter(action=ActivityLog.DELETE).get()
         self.assertEqual(entry.model_name, "Transaction")
@@ -434,3 +483,52 @@ class ActivityLogTests(TestCase):
         self.client.logout()
         response = self.client.get(reverse("activity_log"))
         self.assertEqual(response.status_code, 302)
+
+
+class WalletTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.other_user = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Food")
+        self.client.force_login(self.user)
+
+    def test_can_create_a_wallet(self):
+        response = self.client.post(reverse("wallet_add"), {"name": "Card", "icon": "💳"})
+        self.assertRedirects(response, reverse("wallets"))
+        wallet = Wallet.objects.get()
+        self.assertEqual(wallet.user, self.user)
+        self.assertEqual(wallet.name, "Card")
+
+    def test_duplicate_wallet_name_is_rejected(self):
+        Wallet.objects.create(user=self.user, name="Cash")
+        response = self.client.post(reverse("wallet_add"), {"name": "Cash", "icon": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Wallet.objects.filter(user=self.user).count(), 1)
+
+    def test_blank_wallet_name_is_rejected(self):
+        response = self.client.post(reverse("wallet_add"), {"name": "   ", "icon": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Wallet.objects.count(), 0)
+
+    def test_wallets_list_shows_empty_state(self):
+        response = self.client.get(reverse("wallets"))
+        self.assertContains(response, "No wallets yet")
+
+    def test_wallet_balance_reflects_its_own_transactions_only(self):
+        cash = Wallet.objects.create(user=self.user, name="Cash")
+        card = Wallet.objects.create(user=self.user, name="Card")
+        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=1000, date="2026-01-01", category=self.category, wallet=cash)
+        Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=200, date="2026-01-02", category=self.category, wallet=cash)
+        Transaction.objects.create(user=self.user, type=Transaction.INCOME, amount=500, date="2026-01-03", category=self.category, wallet=card)
+
+        response = self.client.get(reverse("wallets"))
+        balances = {r["wallet"].id: r["balance"] for r in response.context["rows"]}
+        self.assertEqual(balances[cash.id], 800)
+        self.assertEqual(balances[card.id], 500)
+
+    def test_only_own_wallets_appear_in_add_transaction_dropdown(self):
+        own_wallet = Wallet.objects.create(user=self.user, name="Cash")
+        Wallet.objects.create(user=self.other_user, name="Not mine")
+        response = self.client.get(reverse("add_income"))
+        self.assertContains(response, "Cash")
+        self.assertNotContains(response, "Not mine")

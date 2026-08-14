@@ -14,6 +14,20 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
+class Wallet(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="wallets")
+    name = models.CharField(max_length=50)
+    icon = models.CharField(max_length=32, blank=True, default="")
+
+    class Meta:
+        unique_together = ("user", "name")
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class Transaction(models.Model):
     INCOME = "income"
     EXPENSE = "expense"
@@ -34,6 +48,12 @@ class Transaction(models.Model):
         Category,
         on_delete=models.CASCADE,
         related_name="transactions"
+    )
+
+    wallet = models.ForeignKey(
+        Wallet,
+        on_delete=models.CASCADE,
+        related_name="transactions",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

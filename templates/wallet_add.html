@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Add Wallet · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="max-width:520px;margin:auto;padding:22px;">
+  <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Add Wallet</h1>
+  <p class="muted" style="margin:0 0 14px;">Card, cash, savings — whatever accounts you use.</p>
+
+  <form method="POST" style="display:grid;gap:12px;">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+      <div style="display:grid;gap:6px;">
+        <label style="font-weight:900;color:rgba(255,255,255,.86);">{{ field.label }}</label>
+        {{ field }}
+        {% for error in field.errors %}
+          <div style="padding:10px 12px;border-radius:14px;background: rgba(236,72,153,.14);border: 1px solid rgba(236,72,153,.25);font-weight:800;">
+            {{ error }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
+      <button class="btn" type="submit">Create →</button>
+      <a class="btn btn--ghost" href="{% url 'wallets' %}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}
