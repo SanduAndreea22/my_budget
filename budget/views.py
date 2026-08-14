@@ -80,7 +80,15 @@ def _add_transaction_view(request, tx_type, template_name):
         if errors:
             for error in errors:
                 messages.error(request, error)
-            return render(request, template_name, {"categories": categories})
+            return render(request, template_name, {
+                "categories": categories,
+                "values": {
+                    "amount": request.POST.get("amount", ""),
+                    "date": request.POST.get("date", ""),
+                    "category": request.POST.get("category", ""),
+                    "note": note,
+                },
+            })
 
         Transaction.objects.create(
             user=request.user,

@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from openpyxl import load_workbook
 
-from .models import Category, Transaction
+from .models import BudgetLimit, Category, Transaction
 
 User = get_user_model()
 
@@ -69,6 +69,18 @@ class TransactionSecurityTests(TestCase):
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_form_values_are_preserved_after_a_validation_error(self):
+        response = self.client.post(reverse("add_expense"), {
+            "amount": "-10",
+            "date": "2026-01-10",
+            "category": self.own_category.id,
+            "note": "Coffee",
+        })
+        self.assertContains(response, 'value="-10"')
+        self.assertContains(response, 'value="2026-01-10"')
+        self.assertContains(response, 'value="Coffee"')
+        self.assertContains(response, f'value="{self.own_category.id}" selected')
 
 
 class CategoryFormTests(TestCase):
@@ -163,6 +175,16 @@ class CompareViewTests(TestCase):
         response = self.client.get(reverse("compare"), {"year": "2026"})
         self.assertEqual(response.context["year_total_income"], 1200)
 
+    def test_shows_empty_state_when_no_data_for_selected_year(self):
+        response = self.client.get(reverse("compare"), {"year": "2030"})
+        self.assertContains(response, "No transactions in 2030 yet.")
+        self.assertNotContains(response, 'id="compareChart"')
+
+    def test_shows_chart_when_year_has_data(self):
+        response = self.client.get(reverse("compare"), {"year": "2026"})
+        self.assertContains(response, 'id="compareChart"')
+        self.assertNotContains(response, "No transactions in 2026 yet.")
+
 
 class ExportTests(TestCase):
     def setUp(self):
@@ -216,3 +238,64 @@ class ExportTests(TestCase):
         self.client.logout()
         response = self.client.get(reverse("export_transactions_csv"))
         self.assertEqual(response.status_code, 302)
+
+
+class EmptyCategoriesStateTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.client.force_login(self.user)
+
+    def test_add_income_shows_create_category_prompt_when_no_categories(self):
+        response = self.client.get(reverse("add_income"))
+        self.assertContains(response, "You don't have any categories yet")
+        self.assertContains(response, reverse("category_add"))
+        self.assertNotContains(response, "<select name=\"category\"")
+
+    def test_add_expense_shows_create_category_prompt_when_no_categories(self):
+        response = self.client.get(reverse("add_expense"))
+        self.assertContains(response, "You don't have any categories yet")
+        self.assertNotContains(response, "<select name=\"category\"")
+
+    def test_add_income_shows_form_once_a_category_exists(self):
+        Category.objects.create(user=self.user, name="Salary")
+        response = self.client.get(reverse("add_income"))
+        self.assertNotContains(response, "You don't have any categories yet")
+        self.assertContains(response, "<select name=\"category\"")
+
+
+class BudgetLimitFormTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Food")
+        self.client.force_login(self.user)
+
+    def test_month_field_renders_as_a_month_picker(self):
+        response = self.client.get(reverse("budget_add"))
+        self.assertContains(response, 'type="month"')
+
+    def test_can_create_a_budget_limit_with_month_only_value(self):
+        response = self.client.post(reverse("budget_add"), {
+            "category": self.category.id,
+            "month": "2026-03",
+            "limit": "500",
+        })
+        self.assertRedirects(response, reverse("budgets"))
+        b = BudgetLimit.objects.get()
+        self.assertEqual(b.month, date(2026, 3, 1))
+        self.assertEqual(b.user, self.user)
+
+    def test_edit_page_shows_existing_month_in_picker_format(self):
+        b = BudgetLimit.objects.create(user=self.user, category=self.category, month=date(2026, 5, 1), limit=300)
+        response = self.client.get(reverse("budget_edit", args=[b.id]))
+        self.assertContains(response, 'value="2026-05"')
+
+
+class BudgetsViewNoLimitStateTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        Category.objects.create(user=self.user, name="Food")
+        self.client.force_login(self.user)
+
+    def test_shows_explicit_no_limit_message_instead_of_hiding_the_row(self):
+        response = self.client.get(reverse("budgets"))
+        self.assertContains(response, "No limit set for this category yet.")

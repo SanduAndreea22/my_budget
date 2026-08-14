@@ -55,7 +55,7 @@ def register_view(request):
 
             threading.Thread(target=send_email_task).start()
 
-            messages.success(request, 'Account created! Check your email to activate your account.')
+            messages.success(request, 'Account created! You can log in now.')
             return redirect('accounts:login')
     else:
         form = UserRegistrationForm()
@@ -73,7 +73,7 @@ def login_view(request):
             if user is not None:
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                 messages.success(request, f'Welcome, {user.username}!')
-                return redirect('accounts:profile', username=user.username)
+                return redirect('dashboard')
             else:
                 messages.error(request, 'Invalid credentials or inactive account.')
     else:

@@ -38,6 +38,14 @@ class AuthenticatedRedirectTests(TestCase):
         response = self.client.get(reverse("accounts:logout"))
         self.assertRedirects(response, reverse("accounts:login"))
 
+    def test_successful_login_redirects_to_dashboard(self):
+        # A new user's first stop after logging in should be the app
+        # (dashboard), not the profile/settings page.
+        response = self.client.post(
+            reverse("accounts:login"), {"username": "alice", "password": "pass12345"}
+        )
+        self.assertRedirects(response, reverse("dashboard"))
+
 
 class LoginRateLimitTests(TestCase):
     def setUp(self):

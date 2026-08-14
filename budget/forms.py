@@ -60,12 +60,14 @@ class TransactionForm(forms.ModelForm):
 from .models import BudgetLimit
 
 class BudgetLimitForm(forms.ModelForm):
+    month = forms.DateField(
+        input_formats=["%Y-%m"],
+        widget=forms.DateInput(attrs={"type": "month"}, format="%Y-%m"),
+    )
+
     class Meta:
         model = BudgetLimit
         fields = ["category", "month", "limit"]
-        widgets = {
-            "month": forms.DateInput(attrs={"type": "date"}),
-        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)

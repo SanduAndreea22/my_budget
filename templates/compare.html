@@ -61,9 +61,15 @@
     <!-- Month-by-month chart -->
     <div class="glass-card" style="margin-top:14px;padding:16px;">
       <h2 style="margin:0 0 12px;font-size:20px;">Month by month — {{ selected_year }}</h2>
-      <div style="height:280px;">
-        <canvas id="compareChart"></canvas>
-      </div>
+      {% if year_total_income or year_total_expense %}
+        <div style="height:280px;">
+          <canvas id="compareChart"></canvas>
+        </div>
+      {% else %}
+        <div style="height:280px; display:flex; align-items:center; justify-content:center;">
+          <p class="muted">No transactions in {{ selected_year }} yet.</p>
+        </div>
+      {% endif %}
     </div>
 
     <!-- Year over year table -->
