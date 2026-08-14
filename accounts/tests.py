@@ -3,6 +3,8 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.urls import reverse
 
+from .forms import UserRegistrationForm
+
 User = get_user_model()
 
 
@@ -62,3 +64,13 @@ class LoginRateLimitTests(TestCase):
         self.assertFalse(response.wsgi_request.user.is_authenticated)
         messages = [m.message for m in response.context["messages"]]
         self.assertTrue(any("Too many attempts" in m for m in messages))
+
+
+class RegistrationFormTextTests(TestCase):
+    def test_username_field_explains_its_relation_to_email_login(self):
+        form = UserRegistrationForm()
+        self.assertIn("log in with your email", form.fields["username"].help_text)
+
+    def test_registration_page_shows_the_username_help_text(self):
+        response = self.client.get(reverse("accounts:register"))
+        self.assertContains(response, "you can also log in with your email instead")

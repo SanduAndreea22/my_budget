@@ -4,7 +4,7 @@ from django.db import models
 class Category(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="categories")
     name = models.CharField(max_length=50)
-    icon = models.CharField(max_length=10, blank=True, default="")
+    icon = models.CharField(max_length=32, blank=True, default="")
     color = models.CharField(max_length=20, blank=True, default="")
 
     class Meta:

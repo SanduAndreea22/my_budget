@@ -3,11 +3,15 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
 
 class UserRegistrationForm(UserCreationForm):
-    email = forms.EmailField(help_text='A valid email address, please.', required=True)
+    email = forms.EmailField(help_text='Enter a valid email address.', required=True)
 
     class Meta:
         model = get_user_model()
         fields = ['first_name', 'last_name', 'username', 'email', 'password1', 'password2']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].help_text = "This is what you'll use to log in — you can also log in with your email instead."
 
     def save(self, commit=True):
         user = super(UserRegistrationForm, self).save(commit=False)

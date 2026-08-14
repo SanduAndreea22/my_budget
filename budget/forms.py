@@ -3,12 +3,18 @@ from django.core.exceptions import ValidationError
 from .models import Transaction, Category
 
 class CategoryForm(forms.ModelForm):
+    icon = forms.CharField(
+        required=False,
+        max_length=32,
+        widget=forms.TextInput(attrs={"placeholder": "Icon (emoji) e.g. 💼 🍔 (optional)"}),
+        error_messages={"max_length": "That icon is too long — try a single emoji instead."},
+    )
+
     class Meta:
         model = Category
         fields = ["name", "icon", "color"]
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "Category name (e.g. Salary, Food)"}),
-            "icon": forms.TextInput(attrs={"placeholder": "Icon (emoji) e.g. 💼 🍔 (optional)"}),
             "color": forms.TextInput(attrs={"type": "color"}),
         }
 

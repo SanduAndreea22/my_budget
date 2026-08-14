@@ -112,6 +112,20 @@ class CategoryFormTests(TestCase):
         self.assertRedirects(response, reverse("categories"))
         self.assertEqual(Category.objects.get(name="Fun").color, "#ff00aa")
 
+    def test_accepts_a_multi_codepoint_emoji_as_icon(self):
+        # A "single" emoji like a family or a flag can be several Unicode
+        # code points long — this used to trip the old max_length=10 limit
+        # with a confusing "has at most 10 characters" error.
+        family_emoji = "👨‍👩‍👧‍👦"
+        response = self.client.post(reverse("category_add"), {"name": "Family", "icon": family_emoji, "color": ""})
+        self.assertRedirects(response, reverse("categories"))
+        self.assertEqual(Category.objects.get(name="Family").icon, family_emoji)
+
+    def test_overly_long_icon_gets_a_friendly_error_message(self):
+        response = self.client.post(reverse("category_add"), {"name": "Long", "icon": "x" * 40, "color": ""})
+        self.assertContains(response, "try a single emoji instead")
+        self.assertEqual(Category.objects.filter(name="Long").count(), 0)
+
 
 class TransactionsPaginationTests(TestCase):
     def setUp(self):
