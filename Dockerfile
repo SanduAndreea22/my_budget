@@ -13,7 +13,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Pregătim fișierele statice (pentru designul site-ului)
-RUN python manage.py collectstatic --noinput
+# DEBUG=True doar pentru acest pas de build: collectstatic are nevoie ca
+# settings.py să se încarce, dar nu foloseşte SECRET_KEY pentru nimic
+# sensibil. Cheia reală de producţie vine din mediul de rulare, nu de aici.
+RUN DEBUG=True python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
