@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 class Category(models.Model):
@@ -66,6 +67,35 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.type} - {self.amount}"
+
+
+class RecurringTransaction(models.Model):
+    INCOME = "income"
+    EXPENSE = "expense"
+    TYPE_CHOICES = [(INCOME, "Income"), (EXPENSE, "Expense")]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="recurring_transactions")
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="recurring_transactions")
+    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name="recurring_transactions")
+    note = models.CharField(max_length=120, blank=True, default="")
+
+    day_of_month = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(28)],
+        help_text="1-28, so it works the same in every month.",
+    )
+    start_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    last_generated = models.DateField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["day_of_month", "-created_at"]
+
+    def __str__(self):
+        return f"{self.user} - {self.get_type_display()} - {self.amount} (day {self.day_of_month})"
 
 
 class BudgetLimit(models.Model):

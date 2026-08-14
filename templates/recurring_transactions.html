@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Recurring · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="padding:22px;position:relative;overflow:hidden;">
+
+  <div style="
+    position:absolute; inset:-160px -220px auto auto;
+    width:520px;height:520px;border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(99,102,241,.45), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(34,197,94,.35), transparent 60%);
+    filter: blur(18px); opacity:.7; pointer-events:none;"></div>
+
+  <div style="position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Recurring</h1>
+        <p class="muted" style="margin:6px 0 0;">Subscriptions and salaries that add themselves automatically every month.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
+        <a class="btn" href="{% url 'recurring_add' %}">+ Add recurring</a>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;display:grid;gap:10px;">
+      {% for item in items %}
+        <div class="glass-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="min-width:0;">
+            <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              {{ item.category.icon|default:"🏷️" }} {{ item.category.name }}
+              {% if not item.is_active %}<span class="muted" style="font-weight:700;">· paused</span>{% endif %}
+            </div>
+            <div class="muted" style="font-size:13px;">
+              {{ item.get_type_display }} · {{ item.wallet.icon|default:"💳" }} {{ item.wallet.name }} · day {{ item.day_of_month }} of every month
+              {% if item.note %} · {{ item.note }}{% endif %}
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+            <div style="font-weight:950;color:{% if item.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};">
+              {% if item.type == 'income' %}+{% else %}-{% endif %}{{ item.amount|floatformat:2|intcomma }} {{ currency }}
+            </div>
+            <a class="btn btn--ghost" href="{% url 'recurring_edit' item.id %}">Edit</a>
+            <a class="btn btn--ghost" href="{% url 'recurring_delete' item.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="glass-card" style="padding:22px;text-align:center;">
+          <div style="font-weight:900;font-size:16px;margin-bottom:8px;">No recurring transactions yet</div>
+          <p class="muted" style="margin:0 0 16px;">Add your salary or a subscription once — it'll be logged automatically every month from then on.</p>
+          <a class="btn" href="{% url 'recurring_add' %}">+ Add your first one</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

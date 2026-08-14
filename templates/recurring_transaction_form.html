@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{% if mode == "edit" %}Edit Recurring{% else %}Add Recurring{% endif %} · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="max-width:620px;margin:auto;padding:22px;">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+    <div>
+      <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">
+        {% if mode == "edit" %}Edit recurring{% else %}Add recurring{% endif %}
+      </h1>
+      <p class="muted" style="margin:6px 0 0;">It'll be added to your transactions automatically on this day, every month.</p>
+    </div>
+    <a class="btn btn--ghost" href="{% url 'recurring_transactions' %}">← Back</a>
+  </div>
+
+  {% if missing_categories %}
+    <div class="glass-card" style="margin-top:14px;padding:22px;text-align:center;">
+      <div style="font-weight:900;font-size:16px;margin-bottom:8px;">You don't have any categories yet</div>
+      <p class="muted" style="margin:0 0 16px;">Create a category first — you'll use it to organize this recurring transaction.</p>
+      <a class="btn" href="{% url 'category_add' %}">+ Create a category</a>
+    </div>
+  {% elif missing_wallets %}
+    <div class="glass-card" style="margin-top:14px;padding:22px;text-align:center;">
+      <div style="font-weight:900;font-size:16px;margin-bottom:8px;">You don't have any wallets yet</div>
+      <p class="muted" style="margin:0 0 16px;">Create a wallet first — you'll use it to track where this money goes.</p>
+      <a class="btn" href="{% url 'wallet_add' %}">+ Create a wallet</a>
+    </div>
+  {% else %}
+    <form method="POST" style="margin-top:14px;display:grid;gap:12px;">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      {% for field in form %}
+        <div style="display:grid;gap:6px;">
+          <label style="font-weight:900;color:rgba(255,255,255,.86);">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+            <div class="muted" style="font-size:13px;">{{ field.help_text }}</div>
+          {% endif %}
+          {% for error in field.errors %}
+            <div style="padding:10px 12px;border-radius:14px;background: rgba(236,72,153,.14);border: 1px solid rgba(236,72,153,.25);font-weight:800;">
+              {{ error }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn" type="submit">Save →</button>
+        {% if mode == "edit" %}
+          <a class="btn btn--ghost" href="{% url 'recurring_delete' item.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+        {% endif %}
+      </div>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

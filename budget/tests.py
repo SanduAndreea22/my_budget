@@ -7,7 +7,8 @@ from django.test import TestCase
 from django.urls import reverse
 from openpyxl import load_workbook
 
-from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction, Wallet
+from .models import ActivityLog, BudgetLimit, Category, RecurringTransaction, SavingsGoal, Transaction, Wallet
+from .views import generate_due_recurring_transactions
 
 User = get_user_model()
 
@@ -532,3 +533,207 @@ class WalletTests(TestCase):
         response = self.client.get(reverse("add_income"))
         self.assertContains(response, "Cash")
         self.assertNotContains(response, "Not mine")
+
+
+class RecurringTransactionGenerationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Subscriptions")
+        self.wallet = Wallet.objects.create(user=self.user, name="Card")
+        self.client.force_login(self.user)
+
+    def test_generates_first_occurrence_in_start_month_when_day_already_passed_today(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=15,
+            category=self.category, wallet=self.wallet,
+            day_of_month=5, start_date=date(2026, 1, 1),
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 1, 10))
+        tx = Transaction.objects.get()
+        self.assertEqual(tx.date, date(2026, 1, 5))
+        self.assertEqual(tx.amount, 15)
+        self.assertEqual(tx.wallet, self.wallet)
+
+    def test_does_not_generate_before_the_day_of_month_arrives(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=15,
+            category=self.category, wallet=self.wallet,
+            day_of_month=20, start_date=date(2026, 1, 1),
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 1, 10))
+        self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_does_not_generate_before_start_date(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=15,
+            category=self.category, wallet=self.wallet,
+            day_of_month=1, start_date=date(2026, 6, 1),
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 3, 1))
+        self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_catches_up_multiple_missed_months(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.INCOME, amount=2000,
+            category=self.category, wallet=self.wallet,
+            day_of_month=1, start_date=date(2026, 1, 1),
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 4, 15))
+        dates = sorted(Transaction.objects.values_list("date", flat=True))
+        self.assertEqual(dates, [date(2026, 1, 1), date(2026, 2, 1), date(2026, 3, 1), date(2026, 4, 1)])
+
+    def test_does_not_duplicate_on_repeated_calls(self):
+        r = RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=15,
+            category=self.category, wallet=self.wallet,
+            day_of_month=5, start_date=date(2026, 1, 1),
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 1, 10))
+        generate_due_recurring_transactions(self.user, today=date(2026, 1, 10))
+        generate_due_recurring_transactions(self.user, today=date(2026, 1, 31))
+        self.assertEqual(Transaction.objects.count(), 1)
+        r.refresh_from_db()
+        self.assertEqual(r.last_generated, date(2026, 1, 5))
+
+    def test_paused_recurring_transaction_does_not_generate(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=15,
+            category=self.category, wallet=self.wallet,
+            day_of_month=5, start_date=date(2026, 1, 1), is_active=False,
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 2, 1))
+        self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_day_28_works_correctly_in_february(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=10,
+            category=self.category, wallet=self.wallet,
+            day_of_month=28, start_date=date(2026, 1, 1),
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 3, 1))
+        dates = sorted(Transaction.objects.values_list("date", flat=True))
+        self.assertEqual(dates, [date(2026, 1, 28), date(2026, 2, 28)])
+
+    def test_generation_is_scoped_to_the_given_user(self):
+        other = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
+        other_category = Category.objects.create(user=other, name="Rent")
+        other_wallet = Wallet.objects.create(user=other, name="Card")
+        RecurringTransaction.objects.create(
+            user=other, type=RecurringTransaction.EXPENSE, amount=999,
+            category=other_category, wallet=other_wallet,
+            day_of_month=1, start_date=date(2026, 1, 1),
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 2, 1))
+        self.assertEqual(Transaction.objects.count(), 0)
+
+    def test_generated_transaction_is_logged(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=15,
+            category=self.category, wallet=self.wallet,
+            day_of_month=5, start_date=date(2026, 1, 1),
+        )
+        generate_due_recurring_transactions(self.user, today=date(2026, 1, 10))
+        entry = ActivityLog.objects.get()
+        self.assertEqual(entry.model_name, "Transaction")
+        self.assertIn("recurring", entry.object_repr)
+
+    def test_dashboard_visit_triggers_generation(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.INCOME, amount=3000,
+            category=self.category, wallet=self.wallet,
+            day_of_month=1, start_date=date(2020, 1, 1),
+        )
+        self.client.get(reverse("dashboard"))
+        self.assertTrue(Transaction.objects.exists())
+
+
+class RecurringTransactionCrudTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.other_user = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Subscriptions")
+        self.wallet = Wallet.objects.create(user=self.user, name="Card")
+        self.client.force_login(self.user)
+
+    def test_add_prompts_for_category_when_none_exist(self):
+        Category.objects.filter(user=self.user).delete()
+        response = self.client.get(reverse("recurring_add"))
+        self.assertContains(response, "You don't have any categories yet")
+
+    def test_add_prompts_for_wallet_when_none_exist(self):
+        Wallet.objects.filter(user=self.user).delete()
+        response = self.client.get(reverse("recurring_add"))
+        self.assertContains(response, "You don't have any wallets yet")
+
+    def test_can_create_a_recurring_transaction(self):
+        response = self.client.post(reverse("recurring_add"), {
+            "type": "expense", "amount": "9.99", "category": self.category.id, "wallet": self.wallet.id,
+            "day_of_month": "15", "start_date": "2026-01-01", "note": "Netflix", "is_active": "on",
+        })
+        self.assertRedirects(response, reverse("recurring_transactions"))
+        r = RecurringTransaction.objects.get()
+        self.assertEqual(r.user, self.user)
+        self.assertEqual(r.day_of_month, 15)
+
+    def test_rejects_zero_amount(self):
+        response = self.client.post(reverse("recurring_add"), {
+            "type": "expense", "amount": "0", "category": self.category.id, "wallet": self.wallet.id,
+            "day_of_month": "15", "start_date": "2026-01-01",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(RecurringTransaction.objects.count(), 0)
+
+    def test_rejects_day_of_month_above_28(self):
+        response = self.client.post(reverse("recurring_add"), {
+            "type": "expense", "amount": "10", "category": self.category.id, "wallet": self.wallet.id,
+            "day_of_month": "31", "start_date": "2026-01-01",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(RecurringTransaction.objects.count(), 0)
+
+    def test_cannot_edit_another_users_recurring_transaction(self):
+        other_category = Category.objects.create(user=self.other_user, name="Rent")
+        other_wallet = Wallet.objects.create(user=self.other_user, name="Card")
+        other_r = RecurringTransaction.objects.create(
+            user=self.other_user, type=RecurringTransaction.EXPENSE, amount=10,
+            category=other_category, wallet=other_wallet, day_of_month=1, start_date=date(2026, 1, 1),
+        )
+        response = self.client.get(reverse("recurring_edit", args=[other_r.id]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_cannot_delete_another_users_recurring_transaction(self):
+        other_category = Category.objects.create(user=self.other_user, name="Rent")
+        other_wallet = Wallet.objects.create(user=self.other_user, name="Card")
+        other_r = RecurringTransaction.objects.create(
+            user=self.other_user, type=RecurringTransaction.EXPENSE, amount=10,
+            category=other_category, wallet=other_wallet, day_of_month=1, start_date=date(2026, 1, 1),
+        )
+        response = self.client.post(reverse("recurring_delete", args=[other_r.id]))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(RecurringTransaction.objects.filter(pk=other_r.pk).exists())
+
+    def test_delete_removes_it(self):
+        r = RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=10,
+            category=self.category, wallet=self.wallet, day_of_month=1, start_date=date(2026, 1, 1),
+        )
+        response = self.client.post(reverse("recurring_delete", args=[r.id]))
+        self.assertRedirects(response, reverse("recurring_transactions"))
+        self.assertFalse(RecurringTransaction.objects.filter(pk=r.pk).exists())
+
+    def test_list_shows_empty_state(self):
+        response = self.client.get(reverse("recurring_transactions"))
+        self.assertContains(response, "No recurring transactions yet")
+
+    def test_management_command_generates_for_all_users(self):
+        from io import StringIO
+        from django.core.management import call_command
+
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.INCOME, amount=3000,
+            category=self.category, wallet=self.wallet, day_of_month=1, start_date=date(2020, 1, 1),
+        )
+        out = StringIO()
+        call_command("generate_recurring_transactions", stdout=out)
+        self.assertTrue(Transaction.objects.exists())
+        self.assertIn("Checked recurring transactions", out.getvalue())

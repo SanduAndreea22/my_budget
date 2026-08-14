@@ -14,8 +14,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from .forms import BudgetLimitForm, CategoryForm, SavingsGoalForm, TransactionForm, WalletForm
-from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction, Wallet
+from .forms import BudgetLimitForm, CategoryForm, RecurringTransactionForm, SavingsGoalForm, TransactionForm, WalletForm
+from .models import ActivityLog, BudgetLimit, Category, RecurringTransaction, SavingsGoal, Transaction, Wallet
 
 
 def _log_activity(user, action, model_name, object_repr):
@@ -35,8 +35,55 @@ def _budget_limit_repr(b, currency):
     return f"{b.category.name} · {b.month:%b %Y} limit · {b.limit} {currency}"
 
 
+def _next_occurrence(d, day_of_month):
+    """The same day_of_month, one month after d. day_of_month is capped at
+    28 (see RecurringTransaction.day_of_month), so this never lands on an
+    invalid date."""
+    month = d.month + 1
+    year = d.year + (month - 1) // 12
+    month = (month - 1) % 12 + 1
+    return date(year, month, day_of_month)
+
+
+def generate_due_recurring_transactions(user, today=None):
+    """Create real Transaction rows for any recurring transaction whose next
+    occurrence has arrived. Catches up on every month missed since the last
+    generated occurrence (e.g. if the user hasn't opened the app in a
+    while), not just the most recent one."""
+    today = today or date.today()
+    currency = user.currency
+
+    for r in RecurringTransaction.objects.filter(user=user, is_active=True, start_date__lte=today):
+        if r.last_generated:
+            candidate = _next_occurrence(r.last_generated, r.day_of_month)
+        else:
+            candidate = date(r.start_date.year, r.start_date.month, r.day_of_month)
+            if candidate < r.start_date:
+                candidate = _next_occurrence(candidate, r.day_of_month)
+
+        while candidate <= today:
+            tx = Transaction.objects.create(
+                user=user,
+                type=r.type,
+                amount=r.amount,
+                date=candidate,
+                note=r.note,
+                category=r.category,
+                wallet=r.wallet,
+            )
+            _log_activity(
+                user, ActivityLog.CREATE, "Transaction",
+                f"{_transaction_repr(tx, currency)} (recurring)",
+            )
+            r.last_generated = candidate
+            r.save(update_fields=["last_generated"])
+            candidate = _next_occurrence(candidate, r.day_of_month)
+
+
 @login_required
 def dashboard_view(request):
+    generate_due_recurring_transactions(request.user)
+
     transactions = Transaction.objects.filter(user=request.user)
 
     totals = transactions.aggregate(
@@ -727,3 +774,71 @@ def activity_log_view(request):
     page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(request, "activity_log.html", {"page_obj": page_obj})
+
+
+def _recurring_repr(r, currency):
+    return f"{r.get_type_display()} · {r.category.name} · {r.amount} {currency} · day {r.day_of_month}"
+
+
+@login_required
+def recurring_list_view(request):
+    items = RecurringTransaction.objects.filter(user=request.user).select_related("category", "wallet")
+    return render(request, "recurring_transactions.html", {"items": items, "currency": request.user.currency})
+
+
+@login_required
+def recurring_add_view(request):
+    categories = Category.objects.filter(user=request.user).order_by("name")
+    wallets = Wallet.objects.filter(user=request.user).order_by("name")
+
+    if not categories.exists() or not wallets.exists():
+        return render(request, "recurring_transaction_form.html", {
+            "mode": "add",
+            "missing_categories": not categories.exists(),
+            "missing_wallets": not wallets.exists(),
+        })
+
+    if request.method == "POST":
+        form = RecurringTransactionForm(request.POST, user=request.user)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.user = request.user
+            obj.save()
+            _log_activity(request.user, ActivityLog.CREATE, "Recurring Transaction", _recurring_repr(obj, request.user.currency))
+            messages.success(request, "Recurring transaction created!")
+            return redirect("recurring_transactions")
+    else:
+        form = RecurringTransactionForm(user=request.user, initial={"start_date": date.today(), "day_of_month": 1})
+
+    return render(request, "recurring_transaction_form.html", {"form": form, "mode": "add"})
+
+
+@login_required
+def recurring_edit_view(request, pk):
+    r = get_object_or_404(RecurringTransaction, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = RecurringTransactionForm(request.POST, instance=r, user=request.user)
+        if form.is_valid():
+            form.save()
+            _log_activity(request.user, ActivityLog.UPDATE, "Recurring Transaction", _recurring_repr(r, request.user.currency))
+            messages.success(request, "Recurring transaction updated.")
+            return redirect("recurring_transactions")
+    else:
+        form = RecurringTransactionForm(instance=r, user=request.user)
+
+    return render(request, "recurring_transaction_form.html", {"form": form, "mode": "edit", "item": r})
+
+
+@login_required
+def recurring_delete_view(request, pk):
+    r = get_object_or_404(RecurringTransaction, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        object_repr = _recurring_repr(r, request.user.currency)
+        r.delete()
+        _log_activity(request.user, ActivityLog.DELETE, "Recurring Transaction", object_repr)
+        messages.success(request, "Recurring transaction deleted.")
+        return redirect("recurring_transactions")
+
+    return render(request, "recurring_transaction_confirm_delete.html", {"item": r})

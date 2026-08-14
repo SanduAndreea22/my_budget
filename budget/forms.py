@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import BudgetLimit, Category, SavingsGoal, Transaction, Wallet
+from .models import BudgetLimit, Category, RecurringTransaction, SavingsGoal, Transaction, Wallet
 
 class CategoryForm(forms.ModelForm):
     icon = forms.CharField(
@@ -139,3 +139,26 @@ class SavingsGoalForm(forms.ModelForm):
         if target_amount <= 0:
             raise ValidationError("Target amount must be greater than zero.")
         return target_amount
+
+
+class RecurringTransactionForm(forms.ModelForm):
+    class Meta:
+        model = RecurringTransaction
+        fields = ["type", "amount", "category", "wallet", "day_of_month", "start_date", "note", "is_active"]
+        widgets = {
+            "start_date": forms.DateInput(attrs={"type": "date"}),
+            "day_of_month": forms.NumberInput(attrs={"min": 1, "max": 28}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            self.fields["category"].queryset = Category.objects.filter(user=user).order_by("name")
+            self.fields["wallet"].queryset = Wallet.objects.filter(user=user).order_by("name")
+
+    def clean_amount(self):
+        amount = self.cleaned_data["amount"]
+        if amount <= 0:
+            raise ValidationError("Amount must be greater than zero.")
+        return amount
