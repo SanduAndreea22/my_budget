@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Activity · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="padding:22px;position:relative;overflow:hidden;">
+
+  <div style="
+    position:absolute; inset:-160px -220px auto auto;
+    width:520px;height:520px;border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(99,102,241,.45), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(236,72,153,.35), transparent 60%);
+    filter: blur(18px); opacity:.7; pointer-events:none;"></div>
+
+  <div style="position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Activity</h1>
+        <p class="muted" style="margin:6px 0 0;">A record of every transaction and budget limit you've created, changed or deleted.</p>
+      </div>
+      <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
+    </div>
+
+    <div style="margin-top:16px;display:grid;gap:10px;">
+      {% for entry in page_obj %}
+        <div class="glass-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+          <div style="min-width:0;">
+            <div style="font-weight:900;">
+              <span style="
+                color:{% if entry.action == 'create' %}#86efac{% elif entry.action == 'delete' %}#fca5a5{% else %}#93c5fd{% endif %};
+              ">{{ entry.get_action_display }}</span>
+              {{ entry.model_name }}
+            </div>
+            <div class="muted" style="font-size:13px;">{{ entry.object_repr }}</div>
+          </div>
+          <div class="muted" style="font-size:13px;white-space:nowrap;">
+            {{ entry.timestamp|date:"M d, Y H:i" }}
+          </div>
+        </div>
+      {% empty %}
+        <div class="muted">No activity yet — actions on your transactions and budget limits will show up here.</div>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;">
+        {% if page_obj.has_previous %}
+          <a class="btn btn--ghost" href="?page={{ page_obj.previous_page_number }}">← Prev</a>
+        {% endif %}
+        <span class="muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a class="btn btn--ghost" href="?page={{ page_obj.next_page_number }}">Next →</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

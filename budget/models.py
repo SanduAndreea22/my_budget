@@ -63,3 +63,40 @@ class BudgetLimit(models.Model):
 
     def __str__(self):
         return f"{self.user} {self.category} {self.month} {self.limit}"
+
+
+class SavingsGoal(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="savings_goals")
+    name = models.CharField(max_length=100)
+    target_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    saved_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    target_date = models.DateField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["target_date", "name"]
+
+    def __str__(self):
+        return f"{self.user} - {self.name}"
+
+
+class ActivityLog(models.Model):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+    ACTION_CHOICES = [(CREATE, "Created"), (UPDATE, "Updated"), (DELETE, "Deleted")]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="activity_log")
+    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
+    model_name = models.CharField(max_length=50)
+    object_repr = models.CharField(max_length=255)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["user", "timestamp"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user} {self.get_action_display()} {self.model_name}: {self.object_repr}"

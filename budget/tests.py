@@ -7,7 +7,7 @@ from django.test import TestCase
 from django.urls import reverse
 from openpyxl import load_workbook
 
-from .models import BudgetLimit, Category, Transaction
+from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction
 
 User = get_user_model()
 
@@ -313,3 +313,124 @@ class BudgetsViewNoLimitStateTests(TestCase):
     def test_shows_explicit_no_limit_message_instead_of_hiding_the_row(self):
         response = self.client.get(reverse("budgets"))
         self.assertContains(response, "No limit set for this category yet.")
+
+
+class SavingsGoalTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.other_user = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
+        self.client.force_login(self.user)
+
+    def test_can_create_a_goal(self):
+        response = self.client.post(reverse("savings_goal_add"), {
+            "name": "Emergency fund",
+            "target_amount": "1000",
+            "target_date": "",
+        })
+        self.assertRedirects(response, reverse("savings_goals"))
+        goal = SavingsGoal.objects.get()
+        self.assertEqual(goal.user, self.user)
+        self.assertEqual(goal.saved_amount, 0)
+
+    def test_rejects_zero_or_negative_target(self):
+        response = self.client.post(reverse("savings_goal_add"), {
+            "name": "Bad goal", "target_amount": "0", "target_date": "",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(SavingsGoal.objects.count(), 0)
+
+    def test_add_funds_increases_saved_amount(self):
+        goal = SavingsGoal.objects.create(user=self.user, name="Trip", target_amount=500)
+        self.client.post(reverse("savings_goal_add_funds", args=[goal.id]), {"amount": "120"})
+        goal.refresh_from_db()
+        self.assertEqual(goal.saved_amount, 120)
+
+        self.client.post(reverse("savings_goal_add_funds", args=[goal.id]), {"amount": "30"})
+        goal.refresh_from_db()
+        self.assertEqual(goal.saved_amount, 150)
+
+    def test_add_funds_rejects_invalid_amount(self):
+        goal = SavingsGoal.objects.create(user=self.user, name="Trip", target_amount=500)
+        self.client.post(reverse("savings_goal_add_funds", args=[goal.id]), {"amount": "not-a-number"})
+        goal.refresh_from_db()
+        self.assertEqual(goal.saved_amount, 0)
+
+    def test_progress_percentage_is_capped_at_100(self):
+        goal = SavingsGoal.objects.create(user=self.user, name="Overfunded", target_amount=100, saved_amount=250)
+        response = self.client.get(reverse("savings_goals"))
+        rows = response.context["rows"]
+        self.assertEqual(rows[0]["pct"], 100)
+        self.assertTrue(rows[0]["is_complete"])
+
+    def test_cannot_add_funds_to_another_users_goal(self):
+        other_goal = SavingsGoal.objects.create(user=self.other_user, name="Not mine", target_amount=500)
+        response = self.client.post(reverse("savings_goal_add_funds", args=[other_goal.id]), {"amount": "100"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_cannot_delete_another_users_goal(self):
+        other_goal = SavingsGoal.objects.create(user=self.other_user, name="Not mine", target_amount=500)
+        response = self.client.post(reverse("savings_goal_delete", args=[other_goal.id]))
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(SavingsGoal.objects.filter(pk=other_goal.pk).exists())
+
+    def test_delete_removes_the_goal(self):
+        goal = SavingsGoal.objects.create(user=self.user, name="Trip", target_amount=500)
+        response = self.client.post(reverse("savings_goal_delete", args=[goal.id]))
+        self.assertRedirects(response, reverse("savings_goals"))
+        self.assertFalse(SavingsGoal.objects.filter(pk=goal.pk).exists())
+
+    def test_goals_list_shows_empty_state(self):
+        response = self.client.get(reverse("savings_goals"))
+        self.assertContains(response, "No savings goals yet")
+
+
+class ActivityLogTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.other_user = User.objects.create_user(username="bob", email="bob@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Food")
+        self.client.force_login(self.user)
+
+    def test_adding_a_transaction_is_logged(self):
+        self.client.post(reverse("add_expense"), {
+            "amount": "50", "date": "2026-01-10", "category": self.category.id, "note": "Groceries",
+        })
+        entry = ActivityLog.objects.get()
+        self.assertEqual(entry.user, self.user)
+        self.assertEqual(entry.action, ActivityLog.CREATE)
+        self.assertEqual(entry.model_name, "Transaction")
+        self.assertIn("Food", entry.object_repr)
+
+    def test_editing_a_transaction_is_logged(self):
+        tx = Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=50, date="2026-01-10", category=self.category)
+        self.client.post(reverse("transaction_edit", args=[tx.id]), {
+            "type": "expense", "amount": "75", "date": "2026-01-10", "category": self.category.id, "note": "",
+        })
+        entry = ActivityLog.objects.filter(action=ActivityLog.UPDATE).get()
+        self.assertEqual(entry.model_name, "Transaction")
+
+    def test_deleting_a_transaction_is_logged(self):
+        tx = Transaction.objects.create(user=self.user, type=Transaction.EXPENSE, amount=50, date="2026-01-10", category=self.category)
+        self.client.post(reverse("transaction_delete", args=[tx.id]))
+        entry = ActivityLog.objects.filter(action=ActivityLog.DELETE).get()
+        self.assertEqual(entry.model_name, "Transaction")
+
+    def test_budget_limit_changes_are_logged(self):
+        self.client.post(reverse("budget_add"), {
+            "category": self.category.id, "month": "2026-01", "limit": "300",
+        })
+        entry = ActivityLog.objects.get()
+        self.assertEqual(entry.model_name, "Budget Limit")
+        self.assertEqual(entry.action, ActivityLog.CREATE)
+
+    def test_activity_log_only_shows_own_entries(self):
+        ActivityLog.objects.create(user=self.other_user, action=ActivityLog.CREATE, model_name="Transaction", object_repr="Not mine")
+        ActivityLog.objects.create(user=self.user, action=ActivityLog.CREATE, model_name="Transaction", object_repr="Mine")
+        response = self.client.get(reverse("activity_log"))
+        self.assertContains(response, "Mine")
+        self.assertNotContains(response, "Not mine")
+
+    def test_activity_log_page_requires_login(self):
+        self.client.logout()
+        response = self.client.get(reverse("activity_log"))
+        self.assertEqual(response.status_code, 302)

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Savings Goals · MyBudget{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="padding:22px;position:relative;overflow:hidden;">
+
+  <div style="
+    position:absolute; inset:-160px -220px auto auto;
+    width:520px;height:520px;border-radius:999px;
+    background: radial-gradient(circle at 30% 30%, rgba(34,197,94,.45), transparent 60%),
+                radial-gradient(circle at 70% 70%, rgba(34,211,238,.40), transparent 60%);
+    filter: blur(18px); opacity:.75; pointer-events:none;"></div>
+
+  <div style="position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Savings Goals</h1>
+        <p class="muted" style="margin:6px 0 0;">Set a target and track how close you are.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
+        <a class="btn" href="{% url 'savings_goal_add' %}">+ Add goal</a>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;display:grid;gap:10px;">
+      {% for r in rows %}
+        <div class="glass-card" style="padding:14px;display:grid;gap:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+            <div style="min-width:0;">
+              <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ r.goal.name }}{% if r.is_complete %} 🎉{% endif %}
+              </div>
+              <div class="muted" style="font-size:13px;">
+                {{ r.goal.saved_amount|floatformat:2|intcomma }} / {{ r.goal.target_amount|floatformat:2|intcomma }} {{ currency }}
+                {% if r.goal.target_date %} · Target: {{ r.goal.target_date|date:"M Y" }}{% endif %}
+              </div>
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <a class="btn btn--ghost" href="{% url 'savings_goal_edit' r.goal.id %}">Edit</a>
+              <a class="btn btn--ghost" href="{% url 'savings_goal_delete' r.goal.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+            </div>
+          </div>
+
+          <div style="height:14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);overflow:hidden;">
+            <div style="
+              height:100%;
+              width: {{ r.pct }}%;
+              background: linear-gradient(90deg, rgba(34,197,94,.95), rgba(34,211,238,.75), rgba(99,102,241,.65));
+              box-shadow: 0 12px 30px rgba(0,0,0,.25);
+            "></div>
+          </div>
+
+          <div class="muted" style="font-size:13px;display:flex;justify-content:space-between;gap:10px;">
+            <span>{{ r.pct }}%</span>
+            {% if r.is_complete %}
+              <span style="color:#86efac;font-weight:900;">Goal reached!</span>
+            {% else %}
+              <span>{{ r.remaining|floatformat:2|intcomma }} {{ currency }} to go</span>
+            {% endif %}
+          </div>
+
+          <form method="POST" action="{% url 'savings_goal_add_funds' r.goal.id %}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+            {% csrf_token %}
+            <input type="number" step="0.01" name="amount" placeholder="Add funds (e.g. 100)" style="max-width:220px;">
+            <button class="btn btn--ghost" type="submit">+ Add funds</button>
+          </form>
+        </div>
+      {% empty %}
+        <div class="glass-card" style="padding:22px;text-align:center;">
+          <div style="font-weight:900;font-size:16px;margin-bottom:8px;">No savings goals yet</div>
+          <p class="muted" style="margin:0 0 16px;">Set a target — e.g. an emergency fund or a trip — and track your progress here.</p>
+          <a class="btn" href="{% url 'savings_goal_add' %}">+ Create your first goal</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

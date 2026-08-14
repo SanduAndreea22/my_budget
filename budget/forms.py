@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import Transaction, Category
+from .models import BudgetLimit, Category, SavingsGoal, Transaction
 
 class CategoryForm(forms.ModelForm):
     icon = forms.CharField(
@@ -63,8 +63,6 @@ class TransactionForm(forms.ModelForm):
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(user=user).order_by("name")
 
-from .models import BudgetLimit
-
 class BudgetLimitForm(forms.ModelForm):
     month = forms.DateField(
         input_formats=["%Y-%m"],
@@ -80,3 +78,19 @@ class BudgetLimitForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(user=user).order_by("name")
+
+
+class SavingsGoalForm(forms.ModelForm):
+    class Meta:
+        model = SavingsGoal
+        fields = ["name", "target_amount", "target_date"]
+        widgets = {
+            "name": forms.TextInput(attrs={"placeholder": "e.g. Emergency fund, New laptop"}),
+            "target_date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def clean_target_amount(self):
+        target_amount = self.cleaned_data["target_amount"]
+        if target_amount <= 0:
+            raise ValidationError("Target amount must be greater than zero.")
+        return target_amount

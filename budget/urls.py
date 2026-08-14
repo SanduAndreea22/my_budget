@@ -19,5 +19,11 @@ urlpatterns = [
     path("budgets/<int:pk>/delete/", views.budget_delete_view, name="budget_delete"),
     path("charts/", views.charts_view, name="charts"),
     path("compare/", views.compare_view, name="compare"),
+    path("goals/", views.savings_goals_view, name="savings_goals"),
+    path("goals/add/", views.savings_goal_add_view, name="savings_goal_add"),
+    path("goals/<int:pk>/edit/", views.savings_goal_edit_view, name="savings_goal_edit"),
+    path("goals/<int:pk>/add-funds/", views.savings_goal_add_funds_view, name="savings_goal_add_funds"),
+    path("goals/<int:pk>/delete/", views.savings_goal_delete_view, name="savings_goal_delete"),
+    path("activity/", views.activity_log_view, name="activity_log"),
 
 ]

@@ -14,8 +14,25 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
 
-from .forms import BudgetLimitForm, CategoryForm, TransactionForm
-from .models import BudgetLimit, Category, Transaction
+from .forms import BudgetLimitForm, CategoryForm, SavingsGoalForm, TransactionForm
+from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction
+
+
+def _log_activity(user, action, model_name, object_repr):
+    ActivityLog.objects.create(
+        user=user,
+        action=action,
+        model_name=model_name,
+        object_repr=object_repr[:255],
+    )
+
+
+def _transaction_repr(tx, currency):
+    return f"{tx.get_type_display()} · {tx.category.name} · {tx.amount} {currency}"
+
+
+def _budget_limit_repr(b, currency):
+    return f"{b.category.name} · {b.month:%b %Y} limit · {b.limit} {currency}"
 
 
 @login_required
@@ -90,7 +107,7 @@ def _add_transaction_view(request, tx_type, template_name):
                 },
             })
 
-        Transaction.objects.create(
+        tx = Transaction.objects.create(
             user=request.user,
             type=tx_type,
             amount=amount,
@@ -98,6 +115,7 @@ def _add_transaction_view(request, tx_type, template_name):
             note=note,
             category=category,
         )
+        _log_activity(request.user, ActivityLog.CREATE, "Transaction", _transaction_repr(tx, request.user.currency))
         messages.success(request, "Transaction saved.")
         return redirect("dashboard")
 
@@ -274,6 +292,7 @@ def transaction_edit_view(request, pk):
         form = TransactionForm(request.POST, instance=tx, user=request.user)
         if form.is_valid():
             form.save()
+            _log_activity(request.user, ActivityLog.UPDATE, "Transaction", _transaction_repr(tx, request.user.currency))
             messages.success(request, "Transaction updated.")
             return redirect("transactions")
     else:
@@ -287,7 +306,9 @@ def transaction_delete_view(request, pk):
     tx = get_object_or_404(Transaction, pk=pk, user=request.user)
 
     if request.method == "POST":
+        object_repr = _transaction_repr(tx, request.user.currency)
         tx.delete()
+        _log_activity(request.user, ActivityLog.DELETE, "Transaction", object_repr)
         messages.success(request, "Transaction deleted.")
         return redirect("transactions")
 
@@ -378,6 +399,7 @@ def budget_add_view(request):
             obj.user = request.user
             obj.month = _month_start(obj.month)  # normalize
             obj.save()
+            _log_activity(request.user, ActivityLog.CREATE, "Budget Limit", _budget_limit_repr(obj, request.user.currency))
             messages.success(request, "Budget limit saved.")
             return redirect("budgets")
     else:
@@ -396,6 +418,7 @@ def budget_edit_view(request, pk):
             obj = form.save(commit=False)
             obj.month = _month_start(obj.month)
             obj.save()
+            _log_activity(request.user, ActivityLog.UPDATE, "Budget Limit", _budget_limit_repr(obj, request.user.currency))
             messages.success(request, "Budget limit updated.")
             return redirect("budgets")
     else:
@@ -409,7 +432,9 @@ def budget_delete_view(request, pk):
     b = get_object_or_404(BudgetLimit, pk=pk, user=request.user)
 
     if request.method == "POST":
+        object_repr = _budget_limit_repr(b, request.user.currency)
         b.delete()
+        _log_activity(request.user, ActivityLog.DELETE, "Budget Limit", object_repr)
         messages.success(request, "Budget limit deleted.")
         return redirect("budgets")
 
@@ -554,3 +579,101 @@ def compare_view(request):
         "year_total_balance": year_total_income - year_total_expense,
         "year_rows": year_rows,
     })
+
+
+def _savings_goal_repr(goal, currency):
+    return f"{goal.name} · target {goal.target_amount} {currency}"
+
+
+@login_required
+def savings_goals_view(request):
+    goals = SavingsGoal.objects.filter(user=request.user)
+
+    rows = []
+    for g in goals:
+        pct = int(min((g.saved_amount / g.target_amount) * 100, 100)) if g.target_amount else 0
+        rows.append({
+            "goal": g,
+            "pct": pct,
+            "remaining": max(g.target_amount - g.saved_amount, Decimal("0")),
+            "is_complete": g.saved_amount >= g.target_amount,
+        })
+
+    return render(request, "savings_goals.html", {"rows": rows, "currency": request.user.currency})
+
+
+@login_required
+def savings_goal_add_view(request):
+    if request.method == "POST":
+        form = SavingsGoalForm(request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.user = request.user
+            obj.save()
+            _log_activity(request.user, ActivityLog.CREATE, "Savings Goal", _savings_goal_repr(obj, request.user.currency))
+            messages.success(request, "Savings goal created!")
+            return redirect("savings_goals")
+    else:
+        form = SavingsGoalForm()
+
+    return render(request, "savings_goal_form.html", {"form": form, "mode": "add"})
+
+
+@login_required
+def savings_goal_edit_view(request, pk):
+    goal = get_object_or_404(SavingsGoal, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = SavingsGoalForm(request.POST, instance=goal)
+        if form.is_valid():
+            form.save()
+            _log_activity(request.user, ActivityLog.UPDATE, "Savings Goal", _savings_goal_repr(goal, request.user.currency))
+            messages.success(request, "Savings goal updated.")
+            return redirect("savings_goals")
+    else:
+        form = SavingsGoalForm(instance=goal)
+
+    return render(request, "savings_goal_form.html", {"form": form, "mode": "edit", "goal": goal})
+
+
+@login_required
+def savings_goal_add_funds_view(request, pk):
+    goal = get_object_or_404(SavingsGoal, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        amount = _parse_amount(request.POST.get("amount"))
+        if amount is None:
+            messages.error(request, "Please enter a valid amount greater than zero.")
+        else:
+            goal.saved_amount = goal.saved_amount + amount
+            goal.save()
+            _log_activity(
+                request.user, ActivityLog.UPDATE, "Savings Goal",
+                f"{goal.name} · added {amount} {request.user.currency}",
+            )
+            messages.success(request, "Funds added to your goal.")
+
+    return redirect("savings_goals")
+
+
+@login_required
+def savings_goal_delete_view(request, pk):
+    goal = get_object_or_404(SavingsGoal, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        object_repr = _savings_goal_repr(goal, request.user.currency)
+        goal.delete()
+        _log_activity(request.user, ActivityLog.DELETE, "Savings Goal", object_repr)
+        messages.success(request, "Savings goal deleted.")
+        return redirect("savings_goals")
+
+    return render(request, "savings_goal_confirm_delete.html", {"goal": goal})
+
+
+@login_required
+def activity_log_view(request):
+    logs = ActivityLog.objects.filter(user=request.user)
+    paginator = Paginator(logs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    return render(request, "activity_log.html", {"page_obj": page_obj})
