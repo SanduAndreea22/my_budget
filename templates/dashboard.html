@@ -25,19 +25,21 @@
     </p>
 
     <!-- SUMMARY -->
-    <div style="margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+    <div class="totals-grid" style="margin-top:18px;">
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Total Income</div>
-        <div style="font-size:26px;font-weight:900;">
-          {{ total_income|floatformat:2|intcomma }} {{ currency }}
+        <div style="font-size:26px;font-weight:900;"
+             data-countup="{{ total_income }}" data-countup-suffix=" {{ currency }}">
+          0.00 {{ currency }}
         </div>
       </div>
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Total Expense</div>
-        <div style="font-size:26px;font-weight:900;">
-          {{ total_expense|floatformat:2|intcomma }} {{ currency }}
+        <div style="font-size:26px;font-weight:900;"
+             data-countup="{{ total_expense }}" data-countup-suffix=" {{ currency }}">
+          0.00 {{ currency }}
         </div>
       </div>
 
@@ -47,29 +49,36 @@
           font-size:26px;
           font-weight:900;
           color:{% if balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};
-        ">
-          {{ balance|floatformat:2|intcomma }} {{ currency }}
+        "
+             data-countup="{{ balance }}" data-countup-suffix=" {{ currency }}">
+          0.00 {{ currency }}
         </div>
       </div>
 
     </div>
 
     <!-- ACTIONS -->
-    <div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap;">
+    <div class="dash-actions">
       <a class="btn" href="{% url 'add_income' %}">+ Add income</a>
       <a class="btn btn--ghost" href="{% url 'add_expense' %}">- Add expense</a>
-      <a class="btn btn--ghost" href="{% url 'categories' %}">Categories</a>
-      <a class="btn btn--ghost" href="{% url 'wallets' %}">💳 Wallets</a>
-      <a class="btn btn--ghost" href="{% url 'transactions' %}">Transactions</a>
-      <a class="btn btn--ghost" href="{% url 'recurring_transactions' %}">🔁 Recurring</a>
-      <a class="btn btn--ghost" href="{% url 'budgets' %}">Budgets</a>
-      <a class="btn btn--ghost" href="{% url 'charts' %}">📊 Charts</a>
-      <a class="btn btn--ghost" href="{% url 'compare' %}">📅 Compare</a>
-      <a class="btn btn--ghost" href="{% url 'savings_goals' %}">🎯 Goals</a>
-      <a class="btn btn--ghost" href="{% url 'activity_log' %}">🕓 Activity</a>
-      <a class="btn btn--ghost" href="{% url 'accounts:profile' username=user.username %}">
-        Profile
-      </a>
+    </div>
+
+    <div class="dash-action-group">
+      <span class="dash-action-group__label">Manage</span>
+      <a class="btn btn--ghost btn--sm" href="{% url 'categories' %}">Categories</a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'wallets' %}">💳 Wallets</a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'recurring_transactions' %}">🔁 Recurring</a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'budgets' %}">Budgets</a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'savings_goals' %}">🎯 Goals</a>
+    </div>
+
+    <div class="dash-action-group">
+      <span class="dash-action-group__label">Insights</span>
+      <a class="btn btn--ghost btn--sm" href="{% url 'transactions' %}">Transactions</a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'charts' %}">📊 Charts</a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'compare' %}">📅 Compare</a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'activity_log' %}">🕓 Activity</a>
+      <a class="btn btn--ghost btn--sm" href="{% url 'accounts:profile' username=user.username %}">👤 Profile</a>
     </div>
 
     <!-- RECENT TRANSACTIONS -->
@@ -88,7 +97,8 @@
             gap:12px;
           ">
             <div>
-              <div style="font-weight:900;">
+              <div style="font-weight:900;display:flex;align-items:center;gap:8px;">
+                <span style="width:10px;height:10px;border-radius:999px;background:{{ t.category.color|default:'rgba(255,255,255,.3)' }};flex-shrink:0;"></span>
                 {{ t.category.name }}
               </div>
               <div class="muted" style="font-size:13px;">
@@ -114,14 +124,6 @@
 
   </div>
 </section>
-
-<style>
-@media (max-width:900px){
-  div[style*="grid-template-columns:repeat(3"]{
-    grid-template-columns:1fr !important;
-  }
-}
-</style>
 {% endblock %}
 
 

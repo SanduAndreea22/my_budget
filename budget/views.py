@@ -5,6 +5,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import models
 from django.db.models import Sum
@@ -13,9 +14,18 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import BudgetLimitForm, CategoryForm, RecurringTransactionForm, SavingsGoalForm, TransactionForm, WalletForm
 from .models import ActivityLog, BudgetLimit, Category, RecurringTransaction, SavingsGoal, Transaction, Wallet
+
+
+def _safe_next_url(request, next_url):
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return next_url
+    return None
 
 
 def _log_activity(user, action, model_name, object_repr):
@@ -145,22 +155,24 @@ def _add_transaction_view(request, tx_type, template_name):
         if wallet is None:
             errors.append("Please choose one of your wallets.")
 
+        invalid_form_response = lambda: render(request, template_name, {
+            "categories": categories,
+            "wallets": wallets,
+            "values": {
+                "amount": request.POST.get("amount", ""),
+                "date": request.POST.get("date", ""),
+                "category": request.POST.get("category", ""),
+                "wallet": request.POST.get("wallet", ""),
+                "note": note,
+            },
+        })
+
         if errors:
             for error in errors:
                 messages.error(request, error)
-            return render(request, template_name, {
-                "categories": categories,
-                "wallets": wallets,
-                "values": {
-                    "amount": request.POST.get("amount", ""),
-                    "date": request.POST.get("date", ""),
-                    "category": request.POST.get("category", ""),
-                    "wallet": request.POST.get("wallet", ""),
-                    "note": note,
-                },
-            })
+            return invalid_form_response()
 
-        tx = Transaction.objects.create(
+        tx = Transaction(
             user=request.user,
             type=tx_type,
             amount=amount,
@@ -169,6 +181,14 @@ def _add_transaction_view(request, tx_type, template_name):
             category=category,
             wallet=wallet,
         )
+        try:
+            tx.full_clean()
+        except ValidationError as exc:
+            for error in exc.messages:
+                messages.error(request, error)
+            return invalid_form_response()
+
+        tx.save()
         _log_activity(request.user, ActivityLog.CREATE, "Transaction", _transaction_repr(tx, request.user.currency))
         messages.success(request, "Transaction saved.")
         return redirect("dashboard")
@@ -194,16 +214,18 @@ def categories_view(request):
 
 @login_required
 def category_add_view(request):
+    next_url = _safe_next_url(request, request.POST.get("next") or request.GET.get("next"))
+
     if request.method == "POST":
         form = CategoryForm(request.POST, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Category created!")
-            return redirect("categories")
+            return redirect(next_url) if next_url else redirect("categories")
     else:
         form = CategoryForm(user=request.user)
 
-    return render(request, "category_add.html", {"form": form})
+    return render(request, "category_add.html", {"form": form, "next": next_url})
 
 
 @login_required
@@ -229,16 +251,18 @@ def wallets_view(request):
 
 @login_required
 def wallet_add_view(request):
+    next_url = _safe_next_url(request, request.POST.get("next") or request.GET.get("next"))
+
     if request.method == "POST":
         form = WalletForm(request.POST, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Wallet created!")
-            return redirect("wallets")
+            return redirect(next_url) if next_url else redirect("wallets")
     else:
         form = WalletForm(user=request.user)
 
-    return render(request, "wallet_add.html", {"form": form})
+    return render(request, "wallet_add.html", {"form": form, "next": next_url})
 
 
 def _filtered_transactions(request):
@@ -298,6 +322,21 @@ def transactions_list_view(request):
     return render(request, "transactions_list.html", context)
 
 
+_FORMULA_TRIGGER_CHARS = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _spreadsheet_safe(value):
+    """Neutralize CSV/Excel formula injection: a category/wallet name or
+    note starting with =, +, -, @ (or a tab/CR) would otherwise be
+    interpreted as a formula by Excel/LibreOffice when the export is
+    opened, letting user-controlled text run arbitrary spreadsheet
+    formulas (including DDE) on whoever downloads the file."""
+    text = "" if value is None else str(value)
+    if text.startswith(_FORMULA_TRIGGER_CHARS):
+        return "'" + text
+    return text
+
+
 @login_required
 def export_transactions_csv_view(request):
     qs, _ = _filtered_transactions(request)
@@ -312,11 +351,11 @@ def export_transactions_csv_view(request):
         writer.writerow([
             t.date.isoformat(),
             t.get_type_display(),
-            t.category.name,
-            t.wallet.name,
+            _spreadsheet_safe(t.category.name),
+            _spreadsheet_safe(t.wallet.name),
             t.amount,
             request.user.currency,
-            t.note,
+            _spreadsheet_safe(t.note),
         ])
     return response
 
@@ -337,11 +376,11 @@ def export_transactions_xlsx_view(request):
         ws.append([
             t.date.isoformat(),
             t.get_type_display(),
-            t.category.name,
-            t.wallet.name,
+            _spreadsheet_safe(t.category.name),
+            _spreadsheet_safe(t.wallet.name),
             float(t.amount),
             request.user.currency,
-            t.note,
+            _spreadsheet_safe(t.note),
         ])
     for i, width in enumerate([12, 10, 24, 18, 12, 10, 36], start=1):
         ws.column_dimensions[get_column_letter(i)].width = width

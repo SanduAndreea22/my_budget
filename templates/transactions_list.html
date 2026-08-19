@@ -36,7 +36,7 @@
     </div>
 
     <!-- Totals -->
-    <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+    <div class="totals-grid" style="margin-top:16px;">
       <div class="glass-card" style="padding:14px;">
         <div class="muted">Income</div>
         <div style="font-weight:950;font-size:22px;">
@@ -61,7 +61,7 @@
 
     <!-- Filters -->
     <form method="GET" class="glass-card" style="margin-top:14px;padding:14px;display:grid;gap:12px;">
-      <div style="display:grid;grid-template-columns: 1fr 1fr 1fr 1fr 1fr;gap:12px;">
+      <div class="filter-grid">
         <div style="display:grid;gap:6px;">
           <label style="font-weight:900;color:rgba(255,255,255,.86);">Type</label>
           <select name="type">
@@ -110,12 +110,6 @@
         <button class="btn" type="submit">Apply filters →</button>
         <a class="btn btn--ghost" href="{% url 'transactions' %}">Reset</a>
       </div>
-
-      <style>
-        @media(max-width:980px){
-          form .glass-card div[style*="grid-template-columns"]{grid-template-columns:1fr !important;}
-        }
-      </style>
     </form>
 
     <!-- List -->
@@ -123,7 +117,8 @@
       {% for t in transactions %}
         <div class="glass-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div style="min-width:0;">
-            <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px;">
+              <span style="width:10px;height:10px;border-radius:999px;background:{{ t.category.color|default:'rgba(255,255,255,.3)' }};flex-shrink:0;"></span>
               {{ t.category.icon|default:"🏷️" }} {{ t.category.name }}
               <span class="muted" style="font-weight:700;">· {{ t.wallet.icon|default:"💳" }} {{ t.wallet.name }}</span>
             </div>
@@ -162,11 +157,5 @@
     {% endif %}
 
   </div>
-
-  <style>
-    @media(max-width:900px){
-      div[style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr !important;}
-    }
-  </style>
 </section>
 {% endblock %}

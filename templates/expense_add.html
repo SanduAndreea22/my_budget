@@ -106,7 +106,7 @@
         <p class="muted" style="margin:0 0 16px;">
           Create a category first (e.g. Salary, Food, Rent) — you'll use it to organize this and future transactions.
         </p>
-        <a class="btn" href="{% url 'category_add' %}">+ Create a category</a>
+        <a class="btn" href="{% url 'category_add' %}?next={{ request.path|urlencode }}">+ Create a category</a>
       </div>
     {% else %}
       <div class="glass-card" style="margin-top:14px;padding:22px;text-align:center;">
@@ -114,7 +114,7 @@
         <p class="muted" style="margin:0 0 16px;">
           Create a wallet first (e.g. Card, Cash, Savings) — you'll use it to track where this money is.
         </p>
-        <a class="btn" href="{% url 'wallet_add' %}">+ Create a wallet</a>
+        <a class="btn" href="{% url 'wallet_add' %}?next={{ request.path|urlencode }}">+ Create a wallet</a>
       </div>
     {% endif %}
   </div>

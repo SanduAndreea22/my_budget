@@ -5,6 +5,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{% block title %}MyBudget{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 
@@ -43,10 +44,9 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Libs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="{% static 'js/animations.js' %}"></script>
 
-  <!-- Page specific scripts -->
+  <!-- Page specific scripts (pages that use Chart.js load it themselves) -->
   {% block scripts %}{% endblock %}
 </body>
 </html>

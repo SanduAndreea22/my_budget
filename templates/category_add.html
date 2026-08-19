@@ -8,6 +8,7 @@
 
   <form method="POST" style="display:grid;gap:12px;">
     {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
     {{ form.non_field_errors }}
 
     {% for field in form %}
@@ -24,7 +25,11 @@
 
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
       <button class="btn" type="submit">Create →</button>
-      <a class="btn btn--ghost" href="{% url 'categories' %}">Cancel</a>
+      {% if next %}
+        <a class="btn btn--ghost" href="{{ next }}">Cancel</a>
+      {% else %}
+        <a class="btn btn--ghost" href="{% url 'categories' %}">Cancel</a>
+      {% endif %}
     </div>
   </form>
 </section>

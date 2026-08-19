@@ -16,22 +16,7 @@
 
   <div style="position:relative;">
     <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Welcome back</h1>
-    <p class="muted" style="margin:0 0 16px;">Login to continue to your dashboard.</p>
-
-    {% if messages %}
-      <div style="display:grid;gap:10px;margin-bottom:14px;">
-        {% for message in messages %}
-          <div style="
-            padding:12px 14px;border-radius:16px;
-            background: rgba(255,255,255,.06);
-            border: 1px solid rgba(255,255,255,.14);
-            box-shadow: 0 18px 45px rgba(0,0,0,.25);
-          ">
-            <div style="font-weight:900;">{{ message }}</div>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
+    <p class="muted" style="margin:0 0 16px;">Log in to continue to your dashboard.</p>
 
     <form method="POST" novalidate style="display:grid;gap:12px;">
       {% csrf_token %}
@@ -70,7 +55,7 @@
       </div>
 
       <div class="muted" style="margin-top:8px;font-size:13px;">
-        Tip: use your email/username and password. Your data stays private.
+        Tip: log in with your username or email. Your data stays private, always.
       </div>
     </form>
   </div>

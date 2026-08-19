@@ -1,6 +1,8 @@
 Hi {{ user.username }},
 
-Please click on the link below to confirm your account:
+Welcome to MyBudget! Your account is ready — you can log in right away.
+
+If you'd like to verify this email address, you can also click the link below:
 
 http://{{ domain }}{% url 'accounts:activate' uidb64=uid token=token %}
 

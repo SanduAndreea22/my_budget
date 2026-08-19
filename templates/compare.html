@@ -37,7 +37,7 @@
     </form>
 
     <!-- Year totals -->
-    <div style="margin-top:14px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+    <div class="totals-grid" style="margin-top:14px;">
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Income ({{ selected_year }})</div>
         <div style="font-size:26px;font-weight:900;">
@@ -74,17 +74,17 @@
 
     <!-- Year over year table -->
     <div class="glass-card" style="margin-top:14px;padding:16px;">
-      <h2 style="margin:0 0 12px;font-size:20px;">Year over year</h2>
+      <h2 style="margin:0 0 12px;font-size:20px;">Yearly comparison</h2>
       <div style="display:grid;gap:10px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;font-weight:900;" class="muted">
+        <div class="compare-row compare-header muted">
           <span>Year</span><span>Income</span><span>Expense</span><span>Balance</span>
         </div>
         {% for r in year_rows %}
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.10);">
-            <span style="font-weight:900;">{{ r.year }}</span>
-            <span>{{ r.income|floatformat:2|intcomma }} {{ currency }}</span>
-            <span>{{ r.expense|floatformat:2|intcomma }} {{ currency }}</span>
-            <span style="font-weight:900;color:{% if r.balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};">
+          <div class="compare-row" style="padding:10px 0;border-top:1px solid rgba(255,255,255,.10);">
+            <span data-label="Year" style="font-weight:900;">{{ r.year }}</span>
+            <span data-label="Income">{{ r.income|floatformat:2|intcomma }} {{ currency }}</span>
+            <span data-label="Expense">{{ r.expense|floatformat:2|intcomma }} {{ currency }}</span>
+            <span data-label="Balance" style="font-weight:900;color:{% if r.balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};">
               {{ r.balance|floatformat:2|intcomma }} {{ currency }}
             </span>
           </div>
@@ -94,13 +94,6 @@
       </div>
     </div>
   </div>
-
-  <style>
-    @media (max-width:900px){
-      div[style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr !important;}
-      div[style*="grid-template-columns:1fr 1fr 1fr 1fr"]{grid-template-columns:1fr 1fr !important;}
-    }
-  </style>
 </section>
 
 {{ month_rows|json_script:"month-rows-data" }}

@@ -29,7 +29,7 @@ def register_view(request):
 
 
             current_site = get_current_site(request)
-            mail_subject = 'Activate your CashOnly eCommerce account'
+            mail_subject = 'Welcome to MyBudget'
 
 
             html_message = render_to_string('accounts/activation_email.html', {
@@ -42,6 +42,12 @@ def register_view(request):
 
             def send_email_task():
                 try:
+                    # NOTE: "onboarding@resend.dev" is Resend's shared sandbox
+                    # sender — it only reaches the account's own verified
+                    # address, not real users. Sending real activation email
+                    # in production needs a verified sending domain + a real
+                    # RESEND_API_KEY, which is a Resend account/config change,
+                    # not something fixable from this codebase alone.
                     resend.Emails.send({
                         "from": "onboarding@resend.dev",
                         "to": user.email,
@@ -55,8 +61,9 @@ def register_view(request):
 
             threading.Thread(target=send_email_task).start()
 
-            messages.success(request, 'Account created! You can log in now.')
-            return redirect('accounts:login')
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(request, f'Welcome, {user.username}! Your account is ready.')
+            return redirect('dashboard')
     else:
         form = UserRegistrationForm()
     return render(request, 'accounts/register.html', {'form': form})
