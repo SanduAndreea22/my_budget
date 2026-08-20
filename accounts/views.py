@@ -4,6 +4,7 @@ import threading
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -87,6 +88,7 @@ def login_view(request):
         form = UserLoginForm()
     return render(request, 'accounts/login.html', {'form': form})
 
+@require_POST
 def logout_view(request):
     logout(request)
     messages.success(request, 'You have successfully logged out!')

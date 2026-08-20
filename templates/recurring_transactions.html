@@ -42,8 +42,10 @@
             <div style="font-weight:950;color:{% if item.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};">
               {% if item.type == 'income' %}+{% else %}-{% endif %}{{ item.amount|floatformat:2|intcomma }} {{ currency }}
             </div>
-            <a class="btn btn--ghost" href="{% url 'recurring_edit' item.id %}">Edit</a>
-            <a class="btn btn--ghost" href="{% url 'recurring_delete' item.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+            <div class="row-actions">
+              <a class="btn btn--ghost" href="{% url 'recurring_edit' item.id %}">Edit</a>
+              <a class="btn btn--ghost" href="{% url 'recurring_delete' item.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+            </div>
           </div>
         </div>
       {% empty %}

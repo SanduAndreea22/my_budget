@@ -16,32 +16,39 @@
 
   <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:12px;">
     {% for c in categories %}
-      <div class="glass-card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
-          <div style="
-            width:40px;height:40px;border-radius:16px;
-            background: rgba(255,255,255,.08);
-            border:1px solid rgba(255,255,255,.14);
-            display:flex;align-items:center;justify-content:center;
-            font-size:18px;
-          ">{{ c.icon|default:"🏷️" }}</div>
+      <div class="glass-card" style="padding:14px;display:grid;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+            <div style="
+              width:40px;height:40px;border-radius:16px;
+              background: rgba(255,255,255,.08);
+              border:1px solid rgba(255,255,255,.14);
+              display:flex;align-items:center;justify-content:center;
+              font-size:18px;
+            ">{{ c.icon|default:"🏷️" }}</div>
 
-          <div style="min-width:0;">
-            <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              {{ c.name }}
-            </div>
-            <div class="muted" style="font-size:12px;">
-              {{ c.color|default:"" }}
+            <div style="min-width:0;">
+              <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ c.name }}
+              </div>
+              <div class="muted" style="font-size:12px;">
+                {{ c.color|default:"" }}
+              </div>
             </div>
           </div>
+
+          <div style="
+            width:14px;height:14px;border-radius:999px;flex-shrink:0;
+            background: {{ c.color|default:"rgba(255,255,255,.35)" }};
+            border:1px solid rgba(255,255,255,.18);
+            box-shadow: 0 12px 30px rgba(0,0,0,.25);
+          "></div>
         </div>
 
-        <div style="
-          width:14px;height:14px;border-radius:999px;
-          background: {{ c.color|default:"rgba(255,255,255,.35)" }};
-          border:1px solid rgba(255,255,255,.18);
-          box-shadow: 0 12px 30px rgba(0,0,0,.25);
-        "></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a class="btn btn--ghost btn--sm" href="{% url 'category_edit' c.id %}">Edit</a>
+          <a class="btn btn--ghost btn--sm" href="{% url 'category_delete' c.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+        </div>
       </div>
     {% empty %}
       <div class="muted" style="grid-column:1/-1;padding:14px;">

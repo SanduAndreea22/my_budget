@@ -46,7 +46,7 @@
         <!-- Amount -->
         <div style="display:grid;gap:6px;">
           <label style="font-weight:900;color:rgba(255,255,255,.86);">Amount ({{ user.currency }})</label>
-          <input type="number" step="0.01" name="amount" placeholder="e.g. 125.50" value="{{ values.amount }}" required>
+          <input type="number" step="0.01" min="0.01" name="amount" placeholder="e.g. 125.50" value="{{ values.amount }}" required>
           <div class="muted" style="font-size:13px;">Tip: keep expenses categorized for better stats.</div>
         </div>
 

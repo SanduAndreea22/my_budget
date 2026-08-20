@@ -57,6 +57,29 @@
 
     </div>
 
+    <!-- BUDGET ALERTS -->
+    {% if budget_alerts %}
+      <div style="margin-top:18px;display:grid;gap:10px;">
+        {% for a in budget_alerts %}
+          <div class="glass-card" style="
+            padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+            border-color:{% if a.is_over %}rgba(239,68,68,.35){% else %}rgba(234,179,8,.35){% endif %};
+          ">
+            <span style="font-size:20px;">{% if a.is_over %}🔴{% else %}⚠️{% endif %}</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:900;">
+                {{ a.category.name }} {% if a.is_over %}is over budget{% else %}is close to its limit{% endif %}
+              </div>
+              <div class="muted" style="font-size:13px;">
+                {{ a.spent|floatformat:2 }} / {{ a.limit|floatformat:2 }} {{ currency }} · {{ a.pct }}% this month
+              </div>
+            </div>
+            <a class="btn btn--ghost btn--sm" href="{% url 'budgets' %}">View budgets</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
     <!-- ACTIONS -->
     <div class="dash-actions">
       <a class="btn" href="{% url 'add_income' %}">+ Add income</a>
@@ -124,6 +147,11 @@
 
   </div>
 </section>
+
+<div class="fab-group">
+  <a href="{% url 'add_income' %}" class="btn fab">+ Income</a>
+  <a href="{% url 'add_expense' %}" class="btn btn--ghost fab">- Expense</a>
+</div>
 {% endblock %}
 
 

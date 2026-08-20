@@ -26,7 +26,7 @@
 
     <div style="margin-top:16px;display:grid;gap:10px;">
       {% for r in rows %}
-        <div class="glass-card" style="padding:14px;display:grid;gap:10px;">
+        <div class="glass-card{% if r.goal.id == celebrate_id %} goal-celebrate{% endif %}" style="padding:14px;display:grid;gap:10px;">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
             <div style="min-width:0;">
               <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -38,7 +38,7 @@
               </div>
             </div>
 
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="row-actions">
               <a class="btn btn--ghost" href="{% url 'savings_goal_edit' r.goal.id %}">Edit</a>
               <a class="btn btn--ghost" href="{% url 'savings_goal_delete' r.goal.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
             </div>
@@ -64,7 +64,7 @@
 
           <form method="POST" action="{% url 'savings_goal_add_funds' r.goal.id %}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;">
             {% csrf_token %}
-            <input type="number" step="0.01" name="amount" placeholder="Add funds (e.g. 100)" style="max-width:220px;">
+            <input type="number" step="0.01" min="0.01" name="amount" placeholder="Add funds (e.g. 100)" style="max-width:220px;">
             <button class="btn btn--ghost" type="submit">+ Add funds</button>
           </form>
         </div>

@@ -98,6 +98,7 @@ class TransactionForm(forms.ModelForm):
         fields = ["type", "amount", "date", "category", "wallet", "note"]
         widgets = {
             "date": forms.DateInput(attrs={"type": "date"}),
+            "amount": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -117,6 +118,9 @@ class BudgetLimitForm(forms.ModelForm):
     class Meta:
         model = BudgetLimit
         fields = ["category", "month", "limit"]
+        widgets = {
+            "limit": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
+        }
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
@@ -132,6 +136,7 @@ class SavingsGoalForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "e.g. Emergency fund, New laptop"}),
             "target_date": forms.DateInput(attrs={"type": "date"}),
+            "target_amount": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
         }
 
     def clean_target_amount(self):
@@ -148,6 +153,7 @@ class RecurringTransactionForm(forms.ModelForm):
         widgets = {
             "start_date": forms.DateInput(attrs={"type": "date"}),
             "day_of_month": forms.NumberInput(attrs={"min": 1, "max": 28}),
+            "amount": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
         }
 
     def __init__(self, *args, **kwargs):

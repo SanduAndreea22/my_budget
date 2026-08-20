@@ -69,7 +69,7 @@
               </div>
             </div>
 
-            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <div class="row-actions">
               {% if r.budget %}
                 <a class="btn btn--ghost" href="{% url 'budget_edit' r.budget.id %}">Edit</a>
                 <a class="btn btn--ghost" href="{% url 'budget_delete' r.budget.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
@@ -85,7 +85,7 @@
               <div class="progress-fill" data-fill="{{ r.pct }}" style="
                 height:100%;
                 width: 0%;
-                background: {% if r.is_over %}linear-gradient(90deg, rgba(239,68,68,.95), rgba(236,72,153,.85)){% else %}linear-gradient(90deg, rgba(34,197,94,.95), rgba(34,211,238,.75), rgba(99,102,241,.65)){% endif %};
+                background: {% if r.is_over %}linear-gradient(90deg, rgba(239,68,68,.95), rgba(236,72,153,.85)){% elif r.is_near %}linear-gradient(90deg, rgba(234,179,8,.95), rgba(249,115,22,.85)){% else %}linear-gradient(90deg, rgba(34,197,94,.95), rgba(34,211,238,.75), rgba(99,102,241,.65)){% endif %};
                 box-shadow: 0 12px 30px rgba(0,0,0,.25);
               "></div>
             </div>
@@ -94,6 +94,8 @@
               <span>{{ r.pct }}%</span>
               {% if r.is_over %}
                 <span style="color:#fca5a5;font-weight:900;">Over budget</span>
+              {% elif r.is_near %}
+                <span style="color:#fde047;font-weight:900;">⚠️ Near limit</span>
               {% else %}
                 <span style="color:#86efac;font-weight:900;">On track</span>
               {% endif %}

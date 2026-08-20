@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Add Category · MyBudget{% endblock %}
+{% block title %}{% if mode == "edit" %}Edit Category{% else %}Add Category{% endif %} · MyBudget{% endblock %}
 
 {% block content %}
 <section class="glass-card" style="max-width:520px;margin:auto;padding:22px;">
-  <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Add Category</h1>
+  <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">{% if mode == "edit" %}Edit Category{% else %}Add Category{% endif %}</h1>
   <p class="muted" style="margin:0 0 14px;">Used for both income and expenses.</p>
 
   <form method="POST" style="display:grid;gap:12px;">
     {% csrf_token %}
-    <input type="hidden" name="next" value="{{ next }}">
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
     {{ form.non_field_errors }}
 
     {% for field in form %}
@@ -24,8 +24,10 @@
     {% endfor %}
 
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
-      <button class="btn" type="submit">Create →</button>
-      {% if next %}
+      <button class="btn" type="submit">{% if mode == "edit" %}Save →{% else %}Create →{% endif %}</button>
+      {% if mode == "edit" %}
+        <a class="btn btn--ghost" href="{% url 'category_delete' category.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+      {% elif next %}
         <a class="btn btn--ghost" href="{{ next }}">Cancel</a>
       {% else %}
         <a class="btn btn--ghost" href="{% url 'categories' %}">Cancel</a>

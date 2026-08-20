@@ -7,11 +7,19 @@ class UserRegistrationForm(UserCreationForm):
 
     class Meta:
         model = get_user_model()
-        fields = ['first_name', 'last_name', 'username', 'email', 'password1', 'password2']
+        fields = ['first_name', 'last_name', 'username', 'email', 'currency', 'password1', 'password2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['username'].help_text = "This is what you'll use to log in — you can also log in with your email instead."
+        self.fields['currency'].help_text = "You can change this later in your profile."
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        User = get_user_model()
+        if username and User.objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("That username is taken. Try a different one.")
+        return username
 
     def save(self, commit=True):
         user = super(UserRegistrationForm, self).save(commit=False)

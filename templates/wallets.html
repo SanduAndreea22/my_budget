@@ -17,28 +17,35 @@
 
   <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:12px;">
     {% for r in rows %}
-      <div class="glass-card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:12px;min-width:0;">
-          <div style="
-            width:40px;height:40px;border-radius:16px;
-            background: rgba(255,255,255,.08);
-            border:1px solid rgba(255,255,255,.14);
-            display:flex;align-items:center;justify-content:center;
-            font-size:18px;
-          ">{{ r.wallet.icon|default:"💳" }}</div>
+      <div class="glass-card" style="padding:14px;display:grid;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+            <div style="
+              width:40px;height:40px;border-radius:16px;
+              background: rgba(255,255,255,.08);
+              border:1px solid rgba(255,255,255,.14);
+              display:flex;align-items:center;justify-content:center;
+              font-size:18px;
+            ">{{ r.wallet.icon|default:"💳" }}</div>
 
-          <div style="min-width:0;">
-            <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              {{ r.wallet.name }}
+            <div style="min-width:0;">
+              <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                {{ r.wallet.name }}
+              </div>
+              <div class="muted" style="font-size:12px;">
+                Balance
+              </div>
             </div>
-            <div class="muted" style="font-size:12px;">
-              Balance
-            </div>
+          </div>
+
+          <div style="font-weight:900;color:{% if r.balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};white-space:nowrap;flex-shrink:0;">
+            {{ r.balance|floatformat:2|intcomma }} {{ currency }}
           </div>
         </div>
 
-        <div style="font-weight:900;color:{% if r.balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};white-space:nowrap;">
-          {{ r.balance|floatformat:2|intcomma }} {{ currency }}
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a class="btn btn--ghost btn--sm" href="{% url 'wallet_edit' r.wallet.id %}">Edit</a>
+          <a class="btn btn--ghost btn--sm" href="{% url 'wallet_delete' r.wallet.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
         </div>
       </div>
     {% empty %}

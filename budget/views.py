@@ -13,6 +13,7 @@ from django.db.models.functions import TruncMonth, TruncYear
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 
@@ -106,12 +107,19 @@ def dashboard_view(request):
 
     last_transactions = transactions.select_related("category").order_by("-date")[:5]
 
+    today = date.today()
+    budget_alerts = [
+        r for r in _budget_status_rows(request.user, _month_start(today), _month_end(today))
+        if r["is_over"] or r["is_near"]
+    ]
+
     context = {
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": balance,
         "transactions": last_transactions,
         "currency": request.user.currency,
+        "budget_alerts": budget_alerts,
     }
 
     return render(request, "dashboard.html", context)
@@ -225,7 +233,38 @@ def category_add_view(request):
     else:
         form = CategoryForm(user=request.user)
 
-    return render(request, "category_add.html", {"form": form, "next": next_url})
+    return render(request, "category_add.html", {"form": form, "next": next_url, "mode": "add"})
+
+
+@login_required
+def category_edit_view(request, pk):
+    category = get_object_or_404(Category, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = CategoryForm(request.POST, instance=category, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Category updated.")
+            return redirect("categories")
+    else:
+        form = CategoryForm(instance=category, user=request.user)
+
+    return render(request, "category_add.html", {"form": form, "mode": "edit", "category": category})
+
+
+@login_required
+def category_delete_view(request, pk):
+    category = get_object_or_404(Category, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        category.delete()
+        messages.success(request, "Category deleted.")
+        return redirect("categories")
+
+    return render(request, "category_confirm_delete.html", {
+        "category": category,
+        "tx_count": category.transactions.count(),
+    })
 
 
 @login_required
@@ -262,7 +301,38 @@ def wallet_add_view(request):
     else:
         form = WalletForm(user=request.user)
 
-    return render(request, "wallet_add.html", {"form": form, "next": next_url})
+    return render(request, "wallet_add.html", {"form": form, "next": next_url, "mode": "add"})
+
+
+@login_required
+def wallet_edit_view(request, pk):
+    wallet = get_object_or_404(Wallet, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        form = WalletForm(request.POST, instance=wallet, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Wallet updated.")
+            return redirect("wallets")
+    else:
+        form = WalletForm(instance=wallet, user=request.user)
+
+    return render(request, "wallet_add.html", {"form": form, "mode": "edit", "wallet": wallet})
+
+
+@login_required
+def wallet_delete_view(request, pk):
+    wallet = get_object_or_404(Wallet, pk=pk, user=request.user)
+
+    if request.method == "POST":
+        wallet.delete()
+        messages.success(request, "Wallet deleted.")
+        return redirect("wallets")
+
+    return render(request, "wallet_confirm_delete.html", {
+        "wallet": wallet,
+        "tx_count": wallet.transactions.count(),
+    })
 
 
 def _filtered_transactions(request):
@@ -460,27 +530,17 @@ def _month_end(d: date) -> date:
     return d.replace(day=last_day)
 
 
-@login_required
-def budgets_view(request):
-    month_str = request.GET.get("month", "").strip()
-    if month_str:
-        try:
-            selected = date.fromisoformat(month_str)
-        except ValueError:
-            selected = date.today()
-    else:
-        selected = date.today()
-
-    month_start = _month_start(selected)
-    month_end = _month_end(selected)
-
-    categories = Category.objects.filter(user=request.user).order_by("name")
+def _budget_status_rows(user, month_start, month_end):
+    """Spend vs. limit per category for one month, with over/near-limit
+    flags. Shared by the budgets page (all categories) and the dashboard
+    proactive alert (only categories that need attention)."""
+    categories = Category.objects.filter(user=user).order_by("name")
 
     spent_map = {
         row["category_id"]: (row["total"] or Decimal("0"))
         for row in (
             Transaction.objects.filter(
-                user=request.user,
+                user=user,
                 type=Transaction.EXPENSE,
                 date__gte=month_start,
                 date__lte=month_end,
@@ -490,7 +550,7 @@ def budgets_view(request):
         )
     }
 
-    limits = BudgetLimit.objects.filter(user=request.user, month=month_start).select_related("category")
+    limits = BudgetLimit.objects.filter(user=user, month=month_start).select_related("category")
     limit_map = {b.category_id: b for b in limits}
 
     rows = []
@@ -505,14 +565,35 @@ def budgets_view(request):
         else:
             pct_int = 0
 
+        is_over = limit_val is not None and spent > limit_val
         rows.append({
             "category": c,
             "spent": spent,
             "limit": limit_val,
             "pct": pct_int,
             "budget": b,
-            "is_over": (limit_val is not None and spent > limit_val),
+            "is_over": is_over,
+            "is_near": (not is_over) and limit_val is not None and limit_val > 0 and pct_int >= 80,
         })
+
+    return rows
+
+
+@login_required
+def budgets_view(request):
+    month_str = request.GET.get("month", "").strip()
+    if month_str:
+        try:
+            selected = date.fromisoformat(month_str)
+        except ValueError:
+            selected = date.today()
+    else:
+        selected = date.today()
+
+    month_start = _month_start(selected)
+    month_end = _month_end(selected)
+
+    rows = _budget_status_rows(request.user, month_start, month_end)
 
     total_spent = sum((r["spent"] for r in rows), Decimal("0"))
     total_limit = sum((r["limit"] for r in rows if r["limit"] is not None), Decimal("0"))
@@ -725,6 +806,9 @@ def _savings_goal_repr(goal, currency):
 def savings_goals_view(request):
     goals = SavingsGoal.objects.filter(user=request.user)
 
+    celebrate_raw = request.GET.get("celebrate", "").strip()
+    celebrate_id = int(celebrate_raw) if celebrate_raw.isdigit() else None
+
     rows = []
     for g in goals:
         pct = int(min((g.saved_amount / g.target_amount) * 100, 100)) if g.target_amount else 0
@@ -735,7 +819,11 @@ def savings_goals_view(request):
             "is_complete": g.saved_amount >= g.target_amount,
         })
 
-    return render(request, "savings_goals.html", {"rows": rows, "currency": request.user.currency})
+    return render(request, "savings_goals.html", {
+        "rows": rows,
+        "currency": request.user.currency,
+        "celebrate_id": celebrate_id,
+    })
 
 
 @login_required
@@ -781,12 +869,19 @@ def savings_goal_add_funds_view(request, pk):
         if amount is None:
             messages.error(request, "Please enter a valid amount greater than zero.")
         else:
+            was_complete = goal.saved_amount >= goal.target_amount
             goal.saved_amount = goal.saved_amount + amount
             goal.save()
             _log_activity(
                 request.user, ActivityLog.UPDATE, "Savings Goal",
                 f"{goal.name} · added {amount} {request.user.currency}",
             )
+
+            just_completed = (not was_complete) and goal.saved_amount >= goal.target_amount
+            if just_completed:
+                messages.success(request, f"🎉 Goal reached! You hit your target for \"{goal.name}\".")
+                return redirect(f"{reverse('savings_goals')}?celebrate={goal.pk}")
+
             messages.success(request, "Funds added to your goal.")
 
     return redirect("savings_goals")
