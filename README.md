@@ -1,62 +1,94 @@
 # MyBudget
 
-A modern personal finance and budgeting web application built with Django.  
-MyBudget helps users track income and expenses, manage categories, set monthly budget limits, and visualize spending trends through interactive charts.
+A personal finance and budgeting web app built with Django — multiple wallets, category budgets, recurring transactions, savings goals, and spending trends, with a modern dark glass-style UI.
 
-**Live demo:** https://my-budget-or3r.onrender.com/ 
-
----
-
-## Overview
-
-MyBudget is designed as a clean, user-friendly budgeting tool with a modern dark UI.  
-It focuses on clarity, usability, and essential personal finance features without unnecessary complexity.
+**Live demo:** https://my-budget-or3r.onrender.com
+*(hosted on Render's free tier — the first request after inactivity can take 30-50s to wake up)*
 
 ---
 
 ## Key Features
 
-- Secure user authentication (register, login, logout)
-- Dashboard with income, expenses, and balance overview
-- Income and expense transaction management
-- Category management with icons and colors
-- Monthly budget limits per category
-- Visual budget progress indicators (on track / over budget)
-- Interactive charts for spending analysis
-- Responsive design with a modern glass-style interface
+**Money tracking**
+- Multiple wallets (e.g. cash, bank, savings), each with its own balance
+- Custom categories with icons and colors, for income and expenses separately
+- Full transaction history — filter, edit, delete
+- **Recurring transactions**: set up a transaction once (rent, salary, a subscription) and it repeats automatically
+- **Savings goals**: set a target amount, add funds toward it over time, track progress
+
+**Budgeting & insight**
+- Monthly budget limits per category, with visual on-track/over-budget indicators
+- Interactive charts (Chart.js) for spending breakdown and trends
+- Month-to-month comparison view
 - Multi-currency support
 
----
+**Exports & accountability**
+- Export transactions as **CSV, Excel (.xlsx), or PDF** (PDF rendered server-side with WeasyPrint)
+- Activity log — an audit trail of account actions
 
-## Technology Stack
+**Account**
+- Registration with a welcome/activation email (Resend API, best-effort — accounts are usable immediately regardless of email delivery)
+- Rate-limited login/register (best-effort, per-IP, via cache) against scripted abuse
+- Profile with a custom avatar upload
 
-- **Backend:** Django
-- **Database:** PostgreSQL (production), SQLite (development)
-- **Frontend:** Django Templates, HTML5, CSS3
+## Tech stack
+
+- **Backend:** Django 6
+- **Database:** PostgreSQL (production), SQLite (local dev)
 - **Charts:** Chart.js
-- **Deployment:** Render
+- **Exports:** openpyxl (Excel), WeasyPrint (PDF)
+- **Email:** Resend API
+- **Static files:** WhiteNoise
+- **Testing:** 86 tests across `accounts`/`budget`
+- **Containerization:** Dockerfile; GitHub Actions builds and publishes the image to GHCR (`ghcr.io/sanduandreea22/my-budget`) on every push to `main`
+- **Hosting:** Render
 
----
-## Usage
+## Architecture
 
-1. Create an account or log in
-2. Define categories for income and expenses
-3. Add transactions
-4. Set monthly budget limits per category
-5. Monitor progress and review charts
+Three apps, split by responsibility:
 
----
+| App | Responsibility |
+|---|---|
+| `accounts` | Custom user model (email-unique, avatar upload), registration/login, rate limiting |
+| `budget` | Wallets, categories, transactions, recurring transactions, budget limits, savings goals, exports, activity log |
+| `pages` | Public/marketing pages |
 
-## Deployment
+Core models: `Wallet`, `Category`, `Transaction`, `RecurringTransaction`, `BudgetLimit`, `SavingsGoal`, `ActivityLog`.
 
-The application is deployed on **Render** and configured for production use with PostgreSQL.
+## Running locally
 
----
+```bash
+git clone https://github.com/SanduAndreea22/my_budget.git
+cd my_budget
+python -m venv venv
+venv\Scripts\activate        # or: source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env         # fill in your own values
+python manage.py migrate
+python manage.py runserver
+```
 
-## Security Notice
+`RESEND_API_KEY` is optional for local dev — without it, registration still works, the email attempt just logs an error to the console instead of sending.
 
-This application is intended for educational and personal projects.  
-Avoid using real banking or sensitive financial data.
+Run the test suite with:
 
----
+```bash
+python manage.py test
+```
 
+### Docker
+
+```bash
+docker build -t my-budget .
+docker run -p 8000:8000 --env-file .env my-budget
+```
+
+## Security notice
+
+This application is a portfolio/educational project. Avoid using real banking or sensitive financial data with it.
+
+## 👩‍💻 Author
+
+**Andreea Sandu**
+LinkedIn: [linkedin.com/in/andreealuizasandu](https://linkedin.com/in/andreealuizasandu)
+GitHub: [@SanduAndreea22](https://github.com/SanduAndreea22)
