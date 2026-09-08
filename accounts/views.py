@@ -1,7 +1,7 @@
 import os
 import resend
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate, get_user_model
+from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
@@ -64,15 +64,11 @@ def login_view(request):
     if request.method == 'POST':
         form = UserLoginForm(request, data=request.POST)
         if form.is_valid():
-            username = form.cleaned_data.get('username')
-            password = form.cleaned_data.get('password')
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                messages.success(request, f'Welcome, {user.username}!')
-                return redirect('dashboard')
-            else:
-                messages.error(request, 'Invalid credentials or inactive account.')
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f'Welcome, {user.username}!')
+            return redirect('dashboard')
+        messages.error(request, 'Invalid credentials or inactive account.')
     else:
         form = UserLoginForm()
     return render(request, 'accounts/login.html', {'form': form, 'password_reset_available': EMAIL_ENABLED})

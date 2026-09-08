@@ -44,11 +44,9 @@ class AuthenticatedRedirectTests(TestCase):
 
     def test_successful_login_redirects_to_dashboard(self):
         # A new user's first stop after logging in should be the app
-        # (dashboard), not the profile/settings page. Login is by email —
-        # the form field is still named "username" (AuthenticationForm's
-        # field), but only accepts an email address.
+        # (dashboard), not the profile/settings page. Login is by email.
         response = self.client.post(
-            reverse("accounts:login"), {"username": "alice@example.com", "password": "pass12345"}
+            reverse("accounts:login"), {"email": "alice@example.com", "password": "pass12345"}
         )
         self.assertRedirects(response, reverse("dashboard"))
 
@@ -60,10 +58,10 @@ class LoginRateLimitTests(TestCase):
 
     def test_login_is_throttled_after_too_many_attempts(self):
         for _ in range(10):
-            self.client.post(reverse("accounts:login"), {"username": "alice@example.com", "password": "wrong"})
+            self.client.post(reverse("accounts:login"), {"email": "alice@example.com", "password": "wrong"})
 
         response = self.client.post(
-            reverse("accounts:login"), {"username": "alice@example.com", "password": "pass12345"}, follow=True
+            reverse("accounts:login"), {"email": "alice@example.com", "password": "pass12345"}, follow=True
         )
         self.assertFalse(response.wsgi_request.user.is_authenticated)
         messages = [m.message for m in response.context["messages"]]
