@@ -109,7 +109,32 @@ STORAGES = {
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Render's filesystem is ephemeral — uploaded avatars vanish on every
+# redeploy/restart unless media lives in object storage instead. Set
+# AWS_STORAGE_BUCKET_NAME (and the vars below) to switch media uploads to
+# any S3-compatible provider (AWS S3, Cloudflare R2, Backblaze B2, ...).
+# Left unset, media stays on local disk — fine for local dev, not for
+# production with real users.
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
+if AWS_STORAGE_BUCKET_NAME:
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+    AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME") or None
+    AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL") or None  # e.g. for R2/B2; unset for AWS S3
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_S3_CUSTOM_DOMAIN") or None  # optional CDN/custom domain
+    AWS_QUERYSTRING_AUTH = False
+    AWS_S3_FILE_OVERWRITE = False
+    if AWS_S3_CUSTOM_DOMAIN:
+        MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/"
+
+    STORAGES["default"] = {"BACKEND": "storages.backends.s3.S3Storage"}
+
 AUTH_USER_MODEL = "accounts.CustomUser"
+
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.EmailBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "dashboard"
@@ -127,7 +152,9 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
 
-    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "0"))  # set to 31536000 after you test
+    # Starts at 1 day so HSTS is on by default in production; raise to
+    # 31536000 (1 year) once you've confirmed HTTPS works everywhere.
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "86400"))
     SECURE_HSTS_INCLUDE_SUBDOMAINS = os.getenv("SECURE_HSTS_INCLUDE_SUBDOMAINS", "False") == "True"
     SECURE_HSTS_PRELOAD = os.getenv("SECURE_HSTS_PRELOAD", "False") == "True"
 

@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
@@ -7,34 +9,54 @@ class UserRegistrationForm(UserCreationForm):
 
     class Meta:
         model = get_user_model()
-        fields = ['first_name', 'last_name', 'username', 'email', 'currency', 'password1', 'password2']
+        fields = ['first_name', 'last_name', 'email', 'currency', 'password1', 'password2']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['username'].help_text = "This is what you'll use to log in — you can also log in with your email instead."
         self.fields['currency'].help_text = "You can change this later in your profile."
 
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
         User = get_user_model()
-        if username and User.objects.filter(username__iexact=username).exists():
-            raise forms.ValidationError("That username is taken. Try a different one.")
+        if email and User.objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("An account with this email already exists.")
+        return email
+
+    @staticmethod
+    def _unique_username_from_email(email):
+        """Sign-up is email-only — username is kept internally (profile URLs,
+        avatar folder, admin) but never typed by the user, so derive one
+        from the email's local part and de-dupe with a numeric suffix."""
+        User = get_user_model()
+        base = re.sub(r'[^\w.@+-]', '', email.split('@')[0]).lower() or 'user'
+        username = base
+        suffix = 1
+        while User.objects.filter(username__iexact=username).exists():
+            suffix += 1
+            username = f"{base}{suffix}"
         return username
 
     def save(self, commit=True):
         user = super(UserRegistrationForm, self).save(commit=False)
         user.email = self.cleaned_data['email']
+        user.username = self._unique_username_from_email(user.email)
         if commit:
             user.save()
         return user
 
 class UserLoginForm(AuthenticationForm):
-    username = forms.CharField(widget=forms.TextInput(
-        attrs={'class': 'form-control', 'placeholder': 'Username or Email'}),
-        label="Username or Email*")
+    username = forms.EmailField(widget=forms.EmailInput(
+        attrs={'class': 'form-control', 'placeholder': 'you@example.com', 'autofocus': True}),
+        label="Email*")
 
     password = forms.CharField(widget=forms.PasswordInput(
         attrs={'class': 'form-control', 'placeholder': 'Password'}))
+
+class PasswordResetRequestForm(forms.Form):
+    email = forms.EmailField(
+        label="Email",
+        widget=forms.EmailInput(attrs={'placeholder': 'you@example.com'}),
+    )
 
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField()

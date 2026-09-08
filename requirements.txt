@@ -1,4 +1,5 @@
 asgiref==3.11.0
+boto3==1.43.89
 brotli==1.2.0
 certifi==2026.1.4
 cffi==2.0.0
@@ -6,6 +7,7 @@ charset-normalizer==3.4.4
 cssselect2==0.8.0
 dj-database-url==3.1.0
 Django==6.0.1
+django-storages==1.14.6
 et_xmlfile==2.0.0
 fonttools==4.61.1
 gunicorn==23.0.0

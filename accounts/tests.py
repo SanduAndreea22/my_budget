@@ -1,3 +1,5 @@
+from unittest import mock
+
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import TestCase
@@ -37,14 +39,16 @@ class AuthenticatedRedirectTests(TestCase):
 
     def test_logout_redirects_to_login(self):
         self.client.force_login(self.user)
-        response = self.client.get(reverse("accounts:logout"))
+        response = self.client.post(reverse("accounts:logout"))
         self.assertRedirects(response, reverse("accounts:login"))
 
     def test_successful_login_redirects_to_dashboard(self):
         # A new user's first stop after logging in should be the app
-        # (dashboard), not the profile/settings page.
+        # (dashboard), not the profile/settings page. Login is by email —
+        # the form field is still named "username" (AuthenticationForm's
+        # field), but only accepts an email address.
         response = self.client.post(
-            reverse("accounts:login"), {"username": "alice", "password": "pass12345"}
+            reverse("accounts:login"), {"username": "alice@example.com", "password": "pass12345"}
         )
         self.assertRedirects(response, reverse("dashboard"))
 
@@ -56,21 +60,120 @@ class LoginRateLimitTests(TestCase):
 
     def test_login_is_throttled_after_too_many_attempts(self):
         for _ in range(10):
-            self.client.post(reverse("accounts:login"), {"username": "alice", "password": "wrong"})
+            self.client.post(reverse("accounts:login"), {"username": "alice@example.com", "password": "wrong"})
 
         response = self.client.post(
-            reverse("accounts:login"), {"username": "alice", "password": "pass12345"}, follow=True
+            reverse("accounts:login"), {"username": "alice@example.com", "password": "pass12345"}, follow=True
         )
         self.assertFalse(response.wsgi_request.user.is_authenticated)
         messages = [m.message for m in response.context["messages"]]
         self.assertTrue(any("Too many attempts" in m for m in messages))
 
 
-class RegistrationFormTextTests(TestCase):
-    def test_username_field_explains_its_relation_to_email_login(self):
+class RegistrationFormTests(TestCase):
+    def test_registration_form_has_no_username_field(self):
+        # Sign-up is email-only; username is an internal, auto-generated
+        # detail (profile URL slug), never typed by the user.
         form = UserRegistrationForm()
-        self.assertIn("log in with your email", form.fields["username"].help_text)
+        self.assertNotIn("username", form.fields)
 
-    def test_registration_page_shows_the_username_help_text(self):
-        response = self.client.get(reverse("accounts:register"))
-        self.assertContains(response, "you can also log in with your email instead")
+    def test_registering_generates_a_unique_username_from_the_email(self):
+        response = self.client.post(reverse("accounts:register"), {
+            "first_name": "Alice",
+            "last_name": "Popescu",
+            "email": "alice@example.com",
+            "currency": "RON",
+            "password1": "S3cure-Pass!23",
+            "password2": "S3cure-Pass!23",
+        })
+        self.assertRedirects(response, reverse("dashboard"))
+        user = User.objects.get(email="alice@example.com")
+        self.assertEqual(user.username, "alice")
+
+    def test_duplicate_email_local_part_gets_a_numeric_suffix(self):
+        User.objects.create_user(username="alice", email="alice@other-domain.com", password="pass12345")
+
+        response = self.client.post(reverse("accounts:register"), {
+            "first_name": "Alice",
+            "last_name": "Ionescu",
+            "email": "alice@example.com",
+            "currency": "RON",
+            "password1": "S3cure-Pass!23",
+            "password2": "S3cure-Pass!23",
+        })
+        self.assertRedirects(response, reverse("dashboard"))
+        user = User.objects.get(email="alice@example.com")
+        self.assertEqual(user.username, "alice2")
+
+    def test_cannot_register_with_an_email_already_in_use(self):
+        User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+
+        response = self.client.post(reverse("accounts:register"), {
+            "first_name": "Alice",
+            "last_name": "Din nou",
+            "email": "alice@example.com",
+            "currency": "RON",
+            "password1": "S3cure-Pass!23",
+            "password2": "S3cure-Pass!23",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(User.objects.filter(email__iexact="alice@example.com").count(), 1)
+
+
+class PasswordResetTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="oldpass123")
+
+    def test_request_view_declines_when_email_sending_is_not_configured(self):
+        # RESEND_API_KEY isn't set in this environment, so the request view
+        # must not pretend to send anything.
+        response = self.client.post(
+            reverse("accounts:password_reset"), {"email": "alice@example.com"}, follow=True
+        )
+        self.assertRedirects(response, reverse("accounts:login"))
+        messages = [m.message for m in response.context["messages"]]
+        self.assertTrue(any("isn't set up yet" in m for m in messages))
+
+    def test_reset_request_does_not_reveal_whether_the_email_exists(self):
+        with mock.patch("accounts.views.EMAIL_ENABLED", True):
+            known = self.client.post(reverse("accounts:password_reset"), {"email": "alice@example.com"}, follow=True)
+            unknown = self.client.post(reverse("accounts:password_reset"), {"email": "nobody@example.com"}, follow=True)
+
+        known_messages = [m.message for m in known.context["messages"]]
+        unknown_messages = [m.message for m in unknown.context["messages"]]
+        self.assertEqual(known_messages, unknown_messages)
+
+    def test_valid_token_allows_setting_a_new_password(self):
+        from django.contrib.auth.tokens import default_token_generator
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+        token = default_token_generator.make_token(self.user)
+
+        response = self.client.post(
+            reverse("accounts:password_reset_confirm", kwargs={"uidb64": uid, "token": token}),
+            {"new_password1": "Brand-New-Pass!23", "new_password2": "Brand-New-Pass!23"},
+        )
+        self.assertRedirects(response, reverse("accounts:login"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("Brand-New-Pass!23"))
+
+    def test_invalid_token_is_rejected(self):
+        from django.utils.encoding import force_bytes
+        from django.utils.http import urlsafe_base64_encode
+
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
+
+        # No follow=True: this checks password_reset_confirm_view's own
+        # redirect target, not wherever accounts:password_reset itself
+        # bounces to next (which depends on EMAIL_ENABLED).
+        response = self.client.get(
+            reverse("accounts:password_reset_confirm", kwargs={"uidb64": uid, "token": "bad-token"}),
+        )
+        self.assertRedirects(
+            response, reverse("accounts:password_reset"), target_status_code=302
+        )
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("oldpass123"))

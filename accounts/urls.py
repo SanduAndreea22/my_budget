@@ -9,4 +9,6 @@ urlpatterns = [
     path("profile/<username>", views.profile_view, name="profile"),
     # Dacă folosești activare email
     path("activate/<uidb64>/<token>", views.activate, name="activate"),
+    path("password-reset", views.password_reset_request_view, name="password_reset"),
+    path("reset/<uidb64>/<token>", views.password_reset_confirm_view, name="password_reset_confirm"),
 ]
