@@ -189,6 +189,27 @@ input:focus, select:focus, textarea:focus{box-shadow: var(--focus)}
 /* Make content links consistent */
 a{color: rgba(255,255,255,.92)}
 
+/* Password fields: a show/hide toggle, added generically by JS to every
+   input[type="password"] — no per-template markup needed. */
+.password-field{position:relative}
+.password-field input{padding-right:44px}
+.password-toggle{
+  position:absolute;
+  right:6px;
+  top:50%;
+  transform:translateY(-50%);
+  background:transparent;
+  border:0;
+  cursor:pointer;
+  font-size:16px;
+  line-height:1;
+  padding:8px;
+  border-radius:10px;
+  color: rgba(255,255,255,.72);
+}
+.password-toggle:hover{background: rgba(255,255,255,.10)}
+.password-toggle:focus{outline:none; box-shadow: var(--focus)}
+
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important; scroll-behavior:auto !important; animation:none !important;}
 }

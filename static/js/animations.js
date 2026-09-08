@@ -32,4 +32,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
     requestAnimationFrame(tick);
   });
+
+  // Password fields: add a show/hide toggle to every password input,
+  // wherever it appears (login, register, reset password) — no per-form
+  // markup needed.
+  document.querySelectorAll('input[type="password"]').forEach(function (input) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "password-field";
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "password-toggle";
+    toggle.textContent = "👁";
+    toggle.setAttribute("aria-label", "Show password");
+    wrapper.appendChild(toggle);
+
+    toggle.addEventListener("click", function () {
+      const isShown = input.type === "text";
+      input.type = isShown ? "password" : "text";
+      toggle.textContent = isShown ? "👁" : "🙈";
+      toggle.setAttribute("aria-label", isShown ? "Show password" : "Hide password");
+    });
+  });
 });
