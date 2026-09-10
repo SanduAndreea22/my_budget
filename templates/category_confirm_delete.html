@@ -4,14 +4,16 @@
 {% block content %}
 <section class="glass-card" style="max-width:560px;margin:auto;padding:22px;">
   <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Delete category?</h1>
-  {% if tx_count or budget_count or recurring_count %}
-    <p class="muted" style="margin:0 0 10px;">This will also permanently delete:</p>
+  {% if in_use %}
+    <p style="margin:0 0 10px;color:#fca5a5;font-weight:800;">
+      You can't delete this category — it's still used by:
+    </p>
     <ul class="muted" style="margin:0 0 14px;padding-left:20px;">
       {% if tx_count %}<li>{{ tx_count }} transaction{{ tx_count|pluralize }}</li>{% endif %}
       {% if budget_count %}<li>{{ budget_count }} budget limit{{ budget_count|pluralize }}</li>{% endif %}
       {% if recurring_count %}<li>{{ recurring_count }} recurring transaction{{ recurring_count|pluralize }}</li>{% endif %}
     </ul>
-    <p class="muted" style="margin:0 0 14px;">This cannot be undone.</p>
+    <p class="muted" style="margin:0 0 14px;">Remove or reassign those first, then come back here to delete it.</p>
   {% else %}
     <p class="muted" style="margin:0 0 14px;">This action cannot be undone.</p>
   {% endif %}
@@ -28,8 +30,10 @@
 
   <form method="POST" style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;">
     {% csrf_token %}
-    <button class="btn btn--danger" type="submit">Yes, delete →</button>
-    <a class="btn btn--ghost" href="{% url 'categories' %}">Cancel</a>
+    {% if not in_use %}
+      <button class="btn btn--danger" type="submit">Yes, delete →</button>
+    {% endif %}
+    <a class="btn btn--ghost" href="{% url 'categories' %}">{% if in_use %}Back{% else %}Cancel{% endif %}</a>
   </form>
 </section>
 {% endblock %}

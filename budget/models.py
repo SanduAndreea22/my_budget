@@ -52,13 +52,13 @@ class Transaction(models.Model):
 
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="transactions"
     )
 
     wallet = models.ForeignKey(
         Wallet,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="transactions",
     )
 
@@ -82,8 +82,8 @@ class RecurringTransaction(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="recurring_transactions")
     type = models.CharField(max_length=10, choices=TYPE_CHOICES)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="recurring_transactions")
-    wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, related_name="recurring_transactions")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="recurring_transactions")
+    wallet = models.ForeignKey(Wallet, on_delete=models.PROTECT, related_name="recurring_transactions")
     note = models.CharField(max_length=120, blank=True, default="")
 
     day_of_month = models.PositiveSmallIntegerField(
@@ -105,7 +105,7 @@ class RecurringTransaction(models.Model):
 
 class BudgetLimit(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="budget_limits")
-    category = models.ForeignKey("Category", on_delete=models.CASCADE, related_name="budget_limits")
+    category = models.ForeignKey("Category", on_delete=models.PROTECT, related_name="budget_limits")
 
     month = models.DateField()
     limit = models.DecimalField(max_digits=12, decimal_places=2)

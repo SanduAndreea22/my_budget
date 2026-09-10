@@ -160,6 +160,51 @@ class CategoryFormTests(TestCase):
         self.assertEqual(Category.objects.filter(name="Long").count(), 0)
 
 
+class CategoryDeleteProtectionTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Food")
+        self.wallet = Wallet.objects.create(user=self.user, name="Cash")
+        self.client.force_login(self.user)
+
+    def test_can_delete_an_unused_category(self):
+        response = self.client.post(reverse("category_delete", args=[self.category.id]))
+        self.assertRedirects(response, reverse("categories"))
+        self.assertFalse(Category.objects.filter(pk=self.category.pk).exists())
+
+    def test_cannot_delete_a_category_with_transactions(self):
+        Transaction.objects.create(
+            user=self.user, type=Transaction.EXPENSE, amount=10, date=date(2026, 1, 1),
+            category=self.category, wallet=self.wallet,
+        )
+        response = self.client.post(reverse("category_delete", args=[self.category.id]), follow=True)
+        self.assertTrue(Category.objects.filter(pk=self.category.pk).exists())
+        messages = [m.message for m in response.context["messages"]]
+        self.assertTrue(any("can't delete" in m for m in messages))
+
+    def test_cannot_delete_a_category_with_a_budget_limit(self):
+        BudgetLimit.objects.create(user=self.user, category=self.category, month=date(2026, 1, 1), limit=100)
+        self.client.post(reverse("category_delete", args=[self.category.id]))
+        self.assertTrue(Category.objects.filter(pk=self.category.pk).exists())
+
+    def test_cannot_delete_a_category_with_a_recurring_transaction(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=10,
+            category=self.category, wallet=self.wallet, day_of_month=1, start_date=date(2026, 1, 1),
+        )
+        self.client.post(reverse("category_delete", args=[self.category.id]))
+        self.assertTrue(Category.objects.filter(pk=self.category.pk).exists())
+
+    def test_confirm_page_shows_blocked_message_when_in_use(self):
+        Transaction.objects.create(
+            user=self.user, type=Transaction.EXPENSE, amount=10, date=date(2026, 1, 1),
+            category=self.category, wallet=self.wallet,
+        )
+        response = self.client.get(reverse("category_delete", args=[self.category.id]))
+        self.assertContains(response, "You can't delete this category")
+        self.assertNotContains(response, "Yes, delete")
+
+
 class TransactionsPaginationTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
@@ -568,6 +613,37 @@ class WalletTests(TestCase):
         response = self.client.get(reverse("add_income"))
         self.assertContains(response, "Cash")
         self.assertNotContains(response, "Not mine")
+
+
+class WalletDeleteProtectionTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.category = Category.objects.create(user=self.user, name="Food")
+        self.wallet = Wallet.objects.create(user=self.user, name="Cash")
+        self.client.force_login(self.user)
+
+    def test_can_delete_an_unused_wallet(self):
+        response = self.client.post(reverse("wallet_delete", args=[self.wallet.id]))
+        self.assertRedirects(response, reverse("wallets"))
+        self.assertFalse(Wallet.objects.filter(pk=self.wallet.pk).exists())
+
+    def test_cannot_delete_a_wallet_with_transactions(self):
+        Transaction.objects.create(
+            user=self.user, type=Transaction.EXPENSE, amount=10, date=date(2026, 1, 1),
+            category=self.category, wallet=self.wallet,
+        )
+        response = self.client.post(reverse("wallet_delete", args=[self.wallet.id]), follow=True)
+        self.assertTrue(Wallet.objects.filter(pk=self.wallet.pk).exists())
+        messages = [m.message for m in response.context["messages"]]
+        self.assertTrue(any("can't delete" in m for m in messages))
+
+    def test_cannot_delete_a_wallet_with_a_recurring_transaction(self):
+        RecurringTransaction.objects.create(
+            user=self.user, type=RecurringTransaction.EXPENSE, amount=10,
+            category=self.category, wallet=self.wallet, day_of_month=1, start_date=date(2026, 1, 1),
+        )
+        self.client.post(reverse("wallet_delete", args=[self.wallet.id]))
+        self.assertTrue(Wallet.objects.filter(pk=self.wallet.pk).exists())
 
 
 class RecurringTransactionGenerationTests(TestCase):

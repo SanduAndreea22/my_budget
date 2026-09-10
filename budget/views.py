@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import IntegrityError, models, transaction
-from django.db.models import F, Sum
+from django.db.models import F, ProtectedError, Sum
 from django.db.models.functions import TruncMonth, TruncYear
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -282,20 +282,35 @@ def category_edit_view(request, pk):
     return render(request, "category_add.html", {"form": form, "mode": "edit", "category": category})
 
 
+_IN_USE_MESSAGE = (
+    "You can't delete this while it's still in use. Remove or reassign the "
+    "transactions, budget limits and recurring transactions listed below first."
+)
+
+
 @login_required
 def category_delete_view(request, pk):
     category = get_object_or_404(Category, pk=pk, user=request.user)
+    tx_count = category.transactions.count()
+    budget_count = category.budget_limits.count()
+    recurring_count = category.recurring_transactions.count()
+    in_use = bool(tx_count or budget_count or recurring_count)
 
     if request.method == "POST":
-        category.delete()
+        try:
+            category.delete()
+        except ProtectedError:
+            messages.error(request, _IN_USE_MESSAGE)
+            return redirect("category_delete", pk=category.pk)
         messages.success(request, "Category deleted.")
         return redirect("categories")
 
     return render(request, "category_confirm_delete.html", {
         "category": category,
-        "tx_count": category.transactions.count(),
-        "budget_count": category.budget_limits.count(),
-        "recurring_count": category.recurring_transactions.count(),
+        "tx_count": tx_count,
+        "budget_count": budget_count,
+        "recurring_count": recurring_count,
+        "in_use": in_use,
     })
 
 
@@ -355,16 +370,24 @@ def wallet_edit_view(request, pk):
 @login_required
 def wallet_delete_view(request, pk):
     wallet = get_object_or_404(Wallet, pk=pk, user=request.user)
+    tx_count = wallet.transactions.count()
+    recurring_count = wallet.recurring_transactions.count()
+    in_use = bool(tx_count or recurring_count)
 
     if request.method == "POST":
-        wallet.delete()
+        try:
+            wallet.delete()
+        except ProtectedError:
+            messages.error(request, _IN_USE_MESSAGE)
+            return redirect("wallet_delete", pk=wallet.pk)
         messages.success(request, "Wallet deleted.")
         return redirect("wallets")
 
     return render(request, "wallet_confirm_delete.html", {
         "wallet": wallet,
-        "tx_count": wallet.transactions.count(),
-        "recurring_count": wallet.recurring_transactions.count(),
+        "tx_count": tx_count,
+        "recurring_count": recurring_count,
+        "in_use": in_use,
     })
 
 
