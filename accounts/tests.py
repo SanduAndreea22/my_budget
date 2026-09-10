@@ -200,3 +200,31 @@ class EmailCaseInsensitiveUniquenessTests(TestCase):
         User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
         with self.assertRaises(IntegrityError):
             User.objects.create_user(username="alice2", email="Alice@Example.com", password="pass12345")
+
+
+class UserDeletionTests(TestCase):
+    def test_deleting_a_user_with_transactions_does_not_raise(self):
+        # budget.Category/Wallet are PROTECTed from Transaction/BudgetLimit/
+        # RecurringTransaction (so a user can't delete a category/wallet
+        # still in use) — which used to also block deleting the user
+        # itself, since Django's User -> Category CASCADE ran into those
+        # same protected rows before they were cleared.
+        from datetime import date
+
+        from budget.models import BudgetLimit, Category, RecurringTransaction, Transaction, Wallet
+
+        user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        category = Category.objects.create(user=user, name="Food")
+        wallet = Wallet.objects.create(user=user, name="Cash")
+        Transaction.objects.create(user=user, type="expense", amount=10, date=date(2026, 1, 1), category=category, wallet=wallet)
+        BudgetLimit.objects.create(user=user, category=category, month=date(2026, 1, 1), limit=100)
+        RecurringTransaction.objects.create(
+            user=user, type="expense", amount=10, category=category, wallet=wallet,
+            day_of_month=1, start_date=date(2026, 1, 1),
+        )
+
+        user.delete()
+
+        self.assertFalse(User.objects.filter(pk=user.pk).exists())
+        self.assertFalse(Category.objects.filter(pk=category.pk).exists())
+        self.assertFalse(Transaction.objects.exists())

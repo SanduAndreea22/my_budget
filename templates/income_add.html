@@ -97,11 +97,11 @@
       </form>
     {% elif not categories %}
       <div class="glass-card" style="margin-top:14px;padding:22px;text-align:center;">
-        <div style="font-weight:900;font-size:16px;margin-bottom:8px;">You don't have any categories yet</div>
+        <div style="font-weight:900;font-size:16px;margin-bottom:8px;">You don't have any income categories yet</div>
         <p class="muted" style="margin:0 0 16px;">
-          Create a category first (e.g. Salary, Food, Rent) — you'll use it to organize this and future transactions.
+          Create one first (e.g. Salary, Freelance, Bonus) — you'll use it to organize this and future income.
         </p>
-        <a class="btn" href="{% url 'category_add' %}?next={{ request.path|urlencode }}">+ Create a category</a>
+        <a class="btn" href="{% url 'category_add' %}?next={{ request.path|urlencode }}&type=income">+ Create a category</a>
       </div>
     {% else %}
       <div class="glass-card" style="margin-top:14px;padding:22px;text-align:center;">

@@ -12,7 +12,7 @@ class CategoryForm(forms.ModelForm):
 
     class Meta:
         model = Category
-        fields = ["name", "icon", "color"]
+        fields = ["name", "type", "icon", "color"]
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "Category name (e.g. Salary, Food)"}),
             "color": forms.TextInput(attrs={"type": "color"}),
@@ -126,7 +126,10 @@ class BudgetLimitForm(forms.ModelForm):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if self.user is not None:
-            self.fields["category"].queryset = Category.objects.filter(user=self.user).order_by("name")
+            # A spending limit only makes sense for an expense category.
+            self.fields["category"].queryset = Category.objects.filter(
+                user=self.user, type=Category.EXPENSE
+            ).order_by("name")
 
     def clean(self):
         cleaned_data = super().clean()

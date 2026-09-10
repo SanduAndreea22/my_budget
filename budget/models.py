@@ -8,8 +8,13 @@ validate_hex_color = RegexValidator(
 )
 
 class Category(models.Model):
+    INCOME = "income"
+    EXPENSE = "expense"
+    TYPE_CHOICES = [(INCOME, "Income"), (EXPENSE, "Expense")]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="categories")
     name = models.CharField(max_length=50)
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default=EXPENSE)
     icon = models.CharField(max_length=32, blank=True, default="")
     color = models.CharField(max_length=20, blank=True, default="", validators=[validate_hex_color])
 

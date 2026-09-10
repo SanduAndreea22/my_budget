@@ -173,7 +173,10 @@ def _parse_date(raw_date):
 
 
 def _add_transaction_view(request, tx_type, template_name):
-    categories = Category.objects.filter(user=request.user).order_by("name")
+    # Category.type uses the same "income"/"expense" values as tx_type, so
+    # the dropdown here only ever offers categories that make sense for
+    # the transaction being added (no more "Food" showing up on Add Income).
+    categories = Category.objects.filter(user=request.user, type=tx_type).order_by("name")
     wallets = Wallet.objects.filter(user=request.user).order_by("name")
 
     if request.method == "POST":
@@ -261,7 +264,11 @@ def category_add_view(request):
                 messages.success(request, "Category created!")
                 return redirect(next_url) if next_url else redirect("categories")
     else:
-        form = CategoryForm(user=request.user)
+        initial = {}
+        requested_type = request.GET.get("type")
+        if requested_type in dict(Category.TYPE_CHOICES):
+            initial["type"] = requested_type
+        form = CategoryForm(user=request.user, initial=initial)
 
     return render(request, "category_add.html", {"form": form, "next": next_url, "mode": "add"})
 
@@ -587,10 +594,12 @@ def _month_end(d: date) -> date:
 
 
 def _budget_status_rows(user, month_start, month_end):
-    """Spend vs. limit per category for one month, with over/near-limit
-    flags. Shared by the budgets page (all categories) and the dashboard
-    proactive alert (only categories that need attention)."""
-    categories = Category.objects.filter(user=user).order_by("name")
+    """Spend vs. limit per expense category for one month, with over/near-
+    limit flags. Shared by the budgets page (all expense categories) and
+    the dashboard proactive alert (only categories that need attention).
+    Income categories (e.g. Salary) never appear here — a spending limit
+    doesn't make sense for money coming in."""
+    categories = Category.objects.filter(user=user, type=Category.EXPENSE).order_by("name")
 
     spent_map = {
         row["category_id"]: (row["total"] or Decimal("0"))

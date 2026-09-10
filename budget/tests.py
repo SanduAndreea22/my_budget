@@ -112,12 +112,12 @@ class CategoryFormTests(TestCase):
 
     def test_duplicate_category_name_shows_error_instead_of_crashing(self):
         Category.objects.create(user=self.user, name="Food")
-        response = self.client.post(reverse("category_add"), {"name": "Food", "icon": "", "color": ""})
+        response = self.client.post(reverse("category_add"), {"name": "Food", "type": "expense", "icon": "", "color": ""})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Category.objects.filter(user=self.user).count(), 1)
 
     def test_blank_category_name_is_rejected(self):
-        response = self.client.post(reverse("category_add"), {"name": "   ", "icon": "", "color": ""})
+        response = self.client.post(reverse("category_add"), {"name": "   ", "type": "expense", "icon": "", "color": ""})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Category.objects.count(), 0)
 
@@ -131,7 +131,7 @@ class CategoryFormTests(TestCase):
         # ends up inside a style="background: ...;" attribute on every
         # page listing categories.
         response = self.client.post(reverse("category_add"), {
-            "name": "Sketchy", "icon": "", "color": "red; position:fixed",
+            "name": "Sketchy", "type": "expense", "icon": "", "color": "red; position:fixed",
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Category.objects.filter(name="Sketchy").count(), 0)
@@ -141,7 +141,7 @@ class CategoryFormTests(TestCase):
         self.assertEqual(response.context["form"].initial.get("color"), "#6366f1")
 
     def test_can_create_category_with_a_picked_color(self):
-        response = self.client.post(reverse("category_add"), {"name": "Fun", "icon": "", "color": "#ff00aa"})
+        response = self.client.post(reverse("category_add"), {"name": "Fun", "type": "expense", "icon": "", "color": "#ff00aa"})
         self.assertRedirects(response, reverse("categories"))
         self.assertEqual(Category.objects.get(name="Fun").color, "#ff00aa")
 
@@ -150,12 +150,21 @@ class CategoryFormTests(TestCase):
         # code points long — this used to trip the old max_length=10 limit
         # with a confusing "has at most 10 characters" error.
         family_emoji = "👨‍👩‍👧‍👦"
-        response = self.client.post(reverse("category_add"), {"name": "Family", "icon": family_emoji, "color": ""})
+        response = self.client.post(reverse("category_add"), {"name": "Family", "type": "expense", "icon": family_emoji, "color": ""})
         self.assertRedirects(response, reverse("categories"))
         self.assertEqual(Category.objects.get(name="Family").icon, family_emoji)
 
+    def test_can_create_an_income_category(self):
+        response = self.client.post(reverse("category_add"), {"name": "Bonus", "type": "income", "icon": "", "color": ""})
+        self.assertRedirects(response, reverse("categories"))
+        self.assertEqual(Category.objects.get(name="Bonus").type, Category.INCOME)
+
+    def test_category_add_prefills_type_from_query_param(self):
+        response = self.client.get(reverse("category_add"), {"type": "income"})
+        self.assertEqual(response.context["form"].initial.get("type"), "income")
+
     def test_overly_long_icon_gets_a_friendly_error_message(self):
-        response = self.client.post(reverse("category_add"), {"name": "Long", "icon": "x" * 40, "color": ""})
+        response = self.client.post(reverse("category_add"), {"name": "Long", "type": "expense", "icon": "x" * 40, "color": ""})
         self.assertContains(response, "try a single emoji instead")
         self.assertEqual(Category.objects.filter(name="Long").count(), 0)
 
@@ -355,28 +364,35 @@ class EmptyCategoriesStateTests(TestCase):
 
     def test_add_income_shows_create_category_prompt_when_no_categories(self):
         response = self.client.get(reverse("add_income"))
-        self.assertContains(response, "You don't have any categories yet")
+        self.assertContains(response, "You don't have any income categories yet")
         self.assertContains(response, reverse("category_add"))
         self.assertNotContains(response, "<select name=\"category\"")
 
     def test_add_expense_shows_create_category_prompt_when_no_categories(self):
         response = self.client.get(reverse("add_expense"))
-        self.assertContains(response, "You don't have any categories yet")
+        self.assertContains(response, "You don't have any expense categories yet")
         self.assertNotContains(response, "<select name=\"category\"")
 
-    def test_add_income_shows_wallet_prompt_once_a_category_exists_but_no_wallet(self):
-        Category.objects.create(user=self.user, name="Salary")
+    def test_add_income_ignores_expense_only_categories(self):
+        # A category that exists but is typed as an expense category
+        # shouldn't count as "you have an income category" on Add Income.
+        Category.objects.create(user=self.user, name="Food", type=Category.EXPENSE)
         response = self.client.get(reverse("add_income"))
-        self.assertNotContains(response, "You don't have any categories yet")
+        self.assertContains(response, "You don't have any income categories yet")
+
+    def test_add_income_shows_wallet_prompt_once_a_category_exists_but_no_wallet(self):
+        Category.objects.create(user=self.user, name="Salary", type=Category.INCOME)
+        response = self.client.get(reverse("add_income"))
+        self.assertNotContains(response, "You don't have any income categories yet")
         self.assertContains(response, "You don't have any wallets yet")
         self.assertContains(response, reverse("wallet_add"))
         self.assertNotContains(response, "<select name=\"category\"")
 
     def test_add_income_shows_form_once_a_category_and_wallet_exist(self):
-        Category.objects.create(user=self.user, name="Salary")
+        Category.objects.create(user=self.user, name="Salary", type=Category.INCOME)
         Wallet.objects.create(user=self.user, name="Cash")
         response = self.client.get(reverse("add_income"))
-        self.assertNotContains(response, "You don't have any categories yet")
+        self.assertNotContains(response, "You don't have any income categories yet")
         self.assertNotContains(response, "You don't have any wallets yet")
         self.assertContains(response, "<select name=\"category\"")
         self.assertContains(response, "<select name=\"wallet\"")
@@ -608,9 +624,12 @@ class WalletTests(TestCase):
         self.assertEqual(balances[card.id], 500)
 
     def test_only_own_wallets_appear_in_add_transaction_dropdown(self):
+        # self.category ("Food", from setUp) defaults to an expense
+        # category, so add_expense is the flow that actually reaches the
+        # wallet dropdown here.
         own_wallet = Wallet.objects.create(user=self.user, name="Cash")
         Wallet.objects.create(user=self.other_user, name="Not mine")
-        response = self.client.get(reverse("add_income"))
+        response = self.client.get(reverse("add_expense"))
         self.assertContains(response, "Cash")
         self.assertNotContains(response, "Not mine")
 

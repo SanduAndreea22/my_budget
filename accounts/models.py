@@ -35,6 +35,24 @@ class CustomUser(AbstractUser):
 
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="RON")
 
+    def delete(self, *args, **kwargs):
+        # budget.Category/Wallet are PROTECTed from Transaction,
+        # BudgetLimit and RecurringTransaction (so a user can't delete a
+        # category/wallet still in use) — but that same protection also
+        # blocks Django's own User -> Category/Wallet CASCADE when the
+        # user itself is deleted: those protecting rows still exist at
+        # collection time, even though they'd be deleted too via their
+        # own direct user=CASCADE. Clearing them first lets deleting a
+        # user (admin, shell, a future "delete my account" feature)
+        # cascade cleanly instead of raising ProtectedError. Imported
+        # locally to avoid accounts depending on budget at module load.
+        from budget.models import BudgetLimit, RecurringTransaction, Transaction
+
+        Transaction.objects.filter(user=self).delete()
+        BudgetLimit.objects.filter(user=self).delete()
+        RecurringTransaction.objects.filter(user=self).delete()
+        return super().delete(*args, **kwargs)
+
     class Meta:
         # email=unique=True above is case-sensitive at the DB level, but
         # every lookup in the app (login, password reset) matches
