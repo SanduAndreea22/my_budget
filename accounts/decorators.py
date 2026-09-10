@@ -1,3 +1,4 @@
+import os
 from functools import wraps
 
 from django.contrib import messages
@@ -7,6 +8,7 @@ from django.shortcuts import redirect
 
 def user_not_authenticated(function=None, redirect_url='/'):
     def decorator(view_func):
+        @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if request.user.is_authenticated:
                 return redirect(redirect_url)
@@ -21,10 +23,22 @@ def user_not_authenticated(function=None, redirect_url='/'):
     return decorator
 
 
+# Number of reverse-proxy hops in front of the app (e.g. Render's own
+# proxy = 1). Each hop APPENDS the address it saw to X-Forwarded-For, so
+# only the last NUM_PROXIES entries are trustworthy — anything earlier in
+# the list can be forged freely by the client. Set to 0 if the app is
+# reachable directly (no reverse proxy), which ignores the header
+# entirely and prevents IP spoofing from bypassing the rate limiter below.
+_NUM_TRUSTED_PROXIES = int(os.getenv("NUM_PROXIES", "1"))
+
+
 def _client_ip(request):
-    forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if forwarded_for:
-        return forwarded_for.split(',')[0].strip()
+    if _NUM_TRUSTED_PROXIES > 0:
+        forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if forwarded_for:
+            hops = [ip.strip() for ip in forwarded_for.split(',') if ip.strip()]
+            if len(hops) >= _NUM_TRUSTED_PROXIES:
+                return hops[-_NUM_TRUSTED_PROXIES]
     return request.META.get('REMOTE_ADDR', 'unknown')
 
 

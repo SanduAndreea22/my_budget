@@ -39,6 +39,7 @@ def register_view(request):
             html_message = render_to_string('accounts/activation_email.html', {
                 'user': user,
                 'domain': current_site.domain,
+                'scheme': 'https' if request.is_secure() else 'http',
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': account_activation_token.make_token(user),
             })
@@ -129,6 +130,7 @@ def password_reset_request_view(request):
                 html_message = render_to_string('accounts/password_reset_email.html', {
                     'user': user,
                     'domain': current_site.domain,
+                    'scheme': 'https' if request.is_secure() else 'http',
                     'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                     'token': default_token_generator.make_token(user),
                 })

@@ -14,7 +14,7 @@ admin.site.login = ratelimit_post('admin_login', limit=10, period_seconds=300)(a
 
 # Configurable so production can move it off the guessable "admin/" path
 # (set ADMIN_URL, e.g. "admin-a1b2c3/", in the environment).
-ADMIN_URL = os.getenv("ADMIN_URL", "admin/")
+ADMIN_URL = os.getenv("ADMIN_URL") or "admin/"
 
 urlpatterns = [
     path(ADMIN_URL, admin.site.urls),
