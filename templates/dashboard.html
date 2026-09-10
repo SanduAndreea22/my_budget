@@ -29,7 +29,7 @@
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Total Income</div>
-        <div style="font-size:26px;font-weight:900;color:#22c55e;"
+        <div id="dash-income" style="font-size:26px;font-weight:900;color:#22c55e;"
              data-countup="{{ total_income }}" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
         </div>
@@ -37,7 +37,7 @@
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Total Expense</div>
-        <div style="font-size:26px;font-weight:900;color:#ef4444;"
+        <div id="dash-expense" style="font-size:26px;font-weight:900;color:#ef4444;"
              data-countup="{{ total_expense }}" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
         </div>
@@ -50,7 +50,7 @@
           font-weight:900;
           color:{% if balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};
         "
-             data-countup="{{ balance }}" data-countup-suffix=" {{ currency }}">
+             data-countup-diff="dash-income,dash-expense" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
         </div>
       </div>
