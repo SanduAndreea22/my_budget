@@ -18,8 +18,7 @@
   <div style="position:relative;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
-        <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Add Expense</h1>
-        <p class="muted" style="margin:0;">Save a new expense transaction to your budget.</p>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Add Expense</h1>
       </div>
 
       <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Back</a>
@@ -47,7 +46,6 @@
         <div style="display:grid;gap:6px;">
           <label style="font-weight:900;color:rgba(255,255,255,.86);">Amount ({{ user.currency }})</label>
           <input type="number" step="0.01" min="0.01" name="amount" placeholder="e.g. 125.50" value="{{ values.amount }}" required>
-          <div class="muted" style="font-size:13px;">Tip: keep expenses categorized for better stats.</div>
         </div>
 
         <!-- Date + Category -->
