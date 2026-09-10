@@ -93,6 +93,45 @@ body::before{
 }
 .nav__link:focus{outline:none; box-shadow: var(--focus)}
 
+/* SUBNAV: persistent section links for authenticated users, so getting
+   from e.g. Transactions to Budgets doesn't require detouring back
+   through Dashboard first. Horizontally scrollable on narrow screens
+   instead of wrapping into a tall block. */
+.subnav{
+  position:sticky; top:74px; z-index:49;
+  background: rgba(10,12,24,.55);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(18px);
+  overflow-x: auto;
+}
+.subnav__inner{
+  display:flex;
+  gap:6px;
+  padding:10px 0;
+  white-space:nowrap;
+}
+.subnav__link{
+  flex-shrink:0;
+  text-decoration:none;
+  color: rgba(255,255,255,.65);
+  font-weight:700;
+  font-size:13px;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid transparent;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.subnav__link:hover{
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.92);
+}
+.subnav__link--active{
+  background: rgba(99,102,241,.20);
+  border-color: rgba(99,102,241,.40);
+  color: #fff;
+}
+.subnav__link:focus{outline:none; box-shadow: var(--focus)}
+
 /* BUTTONS: neon gradient + glow */
 .btn{
   display:inline-flex;align-items:center;justify-content:center;

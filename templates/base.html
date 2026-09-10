@@ -29,6 +29,26 @@
     </div>
   </nav>
 
+  {% if user.is_authenticated %}
+    {% with view_name=request.resolver_match.view_name %}
+      <nav class="subnav">
+        <div class="container subnav__inner">
+          <a class="subnav__link{% if view_name == 'dashboard' %} subnav__link--active{% endif %}" href="{% url 'dashboard' %}">Dashboard</a>
+          <a class="subnav__link{% if view_name == 'transactions' %} subnav__link--active{% endif %}" href="{% url 'transactions' %}">Transactions</a>
+          <a class="subnav__link{% if view_name == 'categories' %} subnav__link--active{% endif %}" href="{% url 'categories' %}">Categories</a>
+          <a class="subnav__link{% if view_name == 'wallets' %} subnav__link--active{% endif %}" href="{% url 'wallets' %}">Wallets</a>
+          <a class="subnav__link{% if view_name == 'budgets' %} subnav__link--active{% endif %}" href="{% url 'budgets' %}">Budgets</a>
+          <a class="subnav__link{% if view_name == 'recurring_transactions' %} subnav__link--active{% endif %}" href="{% url 'recurring_transactions' %}">Recurring</a>
+          <a class="subnav__link{% if view_name == 'savings_goals' %} subnav__link--active{% endif %}" href="{% url 'savings_goals' %}">Goals</a>
+          <a class="subnav__link{% if view_name == 'charts' %} subnav__link--active{% endif %}" href="{% url 'charts' %}">Charts</a>
+          <a class="subnav__link{% if view_name == 'compare' %} subnav__link--active{% endif %}" href="{% url 'compare' %}">Compare</a>
+          <a class="subnav__link{% if view_name == 'activity_log' %} subnav__link--active{% endif %}" href="{% url 'activity_log' %}">Activity</a>
+          <a class="subnav__link{% if view_name == 'accounts:profile' %} subnav__link--active{% endif %}" href="{% url 'accounts:profile' username=user.username %}">Profile</a>
+        </div>
+      </nav>
+    {% endwith %}
+  {% endif %}
+
   <main class="container page">
     {% if messages %}
       <div style="display:grid;gap:10px;margin-bottom:18px;">
