@@ -4,13 +4,17 @@
 {% block content %}
 <section class="glass-card" style="max-width:560px;margin:auto;padding:22px;">
   <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Delete category?</h1>
-  <p class="muted" style="margin:0 0 14px;">
-    {% if tx_count %}
-      This will also permanently delete {{ tx_count }} transaction{{ tx_count|pluralize }} in this category. This cannot be undone.
-    {% else %}
-      This action cannot be undone.
-    {% endif %}
-  </p>
+  {% if tx_count or budget_count or recurring_count %}
+    <p class="muted" style="margin:0 0 10px;">This will also permanently delete:</p>
+    <ul class="muted" style="margin:0 0 14px;padding-left:20px;">
+      {% if tx_count %}<li>{{ tx_count }} transaction{{ tx_count|pluralize }}</li>{% endif %}
+      {% if budget_count %}<li>{{ budget_count }} budget limit{{ budget_count|pluralize }}</li>{% endif %}
+      {% if recurring_count %}<li>{{ recurring_count }} recurring transaction{{ recurring_count|pluralize }}</li>{% endif %}
+    </ul>
+    <p class="muted" style="margin:0 0 14px;">This cannot be undone.</p>
+  {% else %}
+    <p class="muted" style="margin:0 0 14px;">This action cannot be undone.</p>
+  {% endif %}
 
   <div class="glass-card" style="padding:14px;display:flex;align-items:center;gap:12px;">
     <div style="

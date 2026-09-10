@@ -1,6 +1,9 @@
+import logging
 import threading
 
 import resend
+
+logger = logging.getLogger(__name__)
 
 
 def send_email_async(to, subject, html_message):
@@ -16,8 +19,8 @@ def send_email_async(to, subject, html_message):
                 "subject": subject,
                 "html": html_message,
             })
-            print("LOG: Email trimis cu succes prin Resend API!")
-        except Exception as e:
-            print(f"LOG EROARE RESEND: {e}")
+            logger.info("Email sent successfully via Resend API (subject=%r)", subject)
+        except Exception:
+            logger.exception("Failed to send email via Resend API (subject=%r)", subject)
 
     threading.Thread(target=_send).start()

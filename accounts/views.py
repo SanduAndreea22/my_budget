@@ -1,5 +1,6 @@
 import os
 import resend
+from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -29,8 +30,14 @@ def register_view(request):
         if form.is_valid():
             user = form.save(commit=False)
             user.is_active = True
-            user.save()
-
+            try:
+                user.save()
+            except IntegrityError:
+                # Someone else registered the same email (or the same
+                # derived username) in the tiny window between the form's
+                # own uniqueness check and this save.
+                form.add_error('email', 'An account with this email already exists.')
+                return render(request, 'accounts/register.html', {'form': form})
 
             current_site = get_current_site(request)
             mail_subject = 'Welcome to MyBudget'

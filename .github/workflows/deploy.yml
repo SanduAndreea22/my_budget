@@ -26,5 +26,9 @@ jobs:
         with:
           context: .
           push: true
-          # Numele pachetului este fixat aici:
-          tags: ghcr.io/sanduandreea22/my-budget:latest
+          # Package name is fixed here. Also tag with the commit SHA
+          # alongside :latest, so a previously published image can still
+          # be pulled/rolled back to after a new push overwrites :latest.
+          tags: |
+            ghcr.io/sanduandreea22/my-budget:latest
+            ghcr.io/sanduandreea22/my-budget:${{ github.sha }}

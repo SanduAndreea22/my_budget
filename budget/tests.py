@@ -125,6 +125,17 @@ class CategoryFormTests(TestCase):
         response = self.client.get(reverse("category_add"))
         self.assertContains(response, 'type="color"')
 
+    def test_rejects_a_color_that_is_not_a_hex_code(self):
+        # The type="color" widget is just a UI hint — a raw POST (bypassing
+        # the browser picker) could otherwise store arbitrary text that
+        # ends up inside a style="background: ...;" attribute on every
+        # page listing categories.
+        response = self.client.post(reverse("category_add"), {
+            "name": "Sketchy", "icon": "", "color": "red; position:fixed",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Category.objects.filter(name="Sketchy").count(), 0)
+
     def test_color_field_has_a_sensible_default_for_new_categories(self):
         response = self.client.get(reverse("category_add"))
         self.assertEqual(response.context["form"].initial.get("color"), "#6366f1")
@@ -351,6 +362,30 @@ class BudgetLimitFormTests(TestCase):
         b = BudgetLimit.objects.create(user=self.user, category=self.category, month=date(2026, 5, 1), limit=300)
         response = self.client.get(reverse("budget_edit", args=[b.id]))
         self.assertContains(response, 'value="2026-05"')
+
+    def test_duplicate_limit_for_same_category_and_month_shows_error_instead_of_crashing(self):
+        BudgetLimit.objects.create(user=self.user, category=self.category, month=date(2026, 3, 1), limit=500)
+        response = self.client.post(reverse("budget_add"), {
+            "category": self.category.id,
+            "month": "2026-03",
+            "limit": "700",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "already have a limit set")
+        self.assertEqual(BudgetLimit.objects.filter(user=self.user, category=self.category, month=date(2026, 3, 1)).count(), 1)
+
+    def test_editing_a_limit_to_clash_with_another_shows_error_instead_of_crashing(self):
+        BudgetLimit.objects.create(user=self.user, category=self.category, month=date(2026, 3, 1), limit=500)
+        other = BudgetLimit.objects.create(user=self.user, category=self.category, month=date(2026, 4, 1), limit=300)
+        response = self.client.post(reverse("budget_edit", args=[other.id]), {
+            "category": self.category.id,
+            "month": "2026-03",
+            "limit": "300",
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "already have a limit set")
+        other.refresh_from_db()
+        self.assertEqual(other.month, date(2026, 4, 1))
 
 
 class BudgetsViewNoLimitStateTests(TestCase):

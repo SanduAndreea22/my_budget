@@ -123,10 +123,23 @@ class BudgetLimitForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop("user", None)
+        self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
-        if user is not None:
-            self.fields["category"].queryset = Category.objects.filter(user=user).order_by("name")
+        if self.user is not None:
+            self.fields["category"].queryset = Category.objects.filter(user=self.user).order_by("name")
+
+    def clean(self):
+        cleaned_data = super().clean()
+        category = cleaned_data.get("category")
+        month = cleaned_data.get("month")
+        if category and month and self.user is not None:
+            normalized_month = month.replace(day=1)
+            qs = BudgetLimit.objects.filter(user=self.user, category=category, month=normalized_month)
+            if self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                self.add_error(None, "You already have a limit set for this category and month.")
+        return cleaned_data
 
 
 class SavingsGoalForm(forms.ModelForm):

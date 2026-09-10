@@ -7,8 +7,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db import models
-from django.db.models import Sum
+from django.db import IntegrityError, models, transaction
+from django.db.models import F, Sum
 from django.db.models.functions import TruncMonth, TruncYear
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -38,6 +38,19 @@ def _log_activity(user, action, model_name, object_repr):
     )
 
 
+def _save_avoiding_race(form, field_name, message):
+    """Save a ModelForm, converting a DB-level uniqueness race (a
+    concurrent duplicate submission that slipped past the form's own
+    pre-save clean() check) into a normal field error instead of an
+    unhandled 500. Returns True on success."""
+    try:
+        form.save()
+    except IntegrityError:
+        form.add_error(field_name, message)
+        return False
+    return True
+
+
 def _transaction_repr(tx, currency):
     return f"{tx.get_type_display()} · {tx.category.name} · {tx.wallet.name} · {tx.amount} {currency}"
 
@@ -60,35 +73,52 @@ def generate_due_recurring_transactions(user, today=None):
     """Create real Transaction rows for any recurring transaction whose next
     occurrence has arrived. Catches up on every month missed since the last
     generated occurrence (e.g. if the user hasn't opened the app in a
-    while), not just the most recent one."""
+    while), not just the most recent one.
+
+    Each recurring transaction is locked (select_for_update) for the
+    duration of its own generation, so two overlapping callers (e.g. the
+    cron command and a live dashboard visit racing for the same user)
+    can't both read the same last_generated and double-book the same
+    occurrence — the second caller blocks until the first commits, then
+    re-reads the now-advanced last_generated and correctly generates
+    nothing further."""
     today = today or date.today()
     currency = user.currency
 
-    for r in RecurringTransaction.objects.filter(user=user, is_active=True, start_date__lte=today):
-        if r.last_generated:
-            candidate = _next_occurrence(r.last_generated, r.day_of_month)
-        else:
-            candidate = date(r.start_date.year, r.start_date.month, r.day_of_month)
-            if candidate < r.start_date:
-                candidate = _next_occurrence(candidate, r.day_of_month)
+    recurring_ids = list(
+        RecurringTransaction.objects.filter(
+            user=user, is_active=True, start_date__lte=today
+        ).values_list("pk", flat=True)
+    )
 
-        while candidate <= today:
-            tx = Transaction.objects.create(
-                user=user,
-                type=r.type,
-                amount=r.amount,
-                date=candidate,
-                note=r.note,
-                category=r.category,
-                wallet=r.wallet,
-            )
-            _log_activity(
-                user, ActivityLog.CREATE, "Transaction",
-                f"{_transaction_repr(tx, currency)} (recurring)",
-            )
-            r.last_generated = candidate
-            r.save(update_fields=["last_generated"])
-            candidate = _next_occurrence(candidate, r.day_of_month)
+    for recurring_id in recurring_ids:
+        with transaction.atomic():
+            r = RecurringTransaction.objects.select_for_update().get(pk=recurring_id)
+
+            if r.last_generated:
+                candidate = _next_occurrence(r.last_generated, r.day_of_month)
+            else:
+                candidate = date(r.start_date.year, r.start_date.month, r.day_of_month)
+                if candidate < r.start_date:
+                    candidate = _next_occurrence(candidate, r.day_of_month)
+
+            while candidate <= today:
+                tx = Transaction.objects.create(
+                    user=user,
+                    type=r.type,
+                    amount=r.amount,
+                    date=candidate,
+                    note=r.note,
+                    category=r.category,
+                    wallet=r.wallet,
+                )
+                _log_activity(
+                    user, ActivityLog.CREATE, "Transaction",
+                    f"{_transaction_repr(tx, currency)} (recurring)",
+                )
+                r.last_generated = candidate
+                r.save(update_fields=["last_generated"])
+                candidate = _next_occurrence(candidate, r.day_of_month)
 
 
 @login_required
@@ -227,9 +257,9 @@ def category_add_view(request):
     if request.method == "POST":
         form = CategoryForm(request.POST, user=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Category created!")
-            return redirect(next_url) if next_url else redirect("categories")
+            if _save_avoiding_race(form, "name", "You already have a category with this name."):
+                messages.success(request, "Category created!")
+                return redirect(next_url) if next_url else redirect("categories")
     else:
         form = CategoryForm(user=request.user)
 
@@ -243,9 +273,9 @@ def category_edit_view(request, pk):
     if request.method == "POST":
         form = CategoryForm(request.POST, instance=category, user=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Category updated.")
-            return redirect("categories")
+            if _save_avoiding_race(form, "name", "You already have a category with this name."):
+                messages.success(request, "Category updated.")
+                return redirect("categories")
     else:
         form = CategoryForm(instance=category, user=request.user)
 
@@ -264,6 +294,8 @@ def category_delete_view(request, pk):
     return render(request, "category_confirm_delete.html", {
         "category": category,
         "tx_count": category.transactions.count(),
+        "budget_count": category.budget_limits.count(),
+        "recurring_count": category.recurring_transactions.count(),
     })
 
 
@@ -295,9 +327,9 @@ def wallet_add_view(request):
     if request.method == "POST":
         form = WalletForm(request.POST, user=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Wallet created!")
-            return redirect(next_url) if next_url else redirect("wallets")
+            if _save_avoiding_race(form, "name", "You already have a wallet with this name."):
+                messages.success(request, "Wallet created!")
+                return redirect(next_url) if next_url else redirect("wallets")
     else:
         form = WalletForm(user=request.user)
 
@@ -311,9 +343,9 @@ def wallet_edit_view(request, pk):
     if request.method == "POST":
         form = WalletForm(request.POST, instance=wallet, user=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, "Wallet updated.")
-            return redirect("wallets")
+            if _save_avoiding_race(form, "name", "You already have a wallet with this name."):
+                messages.success(request, "Wallet updated.")
+                return redirect("wallets")
     else:
         form = WalletForm(instance=wallet, user=request.user)
 
@@ -332,6 +364,7 @@ def wallet_delete_view(request, pk):
     return render(request, "wallet_confirm_delete.html", {
         "wallet": wallet,
         "tx_count": wallet.transactions.count(),
+        "recurring_count": wallet.recurring_transactions.count(),
     })
 
 
@@ -615,7 +648,11 @@ def budget_add_view(request):
             obj = form.save(commit=False)
             obj.user = request.user
             obj.month = _month_start(obj.month)  # normalize
-            obj.save()
+            try:
+                obj.save()
+            except IntegrityError:
+                form.add_error(None, "You already have a limit set for this category and month.")
+                return render(request, "budget_form.html", {"form": form, "mode": "add"})
             _log_activity(request.user, ActivityLog.CREATE, "Budget Limit", _budget_limit_repr(obj, request.user.currency))
             messages.success(request, "Budget limit saved.")
             return redirect("budgets")
@@ -634,7 +671,11 @@ def budget_edit_view(request, pk):
         if form.is_valid():
             obj = form.save(commit=False)
             obj.month = _month_start(obj.month)
-            obj.save()
+            try:
+                obj.save()
+            except IntegrityError:
+                form.add_error(None, "You already have a limit set for this category and month.")
+                return render(request, "budget_form.html", {"form": form, "mode": "edit", "budget": b})
             _log_activity(request.user, ActivityLog.UPDATE, "Budget Limit", _budget_limit_repr(obj, request.user.currency))
             messages.success(request, "Budget limit updated.")
             return redirect("budgets")
@@ -869,9 +910,15 @@ def savings_goal_add_funds_view(request, pk):
         if amount is None:
             messages.error(request, "Please enter a valid amount greater than zero.")
         else:
-            was_complete = goal.saved_amount >= goal.target_amount
-            goal.saved_amount = goal.saved_amount + amount
-            goal.save()
+            # Locked read + a DB-side F() increment instead of a Python
+            # read-modify-write, so two concurrent "add funds" submissions
+            # for the same goal can't silently drop one of the amounts.
+            with transaction.atomic():
+                goal = SavingsGoal.objects.select_for_update().get(pk=goal.pk)
+                was_complete = goal.saved_amount >= goal.target_amount
+                SavingsGoal.objects.filter(pk=goal.pk).update(saved_amount=F("saved_amount") + amount)
+                goal.refresh_from_db(fields=["saved_amount"])
+
             _log_activity(
                 request.user, ActivityLog.UPDATE, "Savings Goal",
                 f"{goal.name} · added {amount} {request.user.currency}",
@@ -925,11 +972,13 @@ def recurring_add_view(request):
     categories = Category.objects.filter(user=request.user).order_by("name")
     wallets = Wallet.objects.filter(user=request.user).order_by("name")
 
-    if not categories.exists() or not wallets.exists():
+    missing_categories = not categories.exists()
+    missing_wallets = not wallets.exists()
+    if missing_categories or missing_wallets:
         return render(request, "recurring_transaction_form.html", {
             "mode": "add",
-            "missing_categories": not categories.exists(),
-            "missing_wallets": not wallets.exists(),
+            "missing_categories": missing_categories,
+            "missing_wallets": missing_wallets,
         })
 
     if request.method == "POST":

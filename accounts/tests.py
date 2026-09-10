@@ -175,3 +175,28 @@ class PasswordResetTests(TestCase):
         )
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("oldpass123"))
+
+
+class ProfileImageDefaultTests(TestCase):
+    def test_new_user_has_no_image_so_the_template_placeholder_actually_shows(self):
+        # image used to default to "default/user.jpg", a path nothing ever
+        # ships to the media store — that made `user.image` truthy and
+        # broke the profile template's `{% if user.image %}` fallback,
+        # rendering a broken <img> instead of the placeholder icon.
+        user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.assertFalse(user.image)
+
+    def test_profile_page_does_not_render_an_image_tag_without_an_upload(self):
+        user = User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        self.client.force_login(user)
+        response = self.client.get(reverse("accounts:profile", args=[user.username]))
+        self.assertNotContains(response, "<img")
+
+
+class EmailCaseInsensitiveUniquenessTests(TestCase):
+    def test_cannot_create_two_accounts_differing_only_by_email_case(self):
+        from django.db import IntegrityError
+
+        User.objects.create_user(username="alice", email="alice@example.com", password="pass12345")
+        with self.assertRaises(IntegrityError):
+            User.objects.create_user(username="alice2", email="Alice@Example.com", password="pass12345")

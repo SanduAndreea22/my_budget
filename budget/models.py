@@ -1,12 +1,17 @@
 from django.conf import settings
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+
+validate_hex_color = RegexValidator(
+    r"^#[0-9a-fA-F]{6}$",
+    "Enter a color as a 6-digit hex code, e.g. #6366f1.",
+)
 
 class Category(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="categories")
     name = models.CharField(max_length=50)
     icon = models.CharField(max_length=32, blank=True, default="")
-    color = models.CharField(max_length=20, blank=True, default="")
+    color = models.CharField(max_length=20, blank=True, default="", validators=[validate_hex_color])
 
     class Meta:
         unique_together = ("user", "name")
