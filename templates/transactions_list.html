@@ -60,57 +60,67 @@
     </div>
 
     <!-- Filters -->
-    <form method="GET" class="glass-card" style="margin-top:14px;padding:14px;display:grid;gap:12px;">
-      <div class="filter-grid">
-        <div style="display:grid;gap:6px;">
-          <label style="font-weight:900;color:rgba(255,255,255,.86);">Type</label>
-          <select name="type">
-            <option value="">All</option>
-            <option value="income" {% if filters.type == "income" %}selected{% endif %}>Income</option>
-            <option value="expense" {% if filters.type == "expense" %}selected{% endif %}>Expense</option>
-          </select>
+    <details class="glass-card filters-details" style="margin-top:14px;padding:14px;"
+      {% if filters.type or filters.category or filters.wallet or filters.from or filters.to %}open{% endif %}>
+      <summary style="cursor:pointer;font-weight:900;color:rgba(255,255,255,.86);">
+        Filters
+        {% if filters.type or filters.category or filters.wallet or filters.from or filters.to %}
+          <span class="muted" style="font-weight:700;font-size:13px;">· active</span>
+        {% endif %}
+      </summary>
+
+      <form method="GET" style="margin-top:14px;display:grid;gap:12px;">
+        <div class="filter-grid">
+          <div style="display:grid;gap:6px;">
+            <label style="font-weight:900;color:rgba(255,255,255,.86);">Type</label>
+            <select name="type">
+              <option value="">All</option>
+              <option value="income" {% if filters.type == "income" %}selected{% endif %}>Income</option>
+              <option value="expense" {% if filters.type == "expense" %}selected{% endif %}>Expense</option>
+            </select>
+          </div>
+
+          <div style="display:grid;gap:6px;">
+            <label style="font-weight:900;color:rgba(255,255,255,.86);">Category</label>
+            <select name="category">
+              <option value="">All</option>
+              {% for c in categories %}
+                <option value="{{ c.id }}" {% if filters.category == c.id|stringformat:"s" %}selected{% endif %}>
+                  {{ c.icon|default:"🏷️" }} {{ c.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div style="display:grid;gap:6px;">
+            <label style="font-weight:900;color:rgba(255,255,255,.86);">Wallet</label>
+            <select name="wallet">
+              <option value="">All</option>
+              {% for w in wallets %}
+                <option value="{{ w.id }}" {% if filters.wallet == w.id|stringformat:"s" %}selected{% endif %}>
+                  {{ w.icon|default:"💳" }} {{ w.name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div style="display:grid;gap:6px;">
+            <label style="font-weight:900;color:rgba(255,255,255,.86);">From</label>
+            <input type="date" name="from" value="{{ filters.from }}">
+          </div>
+
+          <div style="display:grid;gap:6px;">
+            <label style="font-weight:900;color:rgba(255,255,255,.86);">To</label>
+            <input type="date" name="to" value="{{ filters.to }}">
+          </div>
         </div>
 
-        <div style="display:grid;gap:6px;">
-          <label style="font-weight:900;color:rgba(255,255,255,.86);">Category</label>
-          <select name="category">
-            <option value="">All</option>
-            {% for c in categories %}
-              <option value="{{ c.id }}" {% if filters.category == c.id|stringformat:"s" %}selected{% endif %}>
-                {{ c.icon|default:"🏷️" }} {{ c.name }}
-              </option>
-            {% endfor %}
-          </select>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn" type="submit">Apply filters →</button>
+          <a class="btn btn--ghost" href="{% url 'transactions' %}">Reset</a>
         </div>
-
-        <div style="display:grid;gap:6px;">
-          <label style="font-weight:900;color:rgba(255,255,255,.86);">Wallet</label>
-          <select name="wallet">
-            <option value="">All</option>
-            {% for w in wallets %}
-              <option value="{{ w.id }}" {% if filters.wallet == w.id|stringformat:"s" %}selected{% endif %}>
-                {{ w.icon|default:"💳" }} {{ w.name }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div style="display:grid;gap:6px;">
-          <label style="font-weight:900;color:rgba(255,255,255,.86);">From</label>
-          <input type="date" name="from" value="{{ filters.from }}">
-        </div>
-
-        <div style="display:grid;gap:6px;">
-          <label style="font-weight:900;color:rgba(255,255,255,.86);">To</label>
-          <input type="date" name="to" value="{{ filters.to }}">
-        </div>
-      </div>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn" type="submit">Apply filters →</button>
-        <a class="btn btn--ghost" href="{% url 'transactions' %}">Reset</a>
-      </div>
-    </form>
+      </form>
+    </details>
 
     <!-- List -->
     <div style="margin-top:14px;display:grid;gap:10px;">
