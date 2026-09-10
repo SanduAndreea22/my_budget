@@ -1,94 +1,46 @@
 # MyBudget
 
-Know exactly where your money went, without opening a spreadsheet. MyBudget tracks income and expenses across multiple wallets, flags category budgets before you blow past them, and logs recurring bills automatically — built with Django, with a modern dark glass-style UI.
+Right now, your money is scattered across a bank app, a cash pile, and maybe a mental note about that subscription you forgot to cancel. You find out you overspent *after* it happens — at the worst possible moment, staring at a balance that doesn't make sense.
 
-**Live demo:** https://my-budget-or3r.onrender.com
-*(hosted on Render's free tier — the first request after inactivity can take 30-50s to wake up)*
+MyBudget puts all of it in one place. Every wallet, every category, every recurring bill — tracked automatically, so you know where you stand before the month surprises you.
+
+**Try it live:** https://my-budget-or3r.onrender.com
+*(free hosting — the first load after a while asleep can take 30-50 seconds to wake up, then it's instant)*
 
 ---
 
-## Key Features
+## What you get
 
-**Money tracking**
-- Multiple wallets (e.g. cash, bank, savings), each with its own balance
-- Custom categories with icons and colors, for income and expenses separately
-- Full transaction history — filter, edit, delete
-- **Recurring transactions**: set up a transaction once (rent, salary, a subscription) and it repeats automatically
-- **Savings goals**: set a target amount, add funds toward it over time, track progress
+**See your money clearly**
+- Every wallet you use — card, cash, savings — with its own running balance
+- Income and expenses sorted into categories you define, each with its own icon and color
+- A full, searchable history of every transaction
 
-**Budgeting & insight**
-- Monthly budget limits per category, with visual on-track/over-budget indicators
-- Interactive charts (Chart.js) for spending breakdown and trends
-- Month-to-month comparison view
-- Multi-currency support
+**Stop being surprised**
+- Set a monthly spending limit per category and get warned before you go over it, not after
+- Recurring bills and income (rent, salary, subscriptions) log themselves automatically, every month, without you lifting a finger
+- A visual month-by-month and year-over-year comparison, so patterns actually show up
 
-**Exports & accountability**
-- Export transactions as **CSV, Excel (.xlsx), or PDF** (PDF rendered server-side with WeasyPrint)
-- Activity log — an audit trail of account actions
+**Save toward something real**
+- Set a savings goal with a target amount, add money toward it whenever you can, and watch the progress bar move — with an actual celebration when you hit it
 
-**Account**
-- Registration with a welcome/activation email (Resend API, best-effort — accounts are usable immediately regardless of email delivery)
-- Rate-limited login/register (best-effort, per-IP, via cache) against scripted abuse
-- Profile with a custom avatar upload
+**Take your data with you**
+- Export any filtered view of your transactions as CSV, Excel, or a clean PDF report, whenever you need it for yourself, an accountant, or anyone else
 
-## Tech stack
+**Works the way you actually spend**
+- Multiple currencies supported
+- A private account — nobody sees your data but you
 
-- **Backend:** Django 6
-- **Database:** PostgreSQL (production), SQLite (local dev)
-- **Charts:** Chart.js
-- **Exports:** openpyxl (Excel), WeasyPrint (PDF)
-- **Email:** Resend API
-- **Static files:** WhiteNoise
-- **Testing:** 86 tests across `accounts`/`budget`
-- **Containerization:** Dockerfile; GitHub Actions builds and publishes the image to GHCR (`ghcr.io/sanduandreea22/my-budget`) on every push to `main`
-- **Hosting:** Render
+---
 
-## Architecture
+## Built by Andreea Tech
 
-Three apps, split by responsibility:
-
-| App | Responsibility |
-|---|---|
-| `accounts` | Custom user model (email-unique, avatar upload), registration/login, rate limiting |
-| `budget` | Wallets, categories, transactions, recurring transactions, budget limits, savings goals, exports, activity log |
-| `pages` | Public/marketing pages |
-
-Core models: `Wallet`, `Category`, `Transaction`, `RecurringTransaction`, `BudgetLimit`, `SavingsGoal`, `ActivityLog`.
-
-## Running locally
-
-```bash
-git clone https://github.com/SanduAndreea22/my_budget.git
-cd my_budget
-python -m venv venv
-venv\Scripts\activate        # or: source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env         # fill in your own values
-python manage.py migrate
-python manage.py runserver
-```
-
-`RESEND_API_KEY` is optional for local dev — without it, registration still works, the email attempt just logs an error to the console instead of sending.
-
-Run the test suite with:
-
-```bash
-python manage.py test
-```
-
-### Docker
-
-```bash
-docker build -t my-budget .
-docker run -p 8000:8000 --env-file .env my-budget
-```
-
-## Security notice
-
-This application is a portfolio/educational project. Avoid using real banking or sensitive financial data with it.
-
-## 👩‍💻 Author
+MyBudget is one of the products I've built end-to-end — from the first sketch to a live, working app people can actually use. If you're looking for someone to build the digital product behind your own business — a website, a booking system, an internal tool, anything that needs to work correctly and look like it was made on purpose — this is the kind of work I do.
 
 **Andreea Sandu**
 LinkedIn: [linkedin.com/in/andreealuizasandu](https://linkedin.com/in/andreealuizasandu)
 GitHub: [@SanduAndreea22](https://github.com/SanduAndreea22)
+
+---
+
+*A quick note: MyBudget is a real, actively developed product — but it's still early. Feel free to explore it with real numbers, just avoid using actual banking passwords or highly sensitive information for now.*
