@@ -1,6 +1,6 @@
 # MyBudget
 
-A personal finance and budgeting web app built with Django — multiple wallets, category budgets, recurring transactions, savings goals, and spending trends, with a modern dark glass-style UI.
+Know exactly where your money went, without opening a spreadsheet. MyBudget tracks income and expenses across multiple wallets, flags category budgets before you blow past them, and logs recurring bills automatically — built with Django, with a modern dark glass-style UI.
 
 **Live demo:** https://my-budget-or3r.onrender.com
 *(hosted on Render's free tier — the first request after inactivity can take 30-50s to wake up)*

@@ -459,6 +459,15 @@ class BudgetsViewNoLimitStateTests(TestCase):
         response = self.client.get(reverse("budgets"))
         self.assertContains(response, "No limit set for this category yet.")
 
+    def test_month_picker_renders_as_a_month_input(self):
+        response = self.client.get(reverse("budgets"))
+        self.assertContains(response, 'type="month"')
+
+    def test_month_query_param_selects_that_month(self):
+        response = self.client.get(reverse("budgets"), {"month": "2026-03"})
+        self.assertEqual(response.context["month"], date(2026, 3, 1))
+        self.assertContains(response, 'value="2026-03"')
+
 
 class SavingsGoalTests(TestCase):
     def setUp(self):

@@ -27,7 +27,7 @@
     <form method="GET" class="glass-card" style="margin-top:14px;padding:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:end;">
       <div style="display:grid;gap:6px;min-width:260px;">
         <label style="font-weight:900;color:rgba(255,255,255,.86);">Month</label>
-        <input type="date" name="month" value="{{ month|date:'Y-m-d' }}">
+        <input type="month" name="month" value="{{ month|date:'Y-m' }}">
       </div>
       <button class="btn" type="submit">Apply →</button>
 

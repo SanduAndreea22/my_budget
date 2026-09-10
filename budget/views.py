@@ -1,6 +1,6 @@
 import csv
 from calendar import monthrange
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
@@ -649,7 +649,7 @@ def budgets_view(request):
     month_str = request.GET.get("month", "").strip()
     if month_str:
         try:
-            selected = date.fromisoformat(month_str)
+            selected = datetime.strptime(month_str, "%Y-%m").date()
         except ValueError:
             selected = date.today()
     else:
