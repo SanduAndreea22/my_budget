@@ -87,6 +87,18 @@
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {
+      // Chart.js loads from a CDN — if that request fails (offline,
+      // blocked, CDN down), fail visibly instead of leaving an empty box.
+      if (typeof Chart === "undefined") {
+        document.querySelectorAll("#pieChart, #lineChart").forEach(function (canvas) {
+          canvas.parentElement.innerHTML =
+            '<p class="muted" style="text-align:center;padding:40px 0;">' +
+            "Couldn't load the chart library. Check your connection and reload the page." +
+            "</p>";
+        });
+        return;
+      }
+
       // 1. Pie Chart Logic
       {% if pie_values %}
       (function(){

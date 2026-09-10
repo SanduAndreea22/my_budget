@@ -35,7 +35,7 @@
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px;">
       <button class="btn" type="submit">Save →</button>
       {% if mode == "edit" %}
-        <a class="btn btn--ghost" href="{% url 'savings_goal_delete' goal.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+        <a class="btn btn--ghost btn--delete" href="{% url 'savings_goal_delete' goal.id %}">Delete</a>
       {% endif %}
     </div>
   </form>

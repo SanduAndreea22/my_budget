@@ -144,7 +144,7 @@
             </div>
 
             <a class="btn btn--ghost" href="{% url 'transaction_edit' t.id %}">Edit</a>
-            <a class="btn btn--ghost" href="{% url 'transaction_delete' t.id %}" style="border-color: rgba(236,72,153,.25);">
+            <a class="btn btn--ghost btn--delete" href="{% url 'transaction_delete' t.id %}">
               Delete
             </a>
           </div>

@@ -29,7 +29,7 @@
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Total Income</div>
-        <div style="font-size:26px;font-weight:900;"
+        <div style="font-size:26px;font-weight:900;color:#22c55e;"
              data-countup="{{ total_income }}" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
         </div>
@@ -37,7 +37,7 @@
 
       <div class="glass-card" style="padding:16px;">
         <div class="muted">Total Expense</div>
-        <div style="font-size:26px;font-weight:900;"
+        <div style="font-size:26px;font-weight:900;color:#ef4444;"
              data-countup="{{ total_expense }}" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
         </div>
@@ -74,7 +74,7 @@
                 {{ a.spent|floatformat:2 }} / {{ a.limit|floatformat:2 }} {{ currency }} · {{ a.pct }}% this month
               </div>
             </div>
-            <a class="btn btn--ghost btn--sm" href="{% url 'budgets' %}">View budgets</a>
+            <a class="btn btn--ghost btn--sm budget-alert__cta" href="{% url 'budgets' %}">View budgets</a>
           </div>
         {% endfor %}
       </div>

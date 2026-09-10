@@ -138,6 +138,20 @@ body::before{
   box-shadow: 0 22px 55px rgba(239,68,68,.30), 0 22px 55px rgba(236,72,153,.22);
 }
 
+/* Row-level "Delete" links (as opposed to the full .btn--danger on the
+   actual confirm-delete page): tinted background + red text, not just a
+   faint border, so it doesn't read as a same-weight twin of "Edit" next
+   to it in a list. */
+.btn--delete{
+  background: rgba(239,68,68,.14);
+  color: #fca5a5;
+  border: 1px solid rgba(239,68,68,.30);
+}
+.btn--delete:hover{
+  background: rgba(239,68,68,.22);
+  border-color: rgba(239,68,68,.45);
+}
+
 .btn--sm{
   padding:8px 12px;
   border-radius:12px;
@@ -182,6 +196,15 @@ input, select, textarea{
 textarea{min-height:110px; resize:vertical}
 input[type="file"]{padding:10px}
 input[type="color"]{width:64px; height:48px; padding:4px; cursor:pointer;}
+input[type="checkbox"], input[type="radio"]{
+  width:auto;
+  padding:0;
+  border-radius:4px;
+  box-shadow:none;
+  accent-color:#6366f1;
+  cursor:pointer;
+  vertical-align:middle;
+}
 input::placeholder, textarea::placeholder{color: rgba(255,255,255,.55)}
 select option{background:#0b102a; color:#fff} /* dropdown readable on dark bg */
 input:focus, select:focus, textarea:focus{box-shadow: var(--focus)}
@@ -227,12 +250,14 @@ a{color: rgba(255,255,255,.92)}
 }
 
 /* Dashboard "Quick add" — promised on the landing mockup, now actually
-   reachable from the dashboard without scrolling to the action rows. */
+   reachable from the dashboard without scrolling to the action rows.
+   Desktop already shows the same two actions inline above the fold, so
+   the FAB only earns its keep on small screens where that's not true. */
 .fab-group{
+  display:none;
   position:fixed;
   right:20px;
   bottom:20px;
-  display:flex;
   flex-direction:column;
   gap:10px;
   z-index:40;
@@ -243,8 +268,13 @@ a{color: rgba(255,255,255,.92)}
 }
 
 @media (max-width:640px){
-  .fab-group{right:14px;bottom:14px;}
+  .fab-group{display:flex;right:14px;bottom:14px;}
   .fab{padding:12px 16px;font-size:14px;}
+
+  /* On mobile the FAB floats over the bottom-right corner of whatever's
+     currently in view — a budget alert's "View budgets" link wrapping to
+     that same corner would sit right underneath it. Full-width instead. */
+  .budget-alert__cta{width:100%;text-align:center;}
 }
 
 /* Row action buttons (Edit/Delete, etc.) on list pages: stack full-width

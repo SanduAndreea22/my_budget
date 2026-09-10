@@ -45,7 +45,7 @@
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <a class="btn btn--ghost btn--sm" href="{% url 'wallet_edit' r.wallet.id %}">Edit</a>
-          <a class="btn btn--ghost btn--sm" href="{% url 'wallet_delete' r.wallet.id %}" style="border-color: rgba(236,72,153,.25);">Delete</a>
+          <a class="btn btn--ghost btn--sm btn--delete" href="{% url 'wallet_delete' r.wallet.id %}">Delete</a>
         </div>
       </div>
     {% empty %}

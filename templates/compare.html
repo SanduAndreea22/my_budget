@@ -100,31 +100,41 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  const rows = JSON.parse(document.getElementById("month-rows-data").textContent);
   const ctx = document.getElementById("compareChart");
-  if (ctx) {
-    new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels: rows.map(r => r.label),
-        datasets: [
-          { label: "Income", data: rows.map(r => parseFloat(r.income)), backgroundColor: "rgba(34,197,94,.75)", borderRadius: 6 },
-          { label: "Expense", data: rows.map(r => parseFloat(r.expense)), backgroundColor: "rgba(239,68,68,.75)", borderRadius: 6 }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { display: false } },
-          y: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { color: "rgba(255,255,255,0.1)" } }
-        },
-        plugins: {
-          legend: { labels: { color: "rgba(255,255,255,0.85)", font: {size: 14} } }
-        }
-      }
-    });
+  if (!ctx) return;
+
+  // Chart.js loads from a CDN — if that request fails (offline, blocked,
+  // CDN down), fail visibly instead of leaving an empty box.
+  if (typeof Chart === "undefined") {
+    ctx.parentElement.innerHTML =
+      '<p class="muted" style="text-align:center;padding:40px 0;">' +
+      "Couldn't load the chart library. Check your connection and reload the page." +
+      "</p>";
+    return;
   }
+
+  const rows = JSON.parse(document.getElementById("month-rows-data").textContent);
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: rows.map(r => r.label),
+      datasets: [
+        { label: "Income", data: rows.map(r => parseFloat(r.income)), backgroundColor: "rgba(34,197,94,.75)", borderRadius: 6 },
+        { label: "Expense", data: rows.map(r => parseFloat(r.expense)), backgroundColor: "rgba(239,68,68,.75)", borderRadius: 6 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { display: false } },
+        y: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { color: "rgba(255,255,255,0.1)" } }
+      },
+      plugins: {
+        legend: { labels: { color: "rgba(255,255,255,0.85)", font: {size: 14} } }
+      }
+    }
+  });
 });
 </script>
 {% endblock %}
