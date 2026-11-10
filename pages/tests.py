@@ -41,3 +41,39 @@ class FirstImpressionTests(TestCase):
         from django.contrib.staticfiles import finders
         for path in ("fonts/manrope-latin.woff2", "fonts/manrope-latin-ext.woff2", "vendor/chart.umd.js", "img/og-image.jpg"):
             self.assertIsNotNone(finders.find(path), path)
+
+
+class LandingSectionsTests(TestCase):
+    def setUp(self):
+        self.html = self.client.get("/").content.decode()
+
+    def test_has_the_sections_below_the_hero(self):
+        for anchor in ('id="screenshots"', 'id="how-it-works"', 'id="your-data"', 'id="faq"'):
+            self.assertIn(anchor, self.html)
+
+    def test_screenshots_are_real_files_with_alt_text_and_dimensions(self):
+        import re
+        from django.contrib.staticfiles import finders
+        imgs = re.findall(r"<img[^>]+>", self.html)
+        shots = [i for i in imgs if "shots/" in i]
+        self.assertEqual(len(shots), 3)
+        for tag in shots:
+            self.assertRegex(tag, r'alt="[^"]{20,}"')
+            self.assertIn("width=", tag)
+            self.assertIn("height=", tag)
+            self.assertIn('loading="lazy"', tag)
+        for name in ("dashboard", "budgets", "goals"):
+            self.assertIsNotNone(finders.find(f"img/shots/{name}.jpg"))
+
+    def test_how_it_works_has_three_steps(self):
+        self.assertEqual(self.html.count('class="glass-card step"'), 3)
+
+    def test_faq_answers_match_what_the_app_does(self):
+        self.assertEqual(self.html.count('class="glass-card faq__item"'), 7)
+        self.assertIn("RON, EUR, USD or GBP", self.html)
+        self.assertIn("free while it is in testing", self.html)
+        self.assertIn("no automatic password reset", self.html)
+
+    def test_public_navbar_links_to_the_sections(self):
+        self.assertIn('href="/#how-it-works"', self.html)
+        self.assertIn('href="/#faq"', self.html)

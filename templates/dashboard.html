@@ -70,7 +70,7 @@
                 {{ a.category.name }} {% if a.is_over %}is over budget{% else %}is close to its limit{% endif %}
               </div>
               <div class="muted" style="font-size:13px;">
-                {{ a.spent|floatformat:2 }} / {{ a.limit|floatformat:2 }} {{ currency }} · {{ a.pct }}% this month
+                {{ a.spent|floatformat:2|intcomma }} / {{ a.limit|floatformat:2|intcomma }} {{ currency }} · {{ a.pct }}% this month
               </div>
             </div>
             <a class="btn btn--ghost btn--sm budget-alert__cta" href="{% url 'budgets' %}">View budgets</a>

@@ -47,6 +47,8 @@
             <button type="submit" class="nav__link nav__link--logout">Log out</button>
           </form>
         {% else %}
+          <a class="nav__link nav__link--anchor" href="{% url 'home' %}#how-it-works">How it works</a>
+          <a class="nav__link nav__link--anchor" href="{% url 'home' %}#faq">FAQ</a>
           <a class="nav__link" href="{% url 'accounts:login' %}">Login</a>
           <a class="nav__link" href="{% url 'accounts:register' %}">Create account</a>
         {% endif %}

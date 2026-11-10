@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block title %}Budgets · MyBudget{% endblock %}
 
 {% block content %}
@@ -31,9 +32,9 @@
       <button class="btn" type="submit">Show</button>
 
       <div class="muted" style="margin-left:auto;">
-        Total spent: <b style="color:rgba(255,255,255,.86)">{{ total_spent }} {{ currency }}</b>
+        Total spent: <b style="color:rgba(255,255,255,.86)">{{ total_spent|floatformat:2|intcomma }} {{ currency }}</b>
         {% if total_limit %}
-          · Total limits: <b style="color:rgba(255,255,255,.86)">{{ total_limit }} {{ currency }}</b>
+          · Total limits: <b style="color:rgba(255,255,255,.86)">{{ total_limit|floatformat:2|intcomma }} {{ currency }}</b>
         {% endif %}
       </div>
 
@@ -58,9 +59,9 @@
                   {{ r.category.name }}
                 </div>
                 <div class="muted" style="font-size:13px;">
-                  Spent: <b style="color:rgba(255,255,255,.86)">{{ r.spent }} {{ currency }}</b>
+                  Spent: <b style="color:rgba(255,255,255,.86)">{{ r.spent|floatformat:2|intcomma }} {{ currency }}</b>
                   {% if r.limit != None %}
-                    · Limit: <b style="color:rgba(255,255,255,.86)">{{ r.limit }} {{ currency }}</b>
+                    · Limit: <b style="color:rgba(255,255,255,.86)">{{ r.limit|floatformat:2|intcomma }} {{ currency }}</b>
                   {% else %}
                     · <span class="muted">No limit set</span>
                   {% endif %}

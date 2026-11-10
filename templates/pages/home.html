@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}MyBudget · Personal budget tracker{% endblock %}
 {% block og_description %}See where your money goes, before the month surprises you. Wallets, budgets and recurring bills in one place.{% endblock %}
 {% block description %}Track income, expenses, wallets and recurring bills in one place, and see where your money goes before the month surprises you.{% endblock %}
@@ -82,5 +83,124 @@
       </div>
     </div>
   </div>
+</section>
+
+<!-- SEE IT IN ACTION -->
+<section class="lp-section" id="screenshots">
+  <h2 class="lp-title">See it in action</h2>
+  <p class="lp-sub muted">Real screenshots of the app, with example data.</p>
+
+  <div class="feature">
+    <div class="feature__text">
+      <h3>Your month at a glance</h3>
+      <p>Income, expenses and balance the moment you log in, your latest transactions with category icons, and a chart of where this month's money went. Budget warnings show up here too, before you overspend.</p>
+    </div>
+    <figure class="feature__shot">
+      <img src="{% static 'img/shots/dashboard.jpg' %}" width="1296" height="1331" loading="lazy" decoding="async"
+           alt="MyBudget dashboard: totals for income, expense and balance, two budget warnings, recent transactions and a donut chart of this month's spending.">
+    </figure>
+  </div>
+
+  <div class="feature feature--flip">
+    <div class="feature__text">
+      <h3>A limit for every category</h3>
+      <p>Decide how much you want to spend on Food, Transport or Shopping each month. The bar fills as you spend, turns amber near the limit and red when you go over.</p>
+    </div>
+    <figure class="feature__shot feature__shot--tall">
+      <img src="{% static 'img/shots/budgets.jpg' %}" width="1296" height="1631" loading="lazy" decoding="async"
+           alt="MyBudget budgets page: a progress bar for each category, with one marked near its limit and one over budget.">
+    </figure>
+  </div>
+
+  <div class="feature">
+    <div class="feature__text">
+      <h3>Save toward something real</h3>
+      <p>Set a target, add money whenever you can and watch the bar move. When you reach it, the goal celebrates.</p>
+    </div>
+    <figure class="feature__shot">
+      <img src="{% static 'img/shots/goals.jpg' %}" width="1296" height="1073" loading="lazy" decoding="async"
+           alt="MyBudget savings goals: three goals with progress bars, one completed and marked as reached.">
+    </figure>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="lp-section" id="how-it-works">
+  <h2 class="lp-title">How it works</h2>
+  <ol class="steps">
+    <li class="glass-card step">
+      <span class="step__n">1</span>
+      <h3>Create your account</h3>
+      <p>Email and password. Your account starts with a Cash wallet and common categories, so there is nothing to set up first.</p>
+    </li>
+    <li class="glass-card step">
+      <span class="step__n">2</span>
+      <h3>Log your first transaction</h3>
+      <p>Pick income or expense, type the amount and save. Today's date is already filled in.</p>
+    </li>
+    <li class="glass-card step">
+      <span class="step__n">3</span>
+      <h3>See where it goes</h3>
+      <p>Your dashboard, charts and budgets update as you go, and recurring bills and salary log themselves every month.</p>
+    </li>
+  </ol>
+</section>
+
+<!-- YOUR DATA -->
+<section class="lp-section" id="your-data">
+  <div class="glass-card data-band">
+    <div>
+      <h2 class="lp-title" style="margin-bottom:6px;">Your data stays yours</h2>
+      <p class="muted" style="margin:0;">MyBudget is a testing version, so here is exactly what to expect.</p>
+    </div>
+    <ul class="feature-list">
+      <li>Each account only sees its own data</li>
+      <li>No ads, no trackers, no third-party scripts</li>
+      <li>Export to CSV, Excel or PDF whenever you like</li>
+    </ul>
+    <a class="btn btn--ghost" href="{% url 'privacy' %}">How your data is handled →</a>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="lp-section" id="faq">
+  <h2 class="lp-title">Questions</h2>
+  <div class="faq">
+    <details class="glass-card faq__item">
+      <summary>Is it free?</summary>
+      <p>Yes, MyBudget is free while it is in testing, and no credit card is needed. The app may change before it leaves testing.</p>
+    </details>
+    <details class="glass-card faq__item">
+      <summary>Which currencies can I use?</summary>
+      <p>You choose one currency for your account (RON, EUR, USD or GBP). It is shown on every amount, chart and export, and you can change it in your profile.</p>
+    </details>
+    <details class="glass-card faq__item">
+      <summary>Do budgets stop me from spending?</summary>
+      <p>No. They warn you: a bar turns amber near the limit, red when you are over it, and your dashboard shows an alert.</p>
+    </details>
+    <details class="glass-card faq__item">
+      <summary>How do recurring bills work?</summary>
+      <p>Add your salary or a subscription once, choose the day of the month, and it is logged for you every month.</p>
+    </details>
+    <details class="glass-card faq__item">
+      <summary>Does it work on my phone?</summary>
+      <p>Yes. MyBudget runs in your phone's browser, so there is nothing to install.</p>
+    </details>
+    <details class="glass-card faq__item">
+      <summary>Can I take my data with me?</summary>
+      <p>Yes. Export any list of transactions, with your filters applied, as CSV, Excel or PDF.</p>
+    </details>
+    <details class="glass-card faq__item">
+      <summary>What if I forget my password?</summary>
+      <p>There is no automatic password reset yet while MyBudget is in testing, so keep your password somewhere safe.</p>
+    </details>
+  </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="lp-section lp-cta">
+  <h2 class="lp-title">Ready to see where your money goes?</h2>
+  <p class="muted" style="margin:0 0 18px;">Free while in testing, no credit card needed.</p>
+  <a class="btn" href="{% url 'accounts:register' %}">Create account <span aria-hidden="true">→</span></a>
 </section>
 {% endblock %}

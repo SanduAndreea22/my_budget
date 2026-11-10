@@ -1001,3 +1001,20 @@ class CurrencyEverywhereTests(TestCase):
         self.assertContains(self.client.get(reverse("compare")), 'const CURRENCY = "EUR"')
         self._add_expense()
         self.assertContains(self.client.get(reverse("dashboard")), 'window.fmtMoney(c.parsed, "EUR")')
+
+
+class MoneyFormatConsistencyTests(TestCase):
+    def test_budgets_and_dashboard_alerts_format_amounts_the_same_way(self):
+        from .starter import create_starter_data
+        user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        create_starter_data(user)
+        housing = Category.objects.get(user=user, name="Housing")
+        wallet = Wallet.objects.get(user=user, name="Cash")
+        today = date.today()
+        BudgetLimit.objects.create(user=user, category=housing, month=today.replace(day=1), limit=1900)
+        Transaction.objects.create(user=user, category=housing, wallet=wallet, type="expense", amount=1800, date=today)
+        self.client.force_login(user)
+        budgets = self.client.get(reverse("budgets"))
+        self.assertContains(budgets, "1,800.00 RON")
+        self.assertContains(budgets, "1,900.00 RON")
+        self.assertContains(self.client.get(reverse("dashboard")), "1,800.00 / 1,900.00 RON")
