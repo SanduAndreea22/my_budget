@@ -9,8 +9,7 @@
       <p class="muted" style="margin:6px 0 0;">Each category is for either income or expenses.</p>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <a class="btn btn--ghost" href="{% url 'dashboard' %}">Back</a>
-      <a class="btn" href="{% url 'category_add' %}">+ Add category</a>
+      {% if categories %}<a class="btn" href="{% url 'category_add' %}">+ Add category</a>{% endif %}
     </div>
   </div>
 

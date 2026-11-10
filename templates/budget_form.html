@@ -1,18 +1,24 @@
 {% extends "base.html" %}
-{% block title %}{% if mode == "edit" %}Edit Limit{% else %}Add Limit{% endif %} · MyBudget{% endblock %}
+{% block title %}{% if mode == "edit" %}Edit Budget{% else %}Add Budget{% endif %} · MyBudget{% endblock %}
 
 {% block content %}
 <section class="glass-card" style="max-width:620px;margin:auto;padding:22px;">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
     <div>
       <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">
-        {% if mode == "edit" %}Edit limit{% else %}Add limit{% endif %}
+        {% if mode == "edit" %}Edit budget{% else %}Add budget{% endif %}
       </h1>
-      <p class="muted" style="margin:6px 0 0;">Choose category, month and limit amount.</p>
+      <p class="muted" style="margin:6px 0 0;">Pick an expense category, the month, and the most you want to spend on it.</p>
     </div>
-    <a class="btn btn--ghost" href="{% url 'budgets' %}">← Back</a>
+    <a class="btn btn--ghost" href="{% url 'budgets' %}">← Budgets</a>
   </div>
 
+  {% if not form.fields.category.queryset.exists %}
+    {% url 'category_add' as cat_url %}
+    <div style="margin-top:16px;">
+      {% include "partials/empty_state.html" with art="folder" title="You need an expense category first" text="A budget is a monthly limit on a category (Food, Transport…). Create one, then come back." url=cat_url label="+ Create a category" %}
+    </div>
+  {% else %}
   <form method="POST" style="margin-top:14px;display:grid;gap:12px;">
     {% csrf_token %}
     {{ form.non_field_errors }}
@@ -37,5 +43,6 @@
     </div>
 
   </form>
+  {% endif %}
 </section>
 {% endblock %}

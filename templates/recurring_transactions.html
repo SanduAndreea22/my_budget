@@ -19,8 +19,7 @@
         <p class="muted" style="margin:6px 0 0;">Subscriptions and salaries that add themselves automatically every month.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
-        <a class="btn" href="{% url 'recurring_add' %}">+ Add recurring</a>
+        {% if items %}<a class="btn" href="{% url 'recurring_add' %}">+ Add recurring</a>{% endif %}
       </div>
     </div>
 

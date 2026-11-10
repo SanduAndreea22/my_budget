@@ -14,12 +14,11 @@
   <div style="position:relative;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
-        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Monthly Budgets</h1>
-        <p class="muted" style="margin:6px 0 0;">Set limits per category and track progress.</p>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Budgets</h1>
+        <p class="muted" style="margin:6px 0 0;">Set a monthly limit for each category and track your progress.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
-        <a class="btn" href="{% url 'budget_add' %}">+ Add limit</a>
+        {% if rows %}<a class="btn" href="{% url 'budget_add' %}">+ Add budget</a>{% endif %}
       </div>
     </div>
 
@@ -29,7 +28,7 @@
         <label style="font-weight:900;color:rgba(255,255,255,.86);">Month</label>
         <input type="month" name="month" value="{{ month|date:'Y-m' }}">
       </div>
-      <button class="btn" type="submit">Apply →</button>
+      <button class="btn" type="submit">Show</button>
 
       <div class="muted" style="margin-left:auto;">
         Total spent: <b style="color:rgba(255,255,255,.86)">{{ total_spent }} {{ currency }}</b>
@@ -74,7 +73,7 @@
                 <a class="btn btn--ghost" href="{% url 'budget_edit' r.budget.id %}">Edit</a>
                 <a class="btn btn--ghost btn--delete" href="{% url 'budget_delete' r.budget.id %}">Delete</a>
               {% else %}
-                <a class="btn btn--ghost" href="{% url 'budget_add' %}">Set limit</a>
+                <a class="btn btn--ghost btn--sm" href="{% url 'budget_add' %}">Set budget</a>
               {% endif %}
             </div>
           </div>
@@ -100,10 +99,11 @@
                 <span style="color:#86efac;font-weight:900;">On track</span>
               {% endif %}
             </div>
-          {% else %}
-            <div class="muted" style="font-size:13px;">No limit set for this category yet.</div>
           {% endif %}
         </div>
+      {% empty %}
+        {% url 'category_add' as cat_url %}
+        {% include "partials/empty_state.html" with art="folder" title="Budgets start with categories" text="Create an expense category (Food, Transport…), then set how much you want to spend on it each month." url=cat_url label="+ Create a category" %}
       {% endfor %}
     </div>
   </div>

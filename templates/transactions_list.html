@@ -21,12 +21,14 @@
         <p class="muted" style="margin:6px 0 0;">Filter, edit and delete your transactions.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
+        {% if has_filters or transactions %}
         <a class="btn" href="{% url 'add_income' %}">+ Income</a>
         <a class="btn btn--ghost" href="{% url 'add_expense' %}">- Expense</a>
+        {% endif %}
       </div>
     </div>
 
+    {% if has_filters or transactions %}
     <!-- Export -->
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
       <span class="muted" style="font-size:13px;font-weight:800;">Export (current filters):</span>
@@ -122,6 +124,7 @@
       </form>
     </details>
 
+    {% endif %}
     <!-- List -->
     <div style="margin-top:14px;display:grid;gap:10px;">
       {% for t in transactions %}
@@ -152,9 +155,15 @@
           </div>
         </div>
       {% empty %}
-        {% url 'add_expense' as expense_url %}
-        {% include "partials/empty_state.html" with art="receipt" title="Nothing here yet" text="No transactions match these filters. Reset them, or log something new." url=expense_url label="- Add expense" %}
-      {% endfor %}
+        {% if has_filters %}
+          {% url 'transactions' as reset_url %}
+          {% include "partials/empty_state.html" with art="receipt" title="No matches" text="No transactions fit these filters. Clear them to see everything again." url=reset_url label="Clear filters" %}
+        {% else %}
+          {% url 'add_income' as income_url %}
+          {% url 'add_expense' as expense_url %}
+          {% include "partials/empty_state.html" with art="receipt" title="No transactions yet" text="Log your first income or expense and it shows up here, ready to filter and export." url=income_url label="+ Add income" url2=expense_url label2="or add an expense" %}
+        {% endif %}
+        {% endfor %}
     </div>
 
     {% if page_obj.paginator.num_pages > 1 %}

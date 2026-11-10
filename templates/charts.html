@@ -19,7 +19,6 @@
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Charts</h1>
         <p class="muted" style="margin:6px 0 0;">Visual overview of your money.</p>
       </div>
-      <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
     </div>
 
     <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;">
@@ -42,9 +41,8 @@
               <canvas id="pieChart"></canvas>
             </div>
           {% else %}
-            <div style="height:300px; display:flex; align-items:center; justify-content:center;">
-                <p class="muted">No expense data this month.</p>
-            </div>
+            {% url 'add_expense' as expense_url %}
+            {% include "partials/empty_state.html" with plain=1 art="receipt" title="No spending logged this month" text="Add an expense and you will see which categories take the biggest share." url=expense_url label="- Add expense" %}
           {% endif %}
         </div>
       </div>
@@ -65,9 +63,8 @@
               <canvas id="lineChart"></canvas>
             </div>
           {% else %}
-            <div style="height:300px; display:flex; align-items:center; justify-content:center;">
-                <p class="muted">No transaction history yet.</p>
-            </div>
+            {% url 'add_income' as income_url %}
+            {% include "partials/empty_state.html" with plain=1 art="receipt" title="No history yet" text="Once you log income and expenses, your monthly trend shows up here." url=income_url label="+ Add income" %}
           {% endif %}
         </div>
       </div>

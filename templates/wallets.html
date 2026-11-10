@@ -10,8 +10,7 @@
       <p class="muted" style="margin:6px 0 0;">Separate your money — card, cash, savings, whatever you use.</p>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <a class="btn btn--ghost" href="{% url 'dashboard' %}">Back</a>
-      <a class="btn" href="{% url 'wallet_add' %}">+ Add wallet</a>
+      {% if rows %}<a class="btn" href="{% url 'wallet_add' %}">+ Add wallet</a>{% endif %}
     </div>
   </div>
 

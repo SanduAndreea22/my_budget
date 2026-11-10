@@ -1,5 +1,5 @@
 {# Usage: {% include "partials/empty_state.html" with art="receipt" title="..." text="..." url=... label="..." %} #}
-<div class="glass-card empty-state" style="grid-column:1/-1;">
+<div class="{% if plain %}{% else %}glass-card {% endif %}empty-state" style="grid-column:1/-1;">
   <svg class="empty-state__art" viewBox="0 0 160 120" fill="none" aria-hidden="true">
     <ellipse cx="80" cy="108" rx="52" ry="7" fill="rgba(0,0,0,.28)"/>
     {% if art == "folder" %}

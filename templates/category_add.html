@@ -4,7 +4,7 @@
 {% block content %}
 <section class="glass-card" style="max-width:520px;margin:auto;padding:22px;">
   <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">{% if mode == "edit" %}Edit Category{% else %}Add Category{% endif %}</h1>
-  <p class="muted" style="margin:0 0 14px;">Used for both income and expenses.</p>
+  <p class="muted" style="margin:0 0 14px;">Choose whether it is for income or expenses, then add an emoji and a color to spot it quickly.</p>
 
   <form method="POST" style="display:grid;gap:12px;">
     {% csrf_token %}

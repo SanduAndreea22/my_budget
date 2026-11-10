@@ -475,6 +475,7 @@ def transactions_list_view(request):
         "categories": categories,
         "wallets": wallets,
         "filters": filters,
+        "has_filters": any(filters.values()),
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": balance,
@@ -714,7 +715,7 @@ def budget_add_view(request):
                 form.add_error(None, "You already have a limit set for this category and month.")
                 return render(request, "budget_form.html", {"form": form, "mode": "add"})
             _log_activity(request.user, ActivityLog.CREATE, "Budget Limit", _budget_limit_repr(obj, request.user.currency))
-            messages.success(request, "Budget limit saved.")
+            messages.success(request, "Budget saved.")
             return redirect("budgets")
     else:
         form = BudgetLimitForm(user=request.user, initial={"month": date.today().replace(day=1)})
@@ -737,7 +738,7 @@ def budget_edit_view(request, pk):
                 form.add_error(None, "You already have a limit set for this category and month.")
                 return render(request, "budget_form.html", {"form": form, "mode": "edit", "budget": b})
             _log_activity(request.user, ActivityLog.UPDATE, "Budget Limit", _budget_limit_repr(obj, request.user.currency))
-            messages.success(request, "Budget limit updated.")
+            messages.success(request, "Budget updated.")
             return redirect("budgets")
     else:
         form = BudgetLimitForm(instance=b, user=request.user)
@@ -753,7 +754,7 @@ def budget_delete_view(request, pk):
         object_repr = _budget_limit_repr(b, request.user.currency)
         b.delete()
         _log_activity(request.user, ActivityLog.DELETE, "Budget Limit", object_repr)
-        messages.success(request, "Budget limit deleted.")
+        messages.success(request, "Budget deleted.")
         return redirect("budgets")
 
     return render(request, "budget_confirm_delete.html", {"budget": b})

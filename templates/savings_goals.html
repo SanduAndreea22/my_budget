@@ -15,12 +15,11 @@
   <div style="position:relative;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
-        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Savings Goals</h1>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Savings goals</h1>
         <p class="muted" style="margin:6px 0 0;">Set a target and track how close you are.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
-        <a class="btn" href="{% url 'savings_goal_add' %}">+ Add goal</a>
+        {% if rows %}<a class="btn" href="{% url 'savings_goal_add' %}">+ Add goal</a>{% endif %}
       </div>
     </div>
 

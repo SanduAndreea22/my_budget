@@ -17,7 +17,6 @@
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Activity</h1>
         <p class="muted" style="margin:6px 0 0;">A record of every transaction and budget limit you've created, changed or deleted.</p>
       </div>
-      <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
     </div>
 
     <div style="margin-top:16px;display:grid;gap:10px;">
@@ -37,7 +36,8 @@
           </div>
         </div>
       {% empty %}
-        <div class="muted">No activity yet — actions on your transactions and budget limits will show up here.</div>
+        {% url 'add_expense' as expense_url %}
+        {% include "partials/empty_state.html" with plain=1 art="receipt" title="Nothing here yet" text="Every transaction or budget you add, change or delete is recorded here, so you can always see what happened." url=expense_url label="- Add your first expense" %}
       {% endfor %}
     </div>
 
