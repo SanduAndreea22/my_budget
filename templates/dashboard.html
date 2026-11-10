@@ -141,10 +141,12 @@
   </div>
 </section>
 
+{% if transactions %}
 <div class="fab-group">
   <a href="{% url 'add_income' %}" class="btn fab">+ Income</a>
   <a href="{% url 'add_expense' %}" class="btn btn--ghost fab">- Expense</a>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}

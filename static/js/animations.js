@@ -64,6 +64,24 @@ document.addEventListener("DOMContentLoaded", function () {
     requestAnimationFrame(tick);
   });
 
+  // Subnav (11 links) scrolls sideways on phones: bring the active section
+  // into view, and fade the edge(s) that still hide more links.
+  const subnav = document.querySelector(".subnav");
+  if (subnav) {
+    const active = subnav.querySelector(".subnav__link--active");
+    if (active) {
+      subnav.scrollLeft = active.offsetLeft - (subnav.clientWidth - active.offsetWidth) / 2;
+    }
+    const updateFade = function () {
+      const max = subnav.scrollWidth - subnav.clientWidth;
+      subnav.classList.toggle("fade-l", subnav.scrollLeft > 4);
+      subnav.classList.toggle("fade-r", max > 4 && subnav.scrollLeft < max - 4);
+    };
+    subnav.addEventListener("scroll", updateFade, { passive: true });
+    window.addEventListener("resize", updateFade);
+    updateFade();
+  }
+
   // Toasts: auto-dismiss (errors stay longer), click to dismiss early.
   document.querySelectorAll(".toast").forEach(function (toast) {
     const isError = toast.classList.contains("toast--error");
