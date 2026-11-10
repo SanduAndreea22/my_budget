@@ -25,17 +25,17 @@
     </div>
 
     <!-- mini preview card -->
-    <div class="glass-card" style="margin-top:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
+    <div class="glass-card" data-preview data-sign="-" data-currency="{{ user.currency }}" style="margin-top:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div class="muted" style="font-weight:800;font-size:13px;">Preview</div>
+        <div class="muted" style="font-weight:800;font-size:13px;">Live preview</div>
         <div style="font-weight:950;letter-spacing:-.01em;">Expense · {{ user.currency }}</div>
       </div>
       <div style="
-        font-weight:950;
-        background: linear-gradient(135deg, rgba(239,68,68,.95), rgba(244,63,94,.85));
-        -webkit-background-clip:text; background-clip:text; color:transparent;
-        font-size:18px;
-      ">- amount</div>
+        font-weight:800;
+        color:#fca5a5;
+        font-variant-numeric:tabular-nums;
+        font-size:20px;
+      " data-preview-amount>- amount</div>
     </div>
 
     {% if categories and wallets %}
@@ -59,7 +59,7 @@
             <label style="font-weight:900;color:rgba(255,255,255,.86);">Category</label>
             <select name="category" required>
               {% for c in categories %}
-                <option value="{{ c.id }}" {% if values.category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.icon|default:"🧾" }} {{ c.name }}</option>
+                <option value="{{ c.id }}" {% if values.category == c.id|stringformat:"s" %}selected{% endif %}>{{ c.icon|default:"🏷️" }} {{ c.name }}</option>
               {% endfor %}
             </select>
           </div>
@@ -83,13 +83,8 @@
 
         <!-- Actions -->
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:4px;">
-          <!-- keep btn--ghost but add a small gradient hint via inline style -->
-          <button class="btn btn--ghost" type="submit" style="
-            border-color: rgba(239,68,68,.28);
-            box-shadow: 0 18px 45px rgba(239,68,68,.10), 0 18px 45px rgba(0,0,0,.22);
-          ">Save Expense →</button>
-
-          <a class="muted" style="font-weight:700;font-size:14px;text-decoration:underline;" href="{% url 'add_income' %}">Add income instead</a>
+          <button class="btn btn--expense" type="submit">Save expense →</button>
+          <a class="btn btn--ghost btn--sm" href="{% url 'add_income' %}">Switch to income</a>
         </div>
 
         <style>

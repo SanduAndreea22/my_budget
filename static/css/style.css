@@ -95,7 +95,6 @@ body::before{
 /* On phones the subnav already starts with "Dashboard", so the navbar keeps
    only what the subnav doesn't have: avatar + logout, on one row. */
 @media (max-width:640px){
-  .nav__link--dash{display:none;}
   .nav__right{gap:6px;}
 }
 
@@ -691,7 +690,6 @@ a{color: rgba(255,255,255,.92)}
   .btn, .btn--sm{min-height:44px;}
   .nav__brand{min-height:44px;}
   .nav__link{min-height:44px; display:inline-flex; align-items:center;}
-  .nav__link.nav__link--dash{display:none;}   /* Dashboard lives in the subnav on phones */
   .nav__avatar{position:relative; width:36px; height:36px;}
   .nav__avatar::after{content:""; position:absolute; inset:-4px;}   /* 44px hit area */
   .subnav__link{display:inline-flex; align-items:center; min-height:44px; padding:0 14px;}
@@ -733,3 +731,20 @@ a{color: rgba(255,255,255,.92)}
 .pick--swatch:hover{background:var(--c); filter:brightness(1.1);}
 .pick--swatch.is-selected{border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.25);}
 .field-hint{font-size:13px; margin-top:6px;}
+
+
+/* Expense counterpart of the primary (teal) button: solid red, dark text. */
+.btn--expense{
+  background:#ef4444; color:#1a0508;
+  box-shadow:0 14px 34px rgba(239,68,68,.28);
+}
+.btn--expense:hover{filter:brightness(1.05); box-shadow:0 18px 44px rgba(239,68,68,.38);}
+
+/* Navbar: visible profile link + Logout as a button */
+.nav__profile{display:inline-flex; align-items:center; gap:8px; padding:6px 10px 6px 6px;}
+.nav__user{max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700;}
+.nav__link--logout{
+  background:none; cursor:pointer; font:inherit;
+  border:1px solid rgba(255,255,255,.16);
+}
+@media (max-width:640px){ .nav__user{display:none;} .nav__profile{padding:4px;} }
