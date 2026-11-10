@@ -4,11 +4,18 @@
   --bg1:#0B102A;
   --bg2:#0B1B3A;
 
-  --g1: radial-gradient(900px 500px at 15% 20%, rgba(99,102,241,.45), transparent 60%),
-        radial-gradient(700px 420px at 85% 25%, rgba(236,72,153,.40), transparent 60%),
-        radial-gradient(800px 520px at 55% 85%, rgba(34,211,238,.30), transparent 60%);
+  /* Single brand color: teal. Used for the primary action, focus, active
+     nav and accents. Green/red are reserved for income/expense meaning. */
+  --brand:#14b8a6;
+  --brand-light:#2dd4bf;
+  --brand-rgb:20,184,166;
 
-  --g2: linear-gradient(135deg, rgba(99,102,241,.95), rgba(236,72,153,.9), rgba(34,211,238,.85));
+  --g1: radial-gradient(900px 500px at 15% 20%, rgba(20,184,166,.28), transparent 60%),
+        radial-gradient(700px 420px at 85% 25%, rgba(56,120,220,.20), transparent 60%),
+        radial-gradient(800px 520px at 55% 85%, rgba(34,211,238,.14), transparent 60%);
+
+  /* Gradient: reserved for the logo dot and landing hero only. */
+  --g2: linear-gradient(135deg, #2dd4bf, #14b8a6 55%, #22d3ee);
 
   --card: rgba(255,255,255,.08);
   --card2: rgba(255,255,255,.12);
@@ -22,7 +29,7 @@
   --radius: 22px;
   --radius2: 28px;
 
-  --focus: 0 0 0 4px rgba(99,102,241,.28);
+  --focus: 0 0 0 4px rgba(var(--brand-rgb),.32);
 }
 
 *{box-sizing:border-box}
@@ -72,7 +79,7 @@ body::before{
   content:"";
   width: 10px; height: 10px; border-radius: 999px;
   background: var(--g2);
-  box-shadow: 0 0 0 4px rgba(255,255,255,.06), 0 10px 30px rgba(236,72,153,.35);
+  box-shadow: 0 0 0 4px rgba(255,255,255,.06), 0 10px 30px rgba(var(--brand-rgb),.35);
 }
 
 .nav__right{display:flex;gap:10px;align-items:center; flex-wrap:wrap}
@@ -126,8 +133,8 @@ body::before{
   color: rgba(255,255,255,.92);
 }
 .subnav__link--active{
-  background: rgba(99,102,241,.20);
-  border-color: rgba(99,102,241,.40);
+  background: rgba(var(--brand-rgb),.18);
+  border-color: rgba(var(--brand-rgb),.45);
   color: #fff;
 }
 .subnav__link:focus{outline:none; box-shadow: var(--focus)}
@@ -137,12 +144,12 @@ body::before{
   display:inline-flex;align-items:center;justify-content:center;
   padding:12px 16px;
   border-radius: 16px;
-  background: var(--g2);
-  color:#0b0f1f;
+  background: var(--brand);
+  color:#04201c;
   text-decoration:none;
   font-weight: 900;
   letter-spacing: -.01em;
-  box-shadow: 0 18px 40px rgba(99,102,241,.25), 0 18px 40px rgba(236,72,153,.18);
+  box-shadow: 0 14px 34px rgba(var(--brand-rgb),.28);
   border: 0;
   cursor:pointer;
   transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
@@ -150,7 +157,7 @@ body::before{
 .btn:hover{
   transform: translateY(-2px);
   filter: brightness(1.05);
-  box-shadow: 0 22px 55px rgba(99,102,241,.30), 0 22px 55px rgba(236,72,153,.22);
+  box-shadow: 0 18px 44px rgba(var(--brand-rgb),.38);
 }
 .btn:active{transform: translateY(0px) scale(.99)}
 .btn:focus{outline:none; box-shadow: var(--focus)}
@@ -168,13 +175,13 @@ body::before{
 }
 
 .btn--danger{
-  background: linear-gradient(135deg, rgba(239,68,68,.95), rgba(236,72,153,.85));
+  background: #ef4444;
   color:#1a0508;
-  box-shadow: 0 18px 40px rgba(239,68,68,.25), 0 18px 40px rgba(236,72,153,.18);
+  box-shadow: 0 14px 34px rgba(239,68,68,.28);
 }
 .btn--danger:hover{
   filter: brightness(1.05);
-  box-shadow: 0 22px 55px rgba(239,68,68,.30), 0 22px 55px rgba(236,72,153,.22);
+  box-shadow: 0 18px 44px rgba(239,68,68,.38);
 }
 
 /* Row-level "Delete" links (as opposed to the full .btn--danger on the
@@ -240,7 +247,7 @@ input[type="checkbox"], input[type="radio"]{
   padding:0;
   border-radius:4px;
   box-shadow:none;
-  accent-color:#6366f1;
+  accent-color:var(--brand);
   cursor:pointer;
   vertical-align:middle;
 }

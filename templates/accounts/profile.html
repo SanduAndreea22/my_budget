@@ -8,7 +8,7 @@
   <div style="
     position:absolute; inset:-160px -220px auto auto;
     width:520px;height:520px;border-radius:999px;
-    background: radial-gradient(circle at 30% 30%, rgba(236,72,153,.55), transparent 60%),
+    background: radial-gradient(circle at 30% 30%, rgba(56,120,220,.55), transparent 60%),
                 radial-gradient(circle at 70% 70%, rgba(34,211,238,.45), transparent 60%);
     filter: blur(18px);
     opacity:.7;
@@ -66,7 +66,7 @@
                         font-weight:900;">
               <span style="opacity:.8;">Currency:</span>
               <span style="
-                background: linear-gradient(135deg, rgba(99,102,241,.95), rgba(236,72,153,.9), rgba(34,211,238,.85));
+                background: var(--g2);
                 -webkit-background-clip:text; background-clip:text; color:transparent;
               ">
                 {{ user.currency }}
@@ -94,8 +94,8 @@
               {% for error in field.errors %}
                 <div style="
                   padding:10px 12px;border-radius:14px;
-                  background: rgba(236,72,153,.14);
-                  border: 1px solid rgba(236,72,153,.25);
+                  background: rgba(239,68,68,.14);
+                  border: 1px solid rgba(239,68,68,.25);
                   color: rgba(255,255,255,.92);
                   font-weight:800;
                 ">

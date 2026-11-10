@@ -22,7 +22,7 @@ class CategoryForm(forms.ModelForm):
         self.user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if not self.instance.pk and not self.initial.get("color"):
-            self.initial["color"] = "#6366f1"
+            self.initial["color"] = "#14b8a6"
 
     def clean_name(self):
         name = self.cleaned_data["name"].strip()

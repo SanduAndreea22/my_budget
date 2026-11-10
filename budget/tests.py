@@ -138,7 +138,7 @@ class CategoryFormTests(TestCase):
 
     def test_color_field_has_a_sensible_default_for_new_categories(self):
         response = self.client.get(reverse("category_add"))
-        self.assertEqual(response.context["form"].initial.get("color"), "#6366f1")
+        self.assertEqual(response.context["form"].initial.get("color"), "#14b8a6")
 
     def test_can_create_category_with_a_picked_color(self):
         response = self.client.post(reverse("category_add"), {"name": "Fun", "type": "expense", "icon": "", "color": "#ff00aa"})

@@ -756,7 +756,7 @@ def charts_view(request):
         name = r["category__name"] or "Other"
         pie_labels.append(f"{icon} {name}".strip())
         pie_values.append(float(r["total"] or 0))
-        pie_colors.append(r["category__color"] or "#6366f1")
+        pie_colors.append(r["category__color"] or "#14b8a6")
 
     monthly = (
         Transaction.objects.filter(user=request.user)
