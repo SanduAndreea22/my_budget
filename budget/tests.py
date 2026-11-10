@@ -876,3 +876,30 @@ class RecurringTransactionCrudTests(TestCase):
         call_command("generate_recurring_transactions", stdout=out)
         self.assertTrue(Transaction.objects.exists())
         self.assertIn("Checked recurring transactions", out.getvalue())
+
+
+class StarterDataTests(TestCase):
+    def test_create_starter_data_is_idempotent(self):
+        from .starter import STARTER_CATEGORIES, create_starter_data
+        user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        create_starter_data(user)
+        create_starter_data(user)
+        self.assertEqual(Wallet.objects.filter(user=user).count(), 1)
+        self.assertEqual(Category.objects.filter(user=user).count(), len(STARTER_CATEGORIES))
+
+    def test_create_starter_data_keeps_existing_category_untouched(self):
+        from .starter import create_starter_data
+        user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        Category.objects.create(user=user, name="Food", type="expense", icon="🥑", color="#112233")
+        create_starter_data(user)
+        food = Category.objects.get(user=user, name="Food")
+        self.assertEqual((food.icon, food.color), ("🥑", "#112233"))
+
+    def test_add_expense_form_prefills_today(self):
+        from datetime import date
+        from .starter import create_starter_data
+        user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        create_starter_data(user)
+        self.client.force_login(user)
+        response = self.client.get(reverse("add_expense"))
+        self.assertContains(response, f'value="{date.today().isoformat()}"')

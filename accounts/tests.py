@@ -88,6 +88,43 @@ class RegistrationFormTests(TestCase):
         user = User.objects.get(email="alice@example.com")
         self.assertEqual(user.username, "alice")
 
+    def test_registering_creates_a_cash_wallet_and_starter_categories(self):
+        from budget.models import Category, Wallet
+        self.client.post(reverse("accounts:register"), {
+            "first_name": "Alice",
+            "email": "alice@example.com",
+            "currency": "RON",
+            "password1": "S3cure-Pass!23",
+            "password2": "S3cure-Pass!23",
+        })
+        user = User.objects.get(email="alice@example.com")
+        self.assertEqual(list(Wallet.objects.filter(user=user).values_list("name", flat=True)), ["Cash"])
+        names = set(Category.objects.filter(user=user).values_list("name", flat=True))
+        self.assertTrue({"Salary", "Food", "Housing", "Transport"} <= names)
+        self.assertTrue(Category.objects.filter(user=user, type="income").exists())
+        self.assertTrue(Category.objects.filter(user=user, type="expense").exists())
+
+    def test_starter_data_is_not_shared_between_users(self):
+        from budget.models import Category, Wallet
+        from budget.starter import create_starter_data
+        a = User.objects.create_user(username="a", email="a@example.com", password="pass12345")
+        b = User.objects.create_user(username="b", email="b@example.com", password="pass12345")
+        create_starter_data(a)
+        create_starter_data(b)
+        self.assertEqual(Category.objects.filter(user=a).count(), Category.objects.filter(user=b).count())
+        self.assertFalse(Category.objects.filter(user=a, pk__in=Category.objects.filter(user=b).values("pk")).exists())
+        self.assertEqual(Wallet.objects.filter(user=a).count(), 1)
+
+    def test_registering_sends_no_email(self):
+        from unittest import mock
+        with mock.patch("accounts.views.send_email_async") as send:
+            self.client.post(reverse("accounts:register"), {
+                "email": "noemail@example.com", "currency": "RON",
+                "password1": "S3cure-Pass!23", "password2": "S3cure-Pass!23",
+            })
+        send.assert_not_called()
+        self.assertTrue(User.objects.get(email="noemail@example.com").is_active)
+
     def test_duplicate_email_local_part_gets_a_numeric_suffix(self):
         User.objects.create_user(username="alice", email="alice@other-domain.com", password="pass12345")
 

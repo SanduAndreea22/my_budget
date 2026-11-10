@@ -12,10 +12,10 @@ from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.sites.shortcuts import get_current_site
+from budget.starter import create_starter_data
 from .decorators import ratelimit_post, user_not_authenticated
 from .emails import send_email_async
 from .forms import PasswordResetRequestForm, UserRegistrationForm, UserLoginForm, UserUpdateForm
-from .tokens import account_activation_token
 
 User = get_user_model()
 
@@ -39,25 +39,7 @@ def register_view(request):
                 form.add_error('email', 'An account with this email already exists.')
                 return render(request, 'accounts/register.html', {'form': form})
 
-            current_site = get_current_site(request)
-            mail_subject = 'Welcome to MyBudget'
-
-
-            html_message = render_to_string('accounts/activation_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'scheme': 'https' if request.is_secure() else 'http',
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-            })
-
-            # NOTE: "onboarding@resend.dev" is Resend's shared sandbox sender
-            # — it only reaches the account's own verified address, not real
-            # users. Sending real activation email in production needs a
-            # verified sending domain + a real RESEND_API_KEY, which is a
-            # Resend account/config change, not something fixable from this
-            # codebase alone.
-            send_email_async(user.email, mail_subject, html_message)
+            create_starter_data(user)
 
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, f'Welcome, {user.first_name or user.username}! Your account is ready.')
@@ -102,23 +84,6 @@ def profile_view(request, username):
     else:
         form = UserUpdateForm(instance=request.user)
     return render(request, 'accounts/profile.html', {'form': form})
-
-def activate(request, uidb64, token):
-    try:
-        uid = urlsafe_base64_decode(uidb64).decode()
-        user = User.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user = None
-
-    if user is not None and account_activation_token.check_token(user, token):
-        user.is_active = True
-        user.save()
-        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        messages.success(request, "Your account has been activated and you are now logged in!")
-        return redirect('accounts:profile', username=user.username)
-    else:
-        messages.error(request, "Activation link is invalid!")
-        return redirect('accounts:login')
 
 @user_not_authenticated(redirect_url='dashboard')
 @ratelimit_post('password_reset', limit=5, period_seconds=3600)

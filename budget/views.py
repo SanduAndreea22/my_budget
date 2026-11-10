@@ -256,7 +256,13 @@ def _add_transaction_view(request, tx_type, template_name):
         messages.success(request, "Transaction saved.")
         return redirect("dashboard")
 
-    return render(request, template_name, {"categories": categories, "wallets": wallets})
+    # Most entries are for today: pre-fill it instead of an empty
+    # mm/dd/yyyy the user has to pick every time.
+    return render(request, template_name, {
+        "categories": categories,
+        "wallets": wallets,
+        "values": {"date": date.today().isoformat()},
+    })
 
 
 @login_required
