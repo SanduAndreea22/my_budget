@@ -19,13 +19,7 @@
       <div class="glass-card" style="padding:14px;display:grid;gap:10px;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
           <div style="display:flex;align-items:center;gap:12px;min-width:0;">
-            <div style="
-              width:40px;height:40px;border-radius:16px;
-              background: rgba(255,255,255,.08);
-              border:1px solid rgba(255,255,255,.14);
-              display:flex;align-items:center;justify-content:center;
-              font-size:18px;
-            ">{{ c.icon|default:"🏷️" }}</div>
+            <div class="cat-badge" style="--c:{{ c.color|default:'#14b8a6' }};">{{ c.icon|default:"🏷️" }}</div>
 
             <div style="min-width:0;">
               <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
@@ -51,9 +45,8 @@
         </div>
       </div>
     {% empty %}
-      <div class="muted" style="grid-column:1/-1;padding:14px;">
-        No categories yet. Create your first one.
-      </div>
+      {% url 'category_add' as add_url %}
+      {% include "partials/empty_state.html" with art="folder" title="Give your money some labels" text="Categories (Food, Rent, Salary…) turn a pile of numbers into patterns you can act on." url=add_url label="+ Create your first one" %}
     {% endfor %}
   </div>
 

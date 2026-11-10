@@ -64,6 +64,20 @@ document.addEventListener("DOMContentLoaded", function () {
     requestAnimationFrame(tick);
   });
 
+  // Toasts: auto-dismiss (errors stay longer), click to dismiss early.
+  document.querySelectorAll(".toast").forEach(function (toast) {
+    const isError = toast.classList.contains("toast--error");
+    const ms = isError ? 8000 : 5000;
+    toast.style.setProperty("--dur", ms + "ms");
+    let timer = setTimeout(dismiss, ms);
+
+    function dismiss() {
+      toast.classList.add("is-leaving");
+      setTimeout(function () { toast.remove(); }, 300);
+    }
+    toast.addEventListener("click", function () { clearTimeout(timer); dismiss(); });
+  });
+
   // Password fields: add a show/hide toggle to every password input,
   // wherever it appears (login, register, reset password) — no per-form
   // markup needed.
@@ -88,3 +102,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 });
+
+// Called by chart pages once a Chart.js chart has rendered, to fade out
+// the shimmering placeholder behind the canvas.
+window.markChartReady = function (canvas) {
+  if (canvas && canvas.parentElement) canvas.parentElement.classList.add("is-ready");
+};

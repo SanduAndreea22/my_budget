@@ -618,7 +618,7 @@ class WalletTests(TestCase):
 
     def test_wallets_list_shows_empty_state(self):
         response = self.client.get(reverse("wallets"))
-        self.assertContains(response, "No wallets yet")
+        self.assertContains(response, "One wallet is where it starts")
 
     def test_wallet_balance_reflects_its_own_transactions_only(self):
         cash = Wallet.objects.create(user=self.user, name="Cash")

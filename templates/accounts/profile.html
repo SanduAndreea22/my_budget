@@ -45,9 +45,7 @@
             {% if user.image %}
               <img src="{{ user.image.url }}" alt="Profile" style="width:100%;height:100%;object-fit:cover;display:block;">
             {% else %}
-              <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:34px;">
-                👤
-              </div>
+              <div class="avatar" style="font-size:38px;">{{ user.username|slice:":1"|upper }}</div>
             {% endif %}
           </div>
 

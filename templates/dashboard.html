@@ -28,26 +28,24 @@
     <div class="totals-grid" style="margin-top:18px;">
 
       <div class="glass-card" style="padding:16px;">
-        <div class="muted">Total Income</div>
-        <div id="dash-income" style="font-size:26px;font-weight:900;color:#22c55e;"
+        <div class="stat-label">Total Income</div>
+        <div id="dash-income" class="stat-number" style="color:#22c55e;"
              data-countup="{{ total_income }}" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
         </div>
       </div>
 
       <div class="glass-card" style="padding:16px;">
-        <div class="muted">Total Expense</div>
-        <div id="dash-expense" style="font-size:26px;font-weight:900;color:#ef4444;"
+        <div class="stat-label">Total Expense</div>
+        <div id="dash-expense" class="stat-number" style="color:#ef4444;"
              data-countup="{{ total_expense }}" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
         </div>
       </div>
 
       <div class="glass-card" style="padding:16px;">
-        <div class="muted">Balance</div>
-        <div style="
-          font-size:26px;
-          font-weight:900;
+        <div class="stat-label">Balance</div>
+        <div class="stat-number stat-number--hero" style="
           color:{% if balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};
         "
              data-countup-diff="dash-income,dash-expense" data-countup-suffix=" {{ currency }}">
@@ -86,62 +84,57 @@
       <a class="btn btn--ghost" href="{% url 'add_expense' %}">- Add expense</a>
     </div>
 
-    <div class="dash-action-group">
-      <span class="dash-action-group__label">Manage</span>
-      <a class="btn btn--ghost btn--sm" href="{% url 'categories' %}">Categories</a>
-      <a class="btn btn--ghost btn--sm" href="{% url 'wallets' %}">💳 Wallets</a>
-      <a class="btn btn--ghost btn--sm" href="{% url 'recurring_transactions' %}">🔁 Recurring</a>
-      <a class="btn btn--ghost btn--sm" href="{% url 'budgets' %}">Budgets</a>
-      <a class="btn btn--ghost btn--sm" href="{% url 'savings_goals' %}">🎯 Goals</a>
-    </div>
+    <div class="dash-grid">
+      <!-- RECENT TRANSACTIONS -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 10px;">
+          <h2 style="margin:0;font-size:22px;letter-spacing:-.02em;">Recent transactions</h2>
+          {% if transactions %}<a class="muted" href="{% url 'transactions' %}" style="font-weight:700;font-size:14px;">View all →</a>{% endif %}
+        </div>
 
-    <div class="dash-action-group">
-      <span class="dash-action-group__label">Insights</span>
-      <a class="btn btn--ghost btn--sm" href="{% url 'transactions' %}">Transactions</a>
-      <a class="btn btn--ghost btn--sm" href="{% url 'charts' %}">📊 Charts</a>
-      <a class="btn btn--ghost btn--sm" href="{% url 'compare' %}">📅 Compare</a>
-      <a class="btn btn--ghost btn--sm" href="{% url 'activity_log' %}">🕓 Activity</a>
-      <a class="btn btn--ghost btn--sm" href="{% url 'accounts:profile' username=user.username %}">👤 Profile</a>
-    </div>
-
-    <!-- RECENT TRANSACTIONS -->
-    <div style="margin-top:22px;">
-      <h2 style="margin:0 0 10px;font-size:22px;">
-        Recent transactions
-      </h2>
-
-      <div style="display:grid;gap:10px;">
-        {% for t in transactions %}
-          <div class="glass-card" style="
-            padding:14px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:12px;
-          ">
-            <div>
-              <div style="font-weight:900;display:flex;align-items:center;gap:8px;">
-                <span style="width:10px;height:10px;border-radius:999px;background:{{ t.category.color|default:'rgba(255,255,255,.3)' }};flex-shrink:0;"></span>
-                {{ t.category.name }}
+        <div style="display:grid;gap:10px;">
+          {% for t in transactions %}
+            <div class="glass-card tx-row">
+              <div class="tx-row__main">
+                <div class="cat-badge" style="--c:{{ t.category.color|default:'#14b8a6' }};">{{ t.category.icon|default:"🏷️" }}</div>
+                <div style="min-width:0;">
+                  <div class="tx-row__title">{{ t.category.name }}</div>
+                  <div class="muted" style="font-size:13px;">
+                    {{ t.date|date:"M d, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
+                  </div>
+                </div>
               </div>
-              <div class="muted" style="font-size:13px;">
-                {{ t.date|date:"M d, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
+
+              <div class="num" style="font-weight:800;white-space:nowrap;color:{% if t.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};">
+                {% if t.type == 'income' %}+{% else %}-{% endif %}{{ t.amount|floatformat:2|intcomma }} {{ currency }}
               </div>
             </div>
+          {% empty %}
+            {% url 'add_income' as income_url %}
+            {% url 'add_expense' as expense_url %}
+            {% include "partials/empty_state.html" with art="receipt" title="Your money story starts here" text="Add your first income or expense and this page turns into a live picture of where your money goes." url=income_url label="+ Add your first income" url2=expense_url label2="or add an expense" %}
+          {% endfor %}
+        </div>
+      </div>
 
-            <div style="
-              font-weight:900;
-              color:{% if t.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};
-            ">
-              {% if t.type == 'income' %}+{% else %}-{% endif %}
-              {{ t.amount|floatformat:2|intcomma }} {{ currency }}
+      <!-- THIS MONTH DONUT -->
+      <div class="glass-card" style="padding:16px;">
+        <h2 style="margin:0;font-size:22px;letter-spacing:-.02em;">{{ month_label }} spending</h2>
+        <p class="muted" style="margin:4px 0 12px;font-size:14px;">Where this month's money went</p>
+        {% if donut_values %}
+          <div class="donut-wrap chart-box">
+            <div class="chart-skeleton"></div>
+            <canvas id="dashDonut" aria-label="Spending by category this month"></canvas>
+            <div class="donut-center">
+              <div class="stat-label">Spent</div>
+              <div class="stat-number" style="font-size:26px;margin-top:2px;">{{ month_expense|floatformat:0|intcomma }}</div>
+              <div class="muted" style="font-size:12px;">{{ currency }}</div>
             </div>
           </div>
-        {% empty %}
-          <div class="muted">
-            No transactions yet.
-          </div>
-        {% endfor %}
+          <a class="btn btn--ghost btn--sm" href="{% url 'charts' %}" style="margin-top:12px;width:100%;">Full charts →</a>
+        {% else %}
+          <p class="muted" style="text-align:center;padding:40px 10px;">No expenses logged this month yet — your chart appears with your first one.</p>
+        {% endif %}
       </div>
     </div>
 
@@ -154,4 +147,38 @@
 </div>
 {% endblock %}
 
+{% block scripts %}
+{% if donut_values %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{{ donut_labels|json_script:"donut-labels" }}
+{{ donut_values|json_script:"donut-values" }}
+{{ donut_colors|json_script:"donut-colors" }}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const canvas = document.getElementById("dashDonut");
+  if (!canvas) return;
+  if (typeof Chart === "undefined") {
+    canvas.parentElement.innerHTML = '<p class="muted" style="text-align:center;padding:60px 0;">Chart unavailable offline.</p>';
+    return;
+  }
+  new Chart(canvas, {
+    type: "doughnut",
+    data: {
+      labels: JSON.parse(document.getElementById("donut-labels").textContent),
+      datasets: [{
+        data: JSON.parse(document.getElementById("donut-values").textContent),
+        backgroundColor: JSON.parse(document.getElementById("donut-colors").textContent),
+        borderWidth: 3, borderColor: "rgba(10,12,24,.9)", hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: "72%",
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: "rgba(0,0,0,.85)", padding: 10 } },
+      animation: { duration: 900, onComplete: function () { window.markChartReady(canvas); } }
+    }
+  });
+});
+</script>
+{% endif %}
+{% endblock %}
 

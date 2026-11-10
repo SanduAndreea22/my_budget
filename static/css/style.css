@@ -37,7 +37,8 @@ html,body{height:100%}
 
 body{
   margin:0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-family: 'Manrope', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-feature-settings: 'cv11','ss01';
   color: var(--text);
   background:
     var(--g1),
@@ -75,12 +76,12 @@ body::before{
   display:flex; align-items:center; gap:10px;
   font-size: 18px;
 }
-.nav__brand::before{
-  content:"";
-  width: 10px; height: 10px; border-radius: 999px;
-  background: var(--g2);
-  box-shadow: 0 0 0 4px rgba(255,255,255,.06), 0 10px 30px rgba(var(--brand-rgb),.35);
+.nav__logo{
+  width:30px; height:30px; flex-shrink:0;
+  filter: drop-shadow(0 8px 18px rgba(var(--brand-rgb),.45));
+  transition: transform .25s cubic-bezier(.16,.84,.44,1);
 }
+.nav__brand:hover .nav__logo{transform: rotate(-8deg) scale(1.08);}
 
 .nav__right{display:flex;gap:10px;align-items:center; flex-wrap:wrap}
 
@@ -401,4 +402,135 @@ a{color: rgba(255,255,255,.92)}
     font-weight:700;
     color:rgba(255,255,255,.6);
   }
+}
+
+
+/* ---------- Typography: big numbers ---------- */
+.num{font-variant-numeric: tabular-nums; letter-spacing:-.02em;}
+.stat-label{
+  font-size:12px; font-weight:800; text-transform:uppercase;
+  letter-spacing:.08em; color:var(--muted);
+}
+.stat-number{
+  font-variant-numeric: tabular-nums;
+  font-size:clamp(24px, 3vw, 34px);
+  font-weight:800; line-height:1.05; letter-spacing:-.035em;
+  margin-top:6px;
+}
+.stat-number--hero{font-size:clamp(24px, 3.4vw, 38px); font-weight:800;}
+
+/* ---------- Category badge: colored circle + emoji ---------- */
+.cat-badge{
+  --c:#14b8a6;
+  width:40px; height:40px; flex-shrink:0;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+  background: color-mix(in srgb, var(--c) 22%, transparent);
+  border:1px solid color-mix(in srgb, var(--c) 55%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--c) 18%, transparent);
+}
+
+/* ---------- Transaction rows: hover + tap feedback ---------- */
+.tx-row{
+  padding:12px 14px;
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+}
+.tx-row:hover{
+  background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
+  transform: translateX(3px);
+}
+.tx-row:active{transform: scale(.995);}
+.tx-row__main{display:flex; align-items:center; gap:12px; min-width:0;}
+.tx-row__title{font-weight:800; display:flex; gap:8px; flex-wrap:wrap; align-items:baseline;}
+
+/* ---------- Empty states ---------- */
+.empty-state{
+  padding:30px 22px; text-align:center;
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+}
+.empty-state__art{width:150px; height:auto; margin-bottom:6px; animation: float-y 4s ease-in-out infinite;}
+.empty-state__title{font-weight:800; font-size:18px; letter-spacing:-.02em;}
+.empty-state__text{margin:0 0 12px; max-width:44ch;}
+@keyframes float-y{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* ---------- Toasts (replace static message blocks) ---------- */
+.toast-stack{
+  position:fixed; top:132px; right:16px; z-index:100;
+  display:grid; gap:10px; width:min(360px, calc(100vw - 32px));
+  pointer-events:none;
+}
+.toast{
+  --t:255,255,255;
+  pointer-events:auto;
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; border-radius:16px;
+  background: rgba(12,16,34,.92);
+  border:1px solid rgba(var(--t),.40);
+  box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(var(--t),.08) inset;
+  backdrop-filter: blur(14px);
+  font-weight:700;
+  animation: toast-in .45s cubic-bezier(.16,.84,.44,1) both;
+  position:relative; overflow:hidden; cursor:pointer;
+}
+.toast--success{--t:34,197,94;}
+.toast--error{--t:239,68,68;}
+.toast--warning{--t:234,179,8;}
+.toast.is-leaving{animation: toast-out .3s ease forwards;}
+.toast__icon{
+  width:26px; height:26px; flex-shrink:0; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background: rgba(var(--t),.20); color: rgb(var(--t));
+}
+.toast__icon svg{width:16px; height:16px;}
+.toast--success .toast__icon path{
+  stroke-dasharray:24; stroke-dashoffset:24;
+  animation: draw-check .5s .25s ease forwards;
+}
+.toast__bar{
+  position:absolute; left:0; bottom:0; height:3px; width:100%;
+  background: rgb(var(--t)); transform-origin:left;
+  animation: toast-bar var(--dur,5s) linear forwards;
+}
+@keyframes toast-in{from{opacity:0; transform:translateX(30px) scale(.96)}to{opacity:1; transform:none}}
+@keyframes toast-out{to{opacity:0; transform:translateX(30px)}}
+@keyframes draw-check{to{stroke-dashoffset:0}}
+@keyframes toast-bar{to{transform:scaleX(0)}}
+@media (max-width:640px){.toast-stack{top:auto; bottom:84px; right:16px; left:16px; width:auto;}}
+
+/* ---------- Skeleton for charts ---------- */
+.chart-box{position:relative;}
+.chart-skeleton{
+  position:absolute; inset:0; border-radius:20px;
+  background: linear-gradient(100deg, rgba(255,255,255,.04) 30%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.04) 70%);
+  background-size:200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  transition: opacity .3s ease;
+}
+.chart-box.is-ready .chart-skeleton{opacity:0; pointer-events:none;}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* ---------- Initials avatar ---------- */
+.avatar{
+  display:flex; align-items:center; justify-content:center;
+  width:100%; height:100%;
+  background: var(--g2); color:#04201c;
+  font-weight:800; letter-spacing:-.02em;
+}
+.nav__avatar{
+  width:32px; height:32px; border-radius:50%; overflow:hidden; flex-shrink:0;
+  font-size:13px; border:1px solid rgba(255,255,255,.25);
+  display:inline-flex; text-decoration:none;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.nav__avatar:hover{transform: scale(1.08); box-shadow: 0 0 0 4px rgba(var(--brand-rgb),.25);}
+
+/* ---------- Dashboard donut ---------- */
+.dash-grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:16px; margin-top:22px; align-items:start;}
+@media (max-width:900px){.dash-grid{grid-template-columns:1fr;}}
+.donut-wrap{position:relative; height:240px;}
+.donut-center{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; pointer-events:none; text-align:center;
 }

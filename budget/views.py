@@ -143,6 +143,23 @@ def dashboard_view(request):
         if r["is_over"] or r["is_near"]
     ]
 
+    month_rows = list(
+        transactions.filter(
+            type=Transaction.EXPENSE,
+            date__gte=_month_start(today),
+            date__lte=_month_end(today),
+        )
+        .values("category__name", "category__color", "category__icon")
+        .annotate(total=Sum("amount"))
+        .order_by("-total")
+    )
+    donut_labels = [
+        f'{r["category__icon"] or "🏷️"} {r["category__name"] or "Other"}'.strip() for r in month_rows
+    ]
+    donut_values = [float(r["total"] or 0) for r in month_rows]
+    donut_colors = [r["category__color"] or "#14b8a6" for r in month_rows]
+    month_expense = sum(donut_values)
+
     context = {
         "total_income": total_income,
         "total_expense": total_expense,
@@ -150,6 +167,11 @@ def dashboard_view(request):
         "transactions": last_transactions,
         "currency": request.user.currency,
         "budget_alerts": budget_alerts,
+        "donut_labels": donut_labels,
+        "donut_values": donut_values,
+        "donut_colors": donut_colors,
+        "month_expense": month_expense,
+        "month_label": today.strftime("%B"),
     }
 
     return render(request, "dashboard.html", context)

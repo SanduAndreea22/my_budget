@@ -125,20 +125,22 @@
     <!-- List -->
     <div style="margin-top:14px;display:grid;gap:10px;">
       {% for t in transactions %}
-        <div class="glass-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
-          <div style="min-width:0;">
-            <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px;">
-              <span style="width:10px;height:10px;border-radius:999px;background:{{ t.category.color|default:'rgba(255,255,255,.3)' }};flex-shrink:0;"></span>
-              {{ t.category.icon|default:"🏷️" }} {{ t.category.name }}
-              <span class="muted" style="font-weight:700;">· {{ t.wallet.icon|default:"💳" }} {{ t.wallet.name }}</span>
-            </div>
-            <div class="muted" style="font-size:13px;">
-              {{ t.date|date:"M d, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
+        <div class="glass-card tx-row">
+          <div class="tx-row__main">
+            <div class="cat-badge" style="--c:{{ t.category.color|default:'#14b8a6' }};">{{ t.category.icon|default:"🏷️" }}</div>
+            <div style="min-width:0;">
+              <div class="tx-row__title">
+                {{ t.category.name }}
+                <span class="muted" style="font-weight:700;">· {{ t.wallet.icon|default:"💳" }} {{ t.wallet.name }}</span>
+              </div>
+              <div class="muted" style="font-size:13px;">
+                {{ t.date|date:"M d, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
+              </div>
             </div>
           </div>
 
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
-            <div style="font-weight:950;color:{% if t.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};">
+            <div class="num" style="font-weight:800;color:{% if t.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};">
               {% if t.type == 'income' %}+{% else %}-{% endif %}
               {{ t.amount|floatformat:2|intcomma }} {{ currency }}
             </div>
@@ -150,7 +152,8 @@
           </div>
         </div>
       {% empty %}
-        <div class="muted">No transactions found for these filters.</div>
+        {% url 'add_expense' as expense_url %}
+        {% include "partials/empty_state.html" with art="receipt" title="Nothing here yet" text="No transactions match these filters. Reset them, or log something new." url=expense_url label="- Add expense" %}
       {% endfor %}
     </div>
 
