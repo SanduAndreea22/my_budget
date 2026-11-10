@@ -1,26 +1,15 @@
-import os
-import resend
 from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.tokens import default_token_generator
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.template.loader import render_to_string
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes
-from django.contrib.sites.shortcuts import get_current_site
 from budget.starter import create_starter_data
 from .decorators import ratelimit_post, user_not_authenticated
-from .emails import send_email_async
-from .forms import PasswordResetRequestForm, UserRegistrationForm, UserLoginForm, UserUpdateForm
+from .forms import UserRegistrationForm, UserLoginForm, UserUpdateForm
 
 User = get_user_model()
 
-resend.api_key = os.environ.get('RESEND_API_KEY')
-EMAIL_ENABLED = bool(resend.api_key)
 
 @user_not_authenticated(redirect_url='dashboard')
 @ratelimit_post('register', limit=5, period_seconds=3600)
@@ -61,7 +50,7 @@ def login_view(request):
         messages.error(request, 'Invalid credentials or inactive account.')
     else:
         form = UserLoginForm()
-    return render(request, 'accounts/login.html', {'form': form, 'password_reset_available': EMAIL_ENABLED})
+    return render(request, 'accounts/login.html', {'form': form})
 
 @require_POST
 def logout_view(request):
@@ -84,56 +73,3 @@ def profile_view(request, username):
     else:
         form = UserUpdateForm(instance=request.user)
     return render(request, 'accounts/profile.html', {'form': form})
-
-@user_not_authenticated(redirect_url='dashboard')
-@ratelimit_post('password_reset', limit=5, period_seconds=3600)
-def password_reset_request_view(request):
-    if not EMAIL_ENABLED:
-        messages.error(request, "Password reset by email isn't set up yet — contact us directly for help.")
-        return redirect('accounts:login')
-
-    if request.method == 'POST':
-        form = PasswordResetRequestForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            user = User.objects.filter(email__iexact=email).first()
-            if user is not None:
-                current_site = get_current_site(request)
-                html_message = render_to_string('accounts/password_reset_email.html', {
-                    'user': user,
-                    'domain': current_site.domain,
-                    'scheme': 'https' if request.is_secure() else 'http',
-                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                    'token': default_token_generator.make_token(user),
-                })
-                send_email_async(user.email, 'Reset your MyBudget password', html_message)
-
-            # Same message whether or not the email is registered, so this
-            # page can't be used to check which emails have an account.
-            messages.success(request, "If that email is registered, we've sent a password reset link.")
-            return redirect('accounts:login')
-    else:
-        form = PasswordResetRequestForm()
-    return render(request, 'accounts/password_reset.html', {'form': form})
-
-def password_reset_confirm_view(request, uidb64, token):
-    try:
-        uid = urlsafe_base64_decode(uidb64).decode()
-        user = User.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user = None
-
-    if user is None or not default_token_generator.check_token(user, token):
-        messages.error(request, "This password reset link is invalid or has expired.")
-        return redirect('accounts:password_reset')
-
-    if request.method == 'POST':
-        form = SetPasswordForm(user, request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Your password has been reset. You can log in now.")
-            return redirect('accounts:login')
-    else:
-        form = SetPasswordForm(user)
-
-    return render(request, 'accounts/password_reset_confirm.html', {'form': form})

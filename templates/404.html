@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Page not found · MyBudget{% endblock %}
+{% block content %}
+<section style="max-width:560px;margin:24px auto;">
+  {% if user.is_authenticated %}
+    {% url 'dashboard' as home_url %}
+    {% include "partials/empty_state.html" with art="lost" title="We can't find that page" text="The link may be old or mistyped. Use the menu above, or head back to your dashboard." url=home_url label="Back to dashboard" %}
+  {% else %}
+    {% url 'home' as home_url %}
+    {% include "partials/empty_state.html" with art="lost" title="We can't find that page" text="The link may be old or mistyped. Head back to the homepage to get started." url=home_url label="Go to homepage" %}
+  {% endif %}
+</section>
+{% endblock %}

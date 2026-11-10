@@ -905,3 +905,43 @@ class StarterDataTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse("add_expense"))
         self.assertContains(response, f'value="{date.today().isoformat()}"')
+
+
+class UsabilityPolishTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+
+    def test_404_page_has_navigation_for_anonymous_visitors(self):
+        response = self.client.get("/definitely-not-a-page")
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "find that page", status_code=404)
+        self.assertContains(response, "Go to homepage", status_code=404)
+        self.assertContains(response, 'class="nav"', status_code=404)
+
+    def test_404_page_for_logged_in_user_links_to_dashboard_and_shows_menu(self):
+        self.client.force_login(self.user)
+        response = self.client.get("/definitely-not-a-page")
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Back to dashboard", status_code=404)
+        self.assertContains(response, "subnav", status_code=404)
+
+    def test_export_links_live_in_one_menu_and_keep_filters(self):
+        from .starter import create_starter_data
+        create_starter_data(self.user)
+        cat = Category.objects.get(user=self.user, name="Food")
+        wallet = Wallet.objects.get(user=self.user, name="Cash")
+        Transaction.objects.create(user=self.user, category=cat, wallet=wallet, type="expense", amount=10, date=date.today())
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("transactions"), {"type": "expense"})
+        self.assertContains(response, 'class="menu"')
+        for name in ("export_transactions_csv", "export_transactions_xlsx", "export_transactions_pdf"):
+            self.assertContains(response, reverse(name) + "?type=expense")
+
+    def test_category_and_wallet_forms_offer_quick_pickers(self):
+        self.client.force_login(self.user)
+        cat = self.client.get(reverse("category_add"))
+        self.assertContains(cat, 'data-target="id_icon"')
+        self.assertContains(cat, 'data-target="id_color"')
+        wal = self.client.get(reverse("wallet_add"))
+        self.assertContains(wal, 'data-target="id_icon"')
+        self.assertNotContains(wal, 'data-target="id_color"')

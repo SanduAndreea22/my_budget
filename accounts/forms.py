@@ -78,12 +78,6 @@ class UserLoginForm(forms.Form):
     def get_user(self):
         return self.user_cache
 
-class PasswordResetRequestForm(forms.Form):
-    email = forms.EmailField(
-        label="Email",
-        widget=forms.EmailInput(attrs={'placeholder': 'you@example.com'}),
-    )
-
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField()
 

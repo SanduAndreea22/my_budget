@@ -115,16 +115,6 @@ class RegistrationFormTests(TestCase):
         self.assertFalse(Category.objects.filter(user=a, pk__in=Category.objects.filter(user=b).values("pk")).exists())
         self.assertEqual(Wallet.objects.filter(user=a).count(), 1)
 
-    def test_registering_sends_no_email(self):
-        from unittest import mock
-        with mock.patch("accounts.views.send_email_async") as send:
-            self.client.post(reverse("accounts:register"), {
-                "email": "noemail@example.com", "currency": "RON",
-                "password1": "S3cure-Pass!23", "password2": "S3cure-Pass!23",
-            })
-        send.assert_not_called()
-        self.assertTrue(User.objects.get(email="noemail@example.com").is_active)
-
     def test_duplicate_email_local_part_gets_a_numeric_suffix(self):
         User.objects.create_user(username="alice", email="alice@other-domain.com", password="pass12345")
 
@@ -155,63 +145,20 @@ class RegistrationFormTests(TestCase):
         self.assertEqual(User.objects.filter(email__iexact="alice@example.com").count(), 1)
 
 
-class PasswordResetTests(TestCase):
-    def setUp(self):
-        cache.clear()
-        self.user = User.objects.create_user(username="alice", email="alice@example.com", password="oldpass123")
+class NoEmailFlowsTests(TestCase):
+    """The app sends no email at all while it is in testing."""
 
-    def test_request_view_declines_when_email_sending_is_not_configured(self):
-        # RESEND_API_KEY isn't set in this environment, so the request view
-        # must not pretend to send anything.
-        response = self.client.post(
-            reverse("accounts:password_reset"), {"email": "alice@example.com"}, follow=True
-        )
-        self.assertRedirects(response, reverse("accounts:login"))
-        messages = [m.message for m in response.context["messages"]]
-        self.assertTrue(any("isn't set up yet" in m for m in messages))
+    def test_password_reset_routes_are_gone(self):
+        self.assertEqual(self.client.get("/auth/password-reset").status_code, 404)
+        self.assertEqual(self.client.get("/auth/reset/abc/def").status_code, 404)
 
-    def test_reset_request_does_not_reveal_whether_the_email_exists(self):
-        with mock.patch("accounts.views.EMAIL_ENABLED", True):
-            known = self.client.post(reverse("accounts:password_reset"), {"email": "alice@example.com"}, follow=True)
-            unknown = self.client.post(reverse("accounts:password_reset"), {"email": "nobody@example.com"}, follow=True)
+    def test_login_page_has_no_forgot_password_link(self):
+        response = self.client.get(reverse("accounts:login"))
+        self.assertNotContains(response, "Forgot")
 
-        known_messages = [m.message for m in known.context["messages"]]
-        unknown_messages = [m.message for m in unknown.context["messages"]]
-        self.assertEqual(known_messages, unknown_messages)
+    def test_activation_route_is_gone(self):
+        self.assertEqual(self.client.get("/auth/activate/abc/def").status_code, 404)
 
-    def test_valid_token_allows_setting_a_new_password(self):
-        from django.contrib.auth.tokens import default_token_generator
-        from django.utils.encoding import force_bytes
-        from django.utils.http import urlsafe_base64_encode
-
-        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
-        token = default_token_generator.make_token(self.user)
-
-        response = self.client.post(
-            reverse("accounts:password_reset_confirm", kwargs={"uidb64": uid, "token": token}),
-            {"new_password1": "Brand-New-Pass!23", "new_password2": "Brand-New-Pass!23"},
-        )
-        self.assertRedirects(response, reverse("accounts:login"))
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password("Brand-New-Pass!23"))
-
-    def test_invalid_token_is_rejected(self):
-        from django.utils.encoding import force_bytes
-        from django.utils.http import urlsafe_base64_encode
-
-        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
-
-        # No follow=True: this checks password_reset_confirm_view's own
-        # redirect target, not wherever accounts:password_reset itself
-        # bounces to next (which depends on EMAIL_ENABLED).
-        response = self.client.get(
-            reverse("accounts:password_reset_confirm", kwargs={"uidb64": uid, "token": "bad-token"}),
-        )
-        self.assertRedirects(
-            response, reverse("accounts:password_reset"), target_status_code=302
-        )
-        self.user.refresh_from_db()
-        self.assertTrue(self.user.check_password("oldpass123"))
 
 
 class ProfileImageDefaultTests(TestCase):

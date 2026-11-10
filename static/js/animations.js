@@ -126,3 +126,38 @@ document.addEventListener("DOMContentLoaded", function () {
 window.markChartReady = function (canvas) {
   if (canvas && canvas.parentElement) canvas.parentElement.classList.add("is-ready");
 };
+
+// Quick pickers: buttons with data-pick/data-target fill an input (emoji, color)
+// and show which one is currently selected.
+document.addEventListener("DOMContentLoaded", function () {
+  const buttons = document.querySelectorAll("[data-pick][data-target]");
+  function sync(input) {
+    document.querySelectorAll('[data-target="' + input.id + '"]').forEach(function (b) {
+      b.classList.toggle("is-selected", b.dataset.pick.toLowerCase() === input.value.toLowerCase());
+    });
+  }
+  buttons.forEach(function (btn) {
+    const input = document.getElementById(btn.dataset.target);
+    if (!input) return;
+    btn.addEventListener("click", function () {
+      input.value = btn.dataset.pick;
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+      sync(input);
+    });
+    if (!input._pickerBound) {
+      input._pickerBound = true;
+      input.addEventListener("input", function () { sync(input); });
+      sync(input);
+    }
+  });
+
+  // Dropdown menus (<details class="menu">): close on outside click / Escape.
+  document.addEventListener("click", function (e) {
+    document.querySelectorAll("details.menu[open]").forEach(function (m) {
+      if (!m.contains(e.target)) m.removeAttribute("open");
+    });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") document.querySelectorAll("details.menu[open]").forEach(function (m) { m.removeAttribute("open"); });
+  });
+});

@@ -6,7 +6,7 @@ class CategoryForm(forms.ModelForm):
     icon = forms.CharField(
         required=False,
         max_length=32,
-        widget=forms.TextInput(attrs={"placeholder": "Icon (emoji) e.g. 💼 🍔 (optional)"}),
+        widget=forms.TextInput(attrs={"placeholder": "Pick below or type an emoji (optional)"}),
         error_messages={"max_length": "That icon is too long — try a single emoji instead."},
     )
 
@@ -52,7 +52,7 @@ class WalletForm(forms.ModelForm):
     icon = forms.CharField(
         required=False,
         max_length=32,
-        widget=forms.TextInput(attrs={"placeholder": "Icon (emoji) e.g. 💳 💵 (optional)"}),
+        widget=forms.TextInput(attrs={"placeholder": "Pick below or type an emoji (optional)"}),
         error_messages={"max_length": "That icon is too long — try a single emoji instead."},
     )
 
