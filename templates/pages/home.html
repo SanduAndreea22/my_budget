@@ -32,9 +32,9 @@
 
       <div class="hero__cta">
         <a class="btn" href="{% url 'accounts:register' %}">Create account <span aria-hidden="true">→</span></a>
-        <a class="btn btn--ghost" href="{% url 'accounts:login' %}">Login</a>
+        <form method="post" action="{% url 'accounts:demo' %}" class="demo-form">{% csrf_token %}<button type="submit" class="btn btn--ghost">Try the demo <span aria-hidden="true">→</span></button></form>
       </div>
-      <p class="hero__reassure muted">Free while in testing, no credit card needed. <a href="{% url 'privacy' %}">How your data is handled</a></p>
+      <p class="hero__reassure muted">No sign-up needed to look around. Free while in testing, no credit card. <a href="{% url 'privacy' %}">How your data is handled</a></p>
     </div>
 
     <!-- PREVIEW: example screen (not interactive) -->
@@ -167,6 +167,10 @@
   <h2 class="lp-title">Questions</h2>
   <div class="faq">
     <details class="glass-card faq__item">
+      <summary>Can I try it without signing up?</summary>
+      <p>Yes. "Try the demo" opens a private copy of the app filled with example data: change anything you like. It is deleted when you log out, when you create a real account, or after about a day.</p>
+    </details>
+    <details class="glass-card faq__item">
       <summary>Is it free?</summary>
       <p>Yes, MyBudget is free while it is in testing, and no credit card is needed. The app may change before it leaves testing.</p>
     </details>
@@ -201,6 +205,9 @@
 <section class="lp-section lp-cta">
   <h2 class="lp-title">Ready to see where your money goes?</h2>
   <p class="muted" style="margin:0 0 18px;">Free while in testing, no credit card needed.</p>
-  <a class="btn" href="{% url 'accounts:register' %}">Create account <span aria-hidden="true">→</span></a>
+  <div class="hero__cta" style="justify-content:center;">
+    <a class="btn" href="{% url 'accounts:register' %}">Create account <span aria-hidden="true">→</span></a>
+    <form method="post" action="{% url 'accounts:demo' %}" class="demo-form">{% csrf_token %}<button type="submit" class="btn btn--ghost">Try the demo <span aria-hidden="true">→</span></button></form>
+  </div>
 </section>
 {% endblock %}

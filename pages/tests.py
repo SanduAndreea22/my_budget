@@ -69,7 +69,7 @@ class LandingSectionsTests(TestCase):
         self.assertEqual(self.html.count('class="glass-card step"'), 3)
 
     def test_faq_answers_match_what_the_app_does(self):
-        self.assertEqual(self.html.count('class="glass-card faq__item"'), 7)
+        self.assertEqual(self.html.count('class="glass-card faq__item"'), 8)
         self.assertIn("RON, EUR, USD or GBP", self.html)
         self.assertIn("free while it is in testing", self.html)
         self.assertIn("no automatic password reset", self.html)
@@ -77,3 +77,15 @@ class LandingSectionsTests(TestCase):
     def test_public_navbar_links_to_the_sections(self):
         self.assertIn('href="/#how-it-works"', self.html)
         self.assertIn('href="/#faq"', self.html)
+
+
+class LandingDemoButtonTests(TestCase):
+    def test_landing_offers_the_demo_as_a_post_form(self):
+        html = self.client.get("/").content.decode()
+        self.assertEqual(html.count('action="/auth/demo"'), 2)  # hero + final call to action
+        self.assertIn("Try the demo", html)
+        self.assertIn("csrfmiddlewaretoken", html)
+        self.assertIn("Can I try it without signing up?", html)
+
+    def test_privacy_page_describes_demo_accounts(self):
+        self.assertContains(self.client.get("/privacy"), "Demo accounts")

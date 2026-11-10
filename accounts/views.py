@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from budget.starter import create_starter_data
 from .decorators import ratelimit_post, user_not_authenticated
+from .demo import cleanup_old_demo_users, create_demo_user, end_demo_session
 from .forms import UserRegistrationForm, UserLoginForm, UserUpdateForm
 
 User = get_user_model()
@@ -54,14 +55,37 @@ def login_view(request):
 
 @require_POST
 def logout_view(request):
+    was_demo = request.user.is_authenticated and request.user.is_demo
+    if was_demo:
+        end_demo_session(request)
+        messages.success(request, 'Demo ended. The example data was deleted.')
+        return redirect('home')
     logout(request)
     messages.success(request, 'You have successfully logged out!')
     return redirect('accounts:login')
+
+
+@ratelimit_post('demo', limit=20, period_seconds=3600)
+def demo_start_view(request):
+    """Create a temporary account with example data and sign the visitor in."""
+    if request.method != 'POST':
+        return redirect('home')
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    cleanup_old_demo_users()
+    user = create_demo_user()
+    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    messages.success(request, "You're in the demo. Everything here is example data you can change freely.")
+    return redirect('dashboard')
 
 @login_required
 def profile_view(request, username):
     if request.user.username != username:
         messages.error(request, "You can't view someone else's profile.")
+        return redirect('accounts:profile', username=request.user.username)
+
+    if request.method == 'POST' and request.user.is_demo:
+        messages.error(request, "Profile changes are turned off in the demo. Create an account to set up your own.")
         return redirect('accounts:profile', username=request.user.username)
 
     if request.method == 'POST':

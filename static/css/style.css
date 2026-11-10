@@ -833,3 +833,15 @@ html{scroll-behavior:smooth;}
   .nav__link--anchor{display:none;}
 }
 @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} }
+
+
+/* ---------- Demo mode ---------- */
+.demo-form{display:inline-flex; margin:0;}
+.demo-banner{
+  display:flex; align-items:center; justify-content:space-between; gap:10px 16px; flex-wrap:wrap;
+  margin-top:14px; padding:10px 14px; border-radius:16px;
+  background:rgba(234,179,8,.12); border:1px solid rgba(234,179,8,.35);
+  font-size:14px; color:rgba(255,255,255,.9);
+}
+.demo-banner b{color:#fde68a;}
+.btn[disabled]{opacity:.5; cursor:not-allowed; filter:none; transform:none;}

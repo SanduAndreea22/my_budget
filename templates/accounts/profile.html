@@ -20,6 +20,7 @@
       <div>
         <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">My Profile</h1>
         <p class="muted" style="margin:0;">Update your avatar, description and preferred currency.</p>
+        {% if user.is_demo %}<p class="muted" style="margin:8px 0 0;"><b>Demo account:</b> profile changes are turned off. <a href="{% url 'accounts:register' %}">Create an account</a> to set up your own.</p>{% endif %}
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -104,7 +105,7 @@
           {% endfor %}
 
           <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:6px;">
-            <button type="submit" class="btn">
+            <button type="submit" class="btn"{% if user.is_demo %} disabled title="Turned off in the demo"{% endif %}>
               Save changes <span style="margin-left:10px;opacity:.75">→</span>
             </button>
             <a class="btn btn--ghost" href="/app/">Cancel</a>

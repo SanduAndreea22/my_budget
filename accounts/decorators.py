@@ -11,7 +11,12 @@ def user_not_authenticated(function=None, redirect_url='/'):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if request.user.is_authenticated:
-                return redirect(redirect_url)
+                if getattr(request.user, "is_demo", False):
+                    # They chose to log in / sign up: end the demo and carry on as a visitor.
+                    from .demo import end_demo_session
+                    end_demo_session(request)
+                else:
+                    return redirect(redirect_url)
 
             return view_func(request, *args, **kwargs)
 

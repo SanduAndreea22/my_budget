@@ -35,6 +35,9 @@ class CustomUser(AbstractUser):
 
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="RON")
 
+    # Temporary "Try the demo" accounts: example data, deleted on logout / sign-up / after ~24h.
+    is_demo = models.BooleanField(default=False, db_index=True)
+
     def delete(self, *args, **kwargs):
         # budget.Category/Wallet are PROTECTed from Transaction,
         # BudgetLimit and RecurringTransaction (so a user can't delete a

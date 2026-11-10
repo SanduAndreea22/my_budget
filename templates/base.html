@@ -76,6 +76,13 @@
     {% endwith %}
   {% endif %}
 
+  {% if user.is_authenticated and user.is_demo %}
+    <div class="container demo-banner" role="note">
+      <span><b>Demo mode.</b> This is example data you can change freely. It is deleted when you leave.</span>
+      <a class="btn btn--sm" href="{% url 'accounts:register' %}">Create your account →</a>
+    </div>
+  {% endif %}
+
   <main class="container page">
     {% block content %}{% endblock %}
   </main>

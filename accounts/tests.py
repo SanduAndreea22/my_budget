@@ -212,3 +212,125 @@ class UserDeletionTests(TestCase):
         self.assertFalse(User.objects.filter(pk=user.pk).exists())
         self.assertFalse(Category.objects.filter(pk=category.pk).exists())
         self.assertFalse(Transaction.objects.exists())
+
+
+class DemoAccountTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def _start(self):
+        return self.client.post(reverse("accounts:demo"))
+
+    def test_demo_start_creates_a_logged_in_demo_account_with_example_data(self):
+        from budget.models import BudgetLimit, SavingsGoal, Transaction
+        response = self._start()
+        self.assertRedirects(response, reverse("dashboard"))
+        user = User.objects.get(is_demo=True)
+        self.assertFalse(user.has_usable_password())
+        self.assertTrue(user.email.endswith("@demo.invalid"))
+        self.assertGreater(Transaction.objects.filter(user=user).count(), 20)
+        self.assertTrue(BudgetLimit.objects.filter(user=user).exists())
+        self.assertEqual(SavingsGoal.objects.filter(user=user).count(), 3)
+        page = self.client.get(reverse("dashboard"))
+        self.assertContains(page, "Demo mode")
+        self.assertContains(page, "is over budget")
+
+    def test_demo_start_only_accepts_post(self):
+        response = self.client.get(reverse("accounts:demo"))
+        self.assertRedirects(response, reverse("home"), fetch_redirect_response=False)
+        self.assertFalse(User.objects.filter(is_demo=True).exists())
+
+    def test_each_visitor_gets_a_separate_account(self):
+        from budget.models import Transaction
+        self._start()
+        first = User.objects.get(is_demo=True)
+        self.client.logout()
+        self._start()
+        self.assertEqual(User.objects.filter(is_demo=True).count(), 2)
+        second = User.objects.filter(is_demo=True).exclude(pk=first.pk).get()
+        self.assertFalse(Transaction.objects.filter(user=second, pk__in=Transaction.objects.filter(user=first).values("pk")).exists())
+
+    def test_logging_out_deletes_the_demo_account_and_its_data(self):
+        from budget.models import Transaction
+        self._start()
+        user = User.objects.get(is_demo=True)
+        self.client.post(reverse("accounts:logout"))
+        self.assertFalse(User.objects.filter(pk=user.pk).exists())
+        self.assertFalse(Transaction.objects.filter(user_id=user.pk).exists())
+
+    def test_demo_visitor_can_register_and_the_demo_is_deleted(self):
+        self._start()
+        demo = User.objects.get(is_demo=True)
+        response = self.client.post(reverse("accounts:register"), {
+            "email": "real@example.com", "currency": "EUR",
+            "password1": "S3cure-Pass!23", "password2": "S3cure-Pass!23",
+        })
+        self.assertRedirects(response, reverse("dashboard"))
+        self.assertFalse(User.objects.filter(pk=demo.pk).exists())
+        real = User.objects.get(email="real@example.com")
+        self.assertFalse(real.is_demo)
+        self.assertNotContains(self.client.get(reverse("dashboard")), "Demo mode")
+
+    def test_demo_visitor_can_open_the_login_page(self):
+        self._start()
+        response = self.client.get(reverse("accounts:login"))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(is_demo=True).exists())
+
+    def test_profile_changes_are_blocked_in_the_demo(self):
+        self._start()
+        user = User.objects.get(is_demo=True)
+        response = self.client.post(reverse("accounts:profile", args=[user.username]), {
+            "first_name": "Hacker", "last_name": "", "email": "evil@example.com", "description": "", "currency": "USD",
+        })
+        self.assertEqual(response.status_code, 302)
+        user.refresh_from_db()
+        self.assertEqual(user.first_name, "Demo")
+        self.assertTrue(user.email.endswith("@demo.invalid"))
+        self.assertContains(self.client.get(reverse("accounts:profile", args=[user.username])), "profile changes are turned off")
+
+    def test_cleanup_removes_only_old_demo_accounts(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from accounts.demo import cleanup_old_demo_users, create_demo_user
+        real = User.objects.create_user(username="real", email="real@example.com", password="pass12345")
+        User.objects.filter(pk=real.pk).update(date_joined=timezone.now() - timedelta(days=400))
+        old, fresh = create_demo_user(), create_demo_user()
+        User.objects.filter(pk=old.pk).update(date_joined=timezone.now() - timedelta(hours=30))
+        self.assertEqual(cleanup_old_demo_users(), 1)
+        self.assertFalse(User.objects.filter(pk=old.pk).exists())
+        self.assertTrue(User.objects.filter(pk=fresh.pk).exists())
+        self.assertTrue(User.objects.filter(pk=real.pk).exists())
+
+    def test_starting_a_demo_clears_expired_ones(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from accounts.demo import create_demo_user
+        old = create_demo_user()
+        User.objects.filter(pk=old.pk).update(date_joined=timezone.now() - timedelta(hours=48))
+        self._start()
+        self.assertFalse(User.objects.filter(pk=old.pk).exists())
+        self.assertEqual(User.objects.filter(is_demo=True).count(), 1)
+
+    def test_demo_start_is_rate_limited(self):
+        for _ in range(20):
+            self.client.post(reverse("accounts:demo"))
+            self.client.logout()
+        before = User.objects.filter(is_demo=True).count()
+        response = self.client.post(reverse("accounts:demo"))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(User.objects.filter(is_demo=True).count(), before)
+
+    def test_an_already_logged_in_real_user_is_not_replaced_by_a_demo(self):
+        real = User.objects.create_user(username="real", email="real@example.com", password="pass12345")
+        self.client.force_login(real)
+        self._start()
+        self.assertFalse(User.objects.filter(is_demo=True).exists())
+        self.assertEqual(int(self.client.session["_auth_user_id"]), real.pk)
+
+    def test_management_command_runs(self):
+        from io import StringIO
+        from django.core.management import call_command
+        out = StringIO()
+        call_command("cleanup_demo_users", stdout=out)
+        self.assertIn("Deleted 0 demo account(s).", out.getvalue())
