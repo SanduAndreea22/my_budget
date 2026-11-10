@@ -457,7 +457,9 @@ class BudgetsViewNoLimitStateTests(TestCase):
 
     def test_shows_explicit_no_limit_message_instead_of_hiding_the_row(self):
         response = self.client.get(reverse("budgets"))
-        self.assertContains(response, "No limit set for this category yet.")
+        self.assertContains(response, "No limit set")
+        self.assertContains(response, "Set budget")
+        self.assertContains(response, "Food")
 
     def test_month_picker_renders_as_a_month_input(self):
         response = self.client.get(reverse("budgets"))
