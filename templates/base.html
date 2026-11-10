@@ -5,11 +5,22 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{% block title %}MyBudget{% endblock %}</title>
+  {% block meta %}{% endblock %}
   <meta name="description" content="{% block description %}MyBudget: a personal budget tracker for income, expenses, wallets and recurring bills.{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MyBudget">
+  <meta property="og:title" content="{% block og_title %}MyBudget · Personal budget tracker{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}See where your money goes, before the month surprises you. Wallets, budgets and recurring bills in one place.{% endblock %}">
+  <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
+  <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.jpg' %}">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="MyBudget: see where your money goes, before the month surprises you.">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap">
+  <link rel="preload" href="{% static 'fonts/manrope-latin.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <meta name="theme-color" content="#070A1A">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 
@@ -66,6 +77,15 @@
   <main class="container page">
     {% block content %}{% endblock %}
   </main>
+
+  <footer class="container site-footer">
+    <div>MyBudget · free while in testing</div>
+    <div class="site-footer__links">
+      <a href="{% url 'privacy' %}">Privacy</a>
+      <a href="https://github.com/SanduAndreea22/my_budget" target="_blank" rel="noopener">Source on GitHub</a>
+    </div>
+    <div class="site-footer__by">Built by <b>Andreea Tech</b> · <a href="https://www.linkedin.com/in/andreealuizasandu" target="_blank" rel="noopener">LinkedIn</a></div>
+  </footer>
 
   {% if messages %}
     <div class="toast-stack" role="status" aria-live="polite">

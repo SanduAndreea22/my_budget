@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% load humanize %}
 {% block title %}Dashboard · MyBudget{% endblock %}
 
@@ -151,7 +152,7 @@
 
 {% block scripts %}
 {% if donut_values %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="{% static 'vendor/chart.umd.js' %}"></script>
 {{ donut_labels|json_script:"donut-labels" }}
 {{ donut_values|json_script:"donut-values" }}
 {{ donut_colors|json_script:"donut-colors" }}

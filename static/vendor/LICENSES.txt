@@ -1,0 +1,7 @@
+Third-party files served from this site (so visitors' browsers never call another host):
+
+chart.umd.js — Chart.js 4.4.1, MIT License, https://www.chartjs.org
+  Copyright (c) 2014-2024 Chart.js Contributors
+
+fonts/manrope-*.woff2 — Manrope (variable), SIL Open Font License 1.1,
+  https://github.com/sharanda/manrope  (via Google Fonts)

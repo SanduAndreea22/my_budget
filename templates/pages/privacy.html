@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Privacy · MyBudget{% endblock %}
+{% block description %}What MyBudget stores, how it is protected, and the limits of this testing version.{% endblock %}
+{% block og_title %}How MyBudget handles your data{% endblock %}
+{% block og_description %}What is stored, how it is protected, and what to know about the testing version.{% endblock %}
+
+{% block content %}
+<section class="glass-card" style="max-width:760px;margin:0 auto;padding:26px;">
+  <h1 style="margin:0 0 6px;font-size:clamp(28px,5vw,38px);letter-spacing:-.03em;">How MyBudget handles your data</h1>
+  <p class="muted" style="margin:0 0 22px;">Plain language, no legal filler. Last updated 10 November 2026.</p>
+
+  <h2 class="prose-h">What is stored</h2>
+  <ul class="prose-list">
+    <li>Your <b>email</b> (to log in), an optional first and last name, and your chosen currency.</li>
+    <li>An optional profile photo and description, only if you add them.</li>
+    <li>The budget data you enter: transactions, categories, wallets, budgets, savings goals, recurring items, and an activity history of what you changed.</li>
+  </ul>
+
+  <h2 class="prose-h">How it is protected</h2>
+  <ul class="prose-list">
+    <li>Passwords are stored <b>hashed</b>, never in readable form.</li>
+    <li>In production the site forces <b>HTTPS</b>, uses secure cookies and sends an HSTS header.</li>
+    <li>Every account can only open <b>its own</b> data.</li>
+    <li>Sign-up and login attempts are rate-limited to slow down guessing.</li>
+  </ul>
+
+  <h2 class="prose-h">What MyBudget does not do</h2>
+  <ul class="prose-list">
+    <li>No ads and no analytics or tracking scripts.</li>
+    <li>No third-party fonts or scripts: everything the pages need is served from this site, so your browser does not contact other companies when you visit.</li>
+    <li>Only two cookies, both needed to keep you signed in and the forms safe (session and CSRF).</li>
+  </ul>
+
+  <h2 class="prose-h">Your data is yours to take</h2>
+  <p>You can export any filtered list of transactions as CSV, Excel or PDF from the Transactions page, at any time.</p>
+
+  <h2 class="prose-h">This is a testing version</h2>
+  <ul class="prose-list">
+    <li>Please do not enter real banking passwords or highly sensitive information while MyBudget is in testing.</li>
+    <li>Your email address is not verified, and there is no automatic password reset yet. If you lose your password, you cannot recover it yourself.</li>
+    <li>Deleting an account is not self-service yet.</li>
+    <li>MyBudget is free while in testing, and the app may change before it leaves testing.</li>
+  </ul>
+
+  <p style="margin:26px 0 0;"><a class="btn btn--ghost" href="{% url 'home' %}">← Home</a></p>
+</section>
+{% endblock %}
