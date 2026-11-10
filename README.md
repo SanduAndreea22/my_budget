@@ -28,7 +28,7 @@ MyBudget puts all of it in one place. Every wallet, every category, every recurr
 - Export any filtered view of your transactions as CSV, Excel, or a clean PDF report, whenever you need it for yourself, an accountant, or anyone else
 
 **Works the way you actually spend**
-- Multiple currencies supported
+- Pick your currency (RON, EUR, USD or GBP) — it is shown on every amount, chart and export
 - A private account — nobody sees your data but you
 
 ---

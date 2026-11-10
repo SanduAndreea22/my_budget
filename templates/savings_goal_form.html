@@ -19,7 +19,7 @@
 
     {% for field in form %}
       <div style="display:grid;gap:6px;">
-        <label style="font-weight:900;color:rgba(255,255,255,.86);">{{ field.label }}</label>
+        <label style="font-weight:900;color:rgba(255,255,255,.86);">{% include "partials/field_label.html" %}</label>
         {{ field }}
         {% if field.help_text %}
           <div class="muted" style="font-size:13px;">{{ field.help_text }}</div>

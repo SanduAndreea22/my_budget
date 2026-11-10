@@ -86,6 +86,7 @@
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {
+      const CURRENCY = "{{ currency }}";
       // Chart.js loads from a CDN — if that request fails (offline,
       // blocked, CDN down), fail visibly instead of leaving an empty box.
       if (typeof Chart === "undefined") {
@@ -125,7 +126,8 @@
               cutout:"70%",
               plugins:{
                 legend:{ position:"bottom", labels:{ color:"rgba(255,255,255,.85)", boxWidth:12, padding:15, font:{size: 14} } },
-                tooltip:{ backgroundColor: 'rgba(0,0,0,0.8)', padding: 12 }
+                tooltip:{ backgroundColor: 'rgba(0,0,0,0.8)', padding: 12,
+                  callbacks:{ label:function(c){ return ' ' + c.label + ': ' + window.fmtMoney(c.parsed, CURRENCY); } } }
               }
             }
           });
@@ -173,10 +175,12 @@
               animation: { onComplete: function(){ window.markChartReady(ctxLine); } },
               scales: {
                 x: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { display: false } },
-                y: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { color: "rgba(255,255,255,0.1)" } }
+                y: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { color: "rgba(255,255,255,0.1)" },
+                     title: { display: true, text: CURRENCY, color: "rgba(255,255,255,0.6)" } }
               },
               plugins: {
-                legend: { labels: { color: "rgba(255,255,255,0.85)", font: {size: 14} } }
+                legend: { labels: { color: "rgba(255,255,255,0.85)", font: {size: 14} } },
+                tooltip: { callbacks: { label: function(c){ return ' ' + c.dataset.label + ': ' + window.fmtMoney(c.parsed.y, CURRENCY); } } }
               }
             }
           });

@@ -180,3 +180,9 @@ document.addEventListener("DOMContentLoaded", function () {
   input.addEventListener("input", update);
   update();
 });
+
+// Money formatting shared by charts: "1,234.50 RON". Charts get the user's
+// currency from the page so tooltips/axes never show a bare number.
+window.fmtMoney = function (value, currency) {
+  return Number(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + currency;
+};

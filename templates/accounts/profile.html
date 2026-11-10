@@ -26,7 +26,7 @@
         <a class="btn btn--ghost" href="/app/">Back to Dashboard</a>
         <form method="POST" action="{% url 'accounts:logout' %}" style="display:contents;">
           {% csrf_token %}
-          <button type="submit" class="btn btn--ghost">Logout</button>
+          <button type="submit" class="btn btn--ghost">Log out</button>
         </form>
       </div>
     </div>

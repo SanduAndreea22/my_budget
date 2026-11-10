@@ -51,12 +51,18 @@ def _save_avoiding_race(form, field_name, message):
     return True
 
 
-def _transaction_repr(tx, currency):
-    return f"{tx.get_type_display()} · {tx.category.name} · {tx.wallet.name} · {tx.amount} {currency}"
+# Activity entries store this placeholder instead of a currency code, and it is
+# swapped for the account's current currency when shown, so changing the currency
+# in the profile relabels the whole history, like every other page.
+CURRENCY_TOKEN = "{cur}"
 
 
-def _budget_limit_repr(b, currency):
-    return f"{b.category.name} · {b.month:%b %Y} limit · {b.limit} {currency}"
+def _transaction_repr(tx):
+    return f"{tx.get_type_display()} · {tx.category.name} · {tx.wallet.name} · {tx.amount:.2f} {CURRENCY_TOKEN}"
+
+
+def _budget_limit_repr(b):
+    return f"{b.category.name} · {b.month:%b %Y} limit · {b.limit:.2f} {CURRENCY_TOKEN}"
 
 
 def _next_occurrence(d, day_of_month):
@@ -83,7 +89,6 @@ def generate_due_recurring_transactions(user, today=None):
     re-reads the now-advanced last_generated and correctly generates
     nothing further."""
     today = today or date.today()
-    currency = user.currency
 
     recurring_ids = list(
         RecurringTransaction.objects.filter(
@@ -114,7 +119,7 @@ def generate_due_recurring_transactions(user, today=None):
                 )
                 _log_activity(
                     user, ActivityLog.CREATE, "Transaction",
-                    f"{_transaction_repr(tx, currency)} (recurring)",
+                    f"{_transaction_repr(tx)} (recurring)",
                 )
                 r.last_generated = candidate
                 r.save(update_fields=["last_generated"])
@@ -252,7 +257,7 @@ def _add_transaction_view(request, tx_type, template_name):
             return invalid_form_response()
 
         tx.save()
-        _log_activity(request.user, ActivityLog.CREATE, "Transaction", _transaction_repr(tx, request.user.currency))
+        _log_activity(request.user, ActivityLog.CREATE, "Transaction", _transaction_repr(tx))
         messages.success(request, "Transaction saved.")
         return redirect("dashboard")
 
@@ -590,7 +595,7 @@ def transaction_edit_view(request, pk):
         form = TransactionForm(request.POST, instance=tx, user=request.user)
         if form.is_valid():
             form.save()
-            _log_activity(request.user, ActivityLog.UPDATE, "Transaction", _transaction_repr(tx, request.user.currency))
+            _log_activity(request.user, ActivityLog.UPDATE, "Transaction", _transaction_repr(tx))
             messages.success(request, "Transaction updated.")
             return redirect("transactions")
     else:
@@ -604,7 +609,7 @@ def transaction_delete_view(request, pk):
     tx = get_object_or_404(Transaction, pk=pk, user=request.user)
 
     if request.method == "POST":
-        object_repr = _transaction_repr(tx, request.user.currency)
+        object_repr = _transaction_repr(tx)
         tx.delete()
         _log_activity(request.user, ActivityLog.DELETE, "Transaction", object_repr)
         messages.success(request, "Transaction deleted.")
@@ -714,7 +719,7 @@ def budget_add_view(request):
             except IntegrityError:
                 form.add_error(None, "You already have a limit set for this category and month.")
                 return render(request, "budget_form.html", {"form": form, "mode": "add"})
-            _log_activity(request.user, ActivityLog.CREATE, "Budget Limit", _budget_limit_repr(obj, request.user.currency))
+            _log_activity(request.user, ActivityLog.CREATE, "Budget Limit", _budget_limit_repr(obj))
             messages.success(request, "Budget saved.")
             return redirect("budgets")
     else:
@@ -737,7 +742,7 @@ def budget_edit_view(request, pk):
             except IntegrityError:
                 form.add_error(None, "You already have a limit set for this category and month.")
                 return render(request, "budget_form.html", {"form": form, "mode": "edit", "budget": b})
-            _log_activity(request.user, ActivityLog.UPDATE, "Budget Limit", _budget_limit_repr(obj, request.user.currency))
+            _log_activity(request.user, ActivityLog.UPDATE, "Budget Limit", _budget_limit_repr(obj))
             messages.success(request, "Budget updated.")
             return redirect("budgets")
     else:
@@ -751,7 +756,7 @@ def budget_delete_view(request, pk):
     b = get_object_or_404(BudgetLimit, pk=pk, user=request.user)
 
     if request.method == "POST":
-        object_repr = _budget_limit_repr(b, request.user.currency)
+        object_repr = _budget_limit_repr(b)
         b.delete()
         _log_activity(request.user, ActivityLog.DELETE, "Budget Limit", object_repr)
         messages.success(request, "Budget deleted.")
@@ -900,8 +905,8 @@ def compare_view(request):
     })
 
 
-def _savings_goal_repr(goal, currency):
-    return f"{goal.name} · target {goal.target_amount} {currency}"
+def _savings_goal_repr(goal):
+    return f"{goal.name} · target {goal.target_amount:.2f} {CURRENCY_TOKEN}"
 
 
 @login_required
@@ -936,7 +941,7 @@ def savings_goal_add_view(request):
             obj = form.save(commit=False)
             obj.user = request.user
             obj.save()
-            _log_activity(request.user, ActivityLog.CREATE, "Savings Goal", _savings_goal_repr(obj, request.user.currency))
+            _log_activity(request.user, ActivityLog.CREATE, "Savings Goal", _savings_goal_repr(obj))
             messages.success(request, "Savings goal created!")
             return redirect("savings_goals")
     else:
@@ -953,7 +958,7 @@ def savings_goal_edit_view(request, pk):
         form = SavingsGoalForm(request.POST, instance=goal)
         if form.is_valid():
             form.save()
-            _log_activity(request.user, ActivityLog.UPDATE, "Savings Goal", _savings_goal_repr(goal, request.user.currency))
+            _log_activity(request.user, ActivityLog.UPDATE, "Savings Goal", _savings_goal_repr(goal))
             messages.success(request, "Savings goal updated.")
             return redirect("savings_goals")
     else:
@@ -1000,7 +1005,7 @@ def savings_goal_delete_view(request, pk):
     goal = get_object_or_404(SavingsGoal, pk=pk, user=request.user)
 
     if request.method == "POST":
-        object_repr = _savings_goal_repr(goal, request.user.currency)
+        object_repr = _savings_goal_repr(goal)
         goal.delete()
         _log_activity(request.user, ActivityLog.DELETE, "Savings Goal", object_repr)
         messages.success(request, "Savings goal deleted.")
@@ -1014,12 +1019,14 @@ def activity_log_view(request):
     logs = ActivityLog.objects.filter(user=request.user)
     paginator = Paginator(logs, 50)
     page_obj = paginator.get_page(request.GET.get("page"))
+    for entry in page_obj:
+        entry.display = entry.object_repr.replace(CURRENCY_TOKEN, request.user.currency)
 
     return render(request, "activity_log.html", {"page_obj": page_obj})
 
 
-def _recurring_repr(r, currency):
-    return f"{r.get_type_display()} · {r.category.name} · {r.amount} {currency} · day {r.day_of_month}"
+def _recurring_repr(r):
+    return f"{r.get_type_display()} · {r.category.name} · {r.amount:.2f} {CURRENCY_TOKEN} · day {r.day_of_month}"
 
 
 @login_required
@@ -1048,7 +1055,7 @@ def recurring_add_view(request):
             obj = form.save(commit=False)
             obj.user = request.user
             obj.save()
-            _log_activity(request.user, ActivityLog.CREATE, "Recurring Transaction", _recurring_repr(obj, request.user.currency))
+            _log_activity(request.user, ActivityLog.CREATE, "Recurring Transaction", _recurring_repr(obj))
             messages.success(request, "Recurring transaction created!")
             return redirect("recurring_transactions")
     else:
@@ -1065,7 +1072,7 @@ def recurring_edit_view(request, pk):
         form = RecurringTransactionForm(request.POST, instance=r, user=request.user)
         if form.is_valid():
             form.save()
-            _log_activity(request.user, ActivityLog.UPDATE, "Recurring Transaction", _recurring_repr(r, request.user.currency))
+            _log_activity(request.user, ActivityLog.UPDATE, "Recurring Transaction", _recurring_repr(r))
             messages.success(request, "Recurring transaction updated.")
             return redirect("recurring_transactions")
     else:
@@ -1079,7 +1086,7 @@ def recurring_delete_view(request, pk):
     r = get_object_or_404(RecurringTransaction, pk=pk, user=request.user)
 
     if request.method == "POST":
-        object_repr = _recurring_repr(r, request.user.currency)
+        object_repr = _recurring_repr(r)
         r.delete()
         _log_activity(request.user, ActivityLog.DELETE, "Recurring Transaction", object_repr)
         messages.success(request, "Recurring transaction deleted.")

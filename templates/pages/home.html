@@ -46,9 +46,9 @@
           </div>
 
           <div class="phone__rows">
-            <div class="phone__row"><span>Income</span><b>+ 5,200</b></div>
-            <div class="phone__row"><span>Expenses</span><b>- 3,450</b></div>
-            <div class="phone__row phone__row--strong"><span>Balance</span><b>1,750</b></div>
+            <div class="phone__row"><span>Income</span><b>+ 5,200 {{ user.currency|default:"RON" }}</b></div>
+            <div class="phone__row"><span>Expenses</span><b>- 3,450 {{ user.currency|default:"RON" }}</b></div>
+            <div class="phone__row phone__row--strong"><span>Balance</span><b>1,750 {{ user.currency|default:"RON" }}</b></div>
           </div>
 
           <div class="phone__quick">
@@ -70,7 +70,7 @@
       <ul class="feature-list">
         <li>Budgets by category, with a warning before you overspend</li>
         <li>Bills and salary that log themselves every month</li>
-        <li>Multiple wallets &amp; currencies</li>
+        <li>Separate wallets, in RON, EUR, USD or GBP</li>
         <li>Export to Excel, CSV or PDF</li>
       </ul>
 

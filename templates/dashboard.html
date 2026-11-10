@@ -175,7 +175,8 @@ document.addEventListener("DOMContentLoaded", function () {
     },
     options: {
       responsive: true, maintainAspectRatio: false, cutout: "72%",
-      plugins: { legend: { display: false }, tooltip: { backgroundColor: "rgba(0,0,0,.85)", padding: 10 } },
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: "rgba(0,0,0,.85)", padding: 10,
+        callbacks: { label: function (c) { return " " + c.label + ": " + window.fmtMoney(c.parsed, "{{ currency }}"); } } } },
       animation: { duration: 900, onComplete: function () { window.markChartReady(canvas); } }
     }
   });

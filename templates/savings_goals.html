@@ -63,7 +63,7 @@
 
           <form method="POST" action="{% url 'savings_goal_add_funds' r.goal.id %}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;">
             {% csrf_token %}
-            <input type="number" step="0.01" min="0.01" name="amount" placeholder="Add funds (e.g. 100)" style="max-width:220px;">
+            <input type="number" step="0.01" min="0.01" name="amount" placeholder="Add funds in {{ currency }} (e.g. 100)" style="max-width:220px;">
             <button class="btn btn--ghost" type="submit">+ Add funds</button>
           </form>
         </div>

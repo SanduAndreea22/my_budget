@@ -945,3 +945,59 @@ class UsabilityPolishTests(TestCase):
         wal = self.client.get(reverse("wallet_add"))
         self.assertContains(wal, 'data-target="id_icon"')
         self.assertNotContains(wal, 'data-target="id_color"')
+
+
+class CurrencyEverywhereTests(TestCase):
+    """The account currency must show on every amount, including history, labels and charts."""
+
+    def setUp(self):
+        from .starter import create_starter_data
+        self.user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345", currency="EUR")
+        create_starter_data(self.user)
+        self.client.force_login(self.user)
+        self.food = Category.objects.get(user=self.user, name="Food")
+        self.cash = Wallet.objects.get(user=self.user, name="Cash")
+
+    def _add_expense(self):
+        return self.client.post(reverse("add_expense"), {
+            "amount": "25", "date": date.today().isoformat(),
+            "category": self.food.pk, "wallet": self.cash.pk, "note": "",
+        })
+
+    def test_activity_entries_follow_the_accounts_current_currency(self):
+        self._add_expense()
+        entry = ActivityLog.objects.get(user=self.user)
+        self.assertIn("{cur}", entry.object_repr)
+        self.assertNotIn("EUR", entry.object_repr)
+        self.assertContains(self.client.get(reverse("activity_log")), "25.00 EUR")
+
+        self.user.currency = "USD"
+        self.user.save()
+        page = self.client.get(reverse("activity_log"))
+        self.assertContains(page, "25.00 USD")
+        self.assertNotContains(page, "25.00 EUR")
+
+    def test_old_activity_entries_are_converted_by_the_migration_pattern(self):
+        import importlib
+        mig = importlib.import_module("budget.migrations.0013_activitylog_currency_token")
+        cases = {
+            "Expense · Food · Cash · 25.00 RON": "Expense · Food · Cash · 25.00 {cur}",
+            "Expense · Food · Cash · 25 EUR (recurring)": "Expense · Food · Cash · 25 {cur} (recurring)",
+            "Expense · Rent · 1500.00 USD · day 5": "Expense · Rent · 1500.00 {cur} · day 5",
+            "Food · Nov 2026 limit · 100.00 GBP": "Food · Nov 2026 limit · 100.00 {cur}",
+            "Trip · target 900 RON": "Trip · target 900 {cur}",
+        }
+        for old, new in cases.items():
+            self.assertEqual(mig.PATTERN.sub(r"\1 {cur}", old), new)
+        # a number followed by a currency-like word in a NAME is left alone
+        self.assertEqual(mig.PATTERN.sub(r"\1 {cur}", "Plan 5 RONDO · target 9 {cur}"), "Plan 5 RONDO · target 9 {cur}")
+
+    def test_money_form_labels_show_the_currency(self):
+        for name in ("budget_add", "savings_goal_add", "recurring_add"):
+            self.assertContains(self.client.get(reverse(name)), "(EUR)", msg_prefix=name)
+
+    def test_charts_get_the_currency_for_tooltips_and_axes(self):
+        self.assertContains(self.client.get(reverse("charts")), 'const CURRENCY = "EUR"')
+        self.assertContains(self.client.get(reverse("compare")), 'const CURRENCY = "EUR"')
+        self._add_expense()
+        self.assertContains(self.client.get(reverse("dashboard")), 'window.fmtMoney(c.parsed, "EUR")')
