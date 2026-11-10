@@ -60,7 +60,7 @@ def register_view(request):
             send_email_async(user.email, mail_subject, html_message)
 
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            messages.success(request, f'Welcome, {user.username}! Your account is ready.')
+            messages.success(request, f'Welcome, {user.first_name or user.username}! Your account is ready.')
             return redirect('dashboard')
     else:
         form = UserRegistrationForm()
@@ -74,7 +74,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, f'Welcome, {user.username}!')
+            messages.success(request, f'Welcome, {user.first_name or user.username}!')
             return redirect('dashboard')
         messages.error(request, 'Invalid credentials or inactive account.')
     else:

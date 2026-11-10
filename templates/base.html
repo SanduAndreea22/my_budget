@@ -5,6 +5,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{% block title %}MyBudget{% endblock %}</title>
+  <meta name="description" content="{% block description %}MyBudget: a personal budget tracker for income, expenses, wallets and recurring bills.{% endblock %}">
   <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -36,7 +37,7 @@
           </form>
         {% else %}
           <a class="nav__link" href="{% url 'accounts:login' %}">Login</a>
-          <a class="nav__link" href="{% url 'accounts:register' %}">Register</a>
+          <a class="nav__link" href="{% url 'accounts:register' %}">Create account</a>
         {% endif %}
       </div>
     </div>

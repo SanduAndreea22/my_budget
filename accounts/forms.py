@@ -14,6 +14,8 @@ class UserRegistrationForm(UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['currency'].help_text = "You can change this later in your profile."
+        self.fields['first_name'].label = "First name (optional)"
+        self.fields['last_name'].label = "Last name (optional)"
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -53,7 +55,7 @@ class UserLoginForm(forms.Form):
 
     email = forms.EmailField(widget=forms.EmailInput(
         attrs={'class': 'form-control', 'placeholder': 'you@example.com', 'autofocus': True}),
-        label="Email*")
+        label="Email")
 
     password = forms.CharField(widget=forms.PasswordInput(
         attrs={'class': 'form-control', 'placeholder': 'Password'}))

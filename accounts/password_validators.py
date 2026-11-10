@@ -50,7 +50,7 @@ class FriendlyNumericPasswordValidator(NumericPasswordValidator):
         try:
             super().validate(password, user)
         except ValidationError:
-            raise ValidationError("Mix in a letter or two — not just numbers.", code="password_entirely_numeric")
+            raise ValidationError("Use at least one letter, not only numbers.", code="password_entirely_numeric")
 
     def get_help_text(self):
-        return "Mix in a letter or two — not just numbers."
+        return "Use at least one letter, not only numbers."

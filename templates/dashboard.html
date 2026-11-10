@@ -18,7 +18,7 @@
 
   <div style="position:relative;">
     <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">
-      Hello, {{ user.username }} 👋
+      Hello, {{ user.first_name|default:user.username }} 👋
     </h1>
     <p class="muted" style="margin-top:4px;">
       Here’s an overview of your current budget.

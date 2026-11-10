@@ -183,6 +183,7 @@ body::before{
   cursor:pointer;
   font-size:inherit;
   line-height:1.2;
+  gap:8px;
   transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
 }
 .btn:hover{
@@ -567,4 +568,119 @@ a{color: rgba(255,255,255,.92)}
 .donut-center{
   position:absolute; inset:0; display:flex; flex-direction:column;
   align-items:center; justify-content:center; pointer-events:none; text-align:center;
+}
+
+
+/* ---------- Landing hero ---------- */
+.hero-card{position:relative; overflow:hidden; padding:28px;}
+.hero-glow{position:absolute; border-radius:999px; filter:blur(18px); opacity:.7; pointer-events:none;}
+.hero-glow--a{inset:-120px -180px auto auto; width:520px; height:520px;
+  background: radial-gradient(circle at 30% 30%, rgba(56,120,220,.50), transparent 60%),
+              radial-gradient(circle at 70% 70%, rgba(20,184,166,.55), transparent 55%);}
+.hero-glow--b{inset:auto auto -160px -200px; width:560px; height:560px;
+  background: radial-gradient(circle at 35% 35%, rgba(34,211,238,.45), transparent 60%),
+              radial-gradient(circle at 65% 65%, rgba(20,184,166,.40), transparent 58%);}
+
+.hero{
+  position:relative;
+  display:grid; gap:20px 28px; align-items:center;
+  grid-template-columns: 1.15fr .85fr;
+  grid-template-areas: "copy phone" "more phone";
+}
+.hero__copy{grid-area:copy;}
+.hero__phone{grid-area:phone; margin:0; display:flex; flex-direction:column; align-items:center; gap:8px;}
+.hero__more{grid-area:more;}
+
+.hero-badge{
+  display:inline-flex; align-items:center; gap:10px;
+  padding:8px 12px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06);
+  font-weight:700; font-size:13px; color:rgba(255,255,255,.86);
+}
+.hero-badge__dot{width:10px; height:10px; border-radius:999px; background:var(--g2); box-shadow:0 0 0 4px rgba(255,255,255,.06);}
+
+.hero__title{
+  margin:14px 0 12px;
+  font-size:clamp(32px, 6.4vw, 52px);
+  line-height:1.05; letter-spacing:-.035em; font-weight:800;
+}
+.hero__title-accent{
+  background: var(--g2);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.hero__lead{margin:0 0 20px; max-width:56ch; font-size:17px; line-height:1.55; color:rgba(255,255,255,.80);}
+.hero__lead b{color:rgba(255,255,255,.95);}
+.hero__cta{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+.hero__reassure{margin:12px 0 0; font-size:14px;}
+
+.feature-list{list-style:none; margin:0; padding:0; display:grid; gap:10px;}
+.feature-list li{
+  position:relative; padding-left:28px; font-weight:600; color:rgba(255,255,255,.84);
+}
+.feature-list li::before{
+  content:"✓"; position:absolute; left:0; top:1px;
+  width:20px; height:20px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800; color:#04201c; background:var(--brand);
+}
+
+.trust-row{margin-top:20px; display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px 18px;}
+.trust{display:flex; gap:10px; align-items:center;}
+.trust__icon{width:34px; height:34px; flex-shrink:0; border-radius:14px; background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.14); display:flex; align-items:center; justify-content:center;}
+.trust__title{font-weight:800;}
+.trust__text{font-size:13px;}
+
+/* Phone preview */
+.phone{
+  width:min(300px, 100%); aspect-ratio:10/17; position:relative;
+  border-radius:36px; padding:14px;
+  background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));
+  border:1px solid rgba(255,255,255,.18); box-shadow:0 28px 80px rgba(0,0,0,.45);
+  pointer-events:none; user-select:none;
+}
+.phone__notch{position:absolute; top:14px; left:50%; transform:translateX(-50%); width:44%; height:18px;
+  border-radius:999px; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10);}
+.phone__screen{
+  height:100%; border-radius:28px; overflow:hidden; padding:30px 16px 16px;
+  display:flex; flex-direction:column; gap:12px;
+  background:
+    radial-gradient(260px 160px at 30% 20%, rgba(20,184,166,.45), transparent 70%),
+    radial-gradient(220px 160px at 75% 35%, rgba(56,120,220,.40), transparent 70%),
+    linear-gradient(180deg, rgba(8,10,22,.92), rgba(10,14,30,.92));
+  border:1px solid rgba(255,255,255,.10);
+}
+.phone__top{display:flex; justify-content:space-between; align-items:center;}
+.phone__brand{font-weight:800; letter-spacing:-.02em;}
+.phone__cur{font-size:12px; color:rgba(255,255,255,.68); font-weight:800;}
+.phone__rows{display:grid; gap:10px;}
+.phone__row{display:flex; justify-content:space-between; align-items:center; padding:12px; border-radius:18px;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);}
+.phone__row span{color:rgba(255,255,255,.72); font-weight:700;}
+.phone__row b{font-weight:800; font-variant-numeric:tabular-nums;}
+.phone__row--strong{background:rgba(255,255,255,.10); border-color:rgba(255,255,255,.14);}
+.phone__quick{padding:14px; border-radius:22px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10);}
+.phone__quick-title{font-weight:800; margin-bottom:10px;}
+.phone__quick-btns{display:flex; gap:10px;}
+.phone__q{flex:1; padding:10px 6px; border-radius:16px; text-align:center; font-weight:800; font-size:14px; white-space:nowrap;}
+.phone__q--in{background:rgba(var(--brand-rgb),.20); border:1px solid rgba(var(--brand-rgb),.35);}
+.phone__q--out{background:rgba(239,68,68,.16); border:1px solid rgba(239,68,68,.25);}
+.phone__tabs{margin-top:auto; display:flex; justify-content:space-between; gap:10px;
+  color:rgba(255,255,255,.65); font-weight:700; font-size:11px;}
+.hero__caption{font-size:12px;}
+
+/* Footer (landing) */
+.site-footer{
+  margin-top:22px; padding:0 4px;
+  display:flex; justify-content:space-between; gap:12px 24px; flex-wrap:wrap;
+  font-size:14px; color:var(--muted);
+}
+.site-footer__links{display:flex; gap:8px 20px; flex-wrap:wrap;}
+.site-footer a{color:rgba(255,255,255,.8);}
+
+@media (max-width:860px){
+  .hero-card{padding:20px;}
+  .hero{grid-template-columns:1fr; grid-template-areas:"copy" "phone" "more";}
+  .phone{width:min(260px, 100%);}
+  .trust-row{grid-template-columns:1fr;}
 }
