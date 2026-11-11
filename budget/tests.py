@@ -1447,3 +1447,53 @@ class VisualHierarchyTests(TestCase):
             wallet=Wallet.objects.get(user=self.user, name="Cash"), type="expense", amount=5, date=date.today(), note="Lunch")
         page = self.client.get(reverse("transactions")).content.decode()
         self.assertIn("· 💵 Cash · Lunch", page)
+
+
+class NavigationClarityTests(TestCase):
+    """Fixes from the UX/UI audit, zone 3: finding things."""
+
+    def setUp(self):
+        from .starter import create_starter_data
+        self.user = get_user_model().objects.create_user(username="nv", email="nv@example.com", password="pass12345")
+        create_starter_data(self.user)
+        self.client.force_login(self.user)
+        food = Category.objects.get(user=self.user, name="Food")
+        health = Category.objects.get(user=self.user, name="Health")
+        wallet = Wallet.objects.get(user=self.user, name="Cash")
+        Transaction.objects.create(user=self.user, category=food, wallet=wallet, type="expense", amount=10, date=date.today(), note="Pizza night")
+        Transaction.objects.create(user=self.user, category=health, wallet=wallet, type="expense", amount=20, date=date.today(), note="Pharmacy")
+
+    def test_search_matches_notes_and_category_names(self):
+        by_note = self.client.get(reverse("transactions"), {"q": "pizza"})
+        self.assertEqual([t.note for t in by_note.context["transactions"]], ["Pizza night"])
+        by_category = self.client.get(reverse("transactions"), {"q": "health"})
+        self.assertEqual([t.note for t in by_category.context["transactions"]], ["Pharmacy"])
+
+    def test_search_never_shows_another_users_transactions(self):
+        other = get_user_model().objects.create_user(username="ot", email="ot@example.com", password="pass12345")
+        from .starter import create_starter_data
+        create_starter_data(other)
+        Transaction.objects.create(
+            user=other, category=Category.objects.get(user=other, name="Food"),
+            wallet=Wallet.objects.get(user=other, name="Cash"), type="expense", amount=5, date=date.today(), note="Pizza secret")
+        page = self.client.get(reverse("transactions"), {"q": "pizza"}).content.decode()
+        self.assertNotIn("Pizza secret", page)
+
+    def test_search_keeps_the_other_filters_and_the_exports(self):
+        page = self.client.get(reverse("transactions"), {"q": "pizza", "type": "expense"}).content.decode()
+        self.assertIn('name="type" value="expense"', page)
+        self.assertIn("q=pizza", page)          # export links carry the search
+
+    def test_app_menu_has_no_second_profile_tab_and_is_grouped(self):
+        page = self.client.get(reverse("dashboard")).content.decode()
+        subnav = page.split('<nav class="subnav">')[1].split("</nav>")[0]
+        self.assertNotIn(">Profile</a>", subnav)
+        self.assertEqual(subnav.count("subnav__sep"), 2)
+        self.assertLess(subnav.index(">Budgets</a>"), subnav.index(">Categories</a>"))
+
+    def test_public_navbar_offers_the_demo(self):
+        self.client.logout()
+        page = self.client.get("/").content.decode()
+        nav = page.split('<nav class="nav">')[1].split("</nav>")[0]
+        self.assertIn("Try the demo", nav)
+        self.assertIn("demo", nav.split("Try the demo")[0].split("<form")[-1])

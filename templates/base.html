@@ -47,6 +47,7 @@
         {% else %}
           <a class="nav__link nav__link--anchor" href="{% url 'home' %}#how-it-works">How it works</a>
           <a class="nav__link nav__link--anchor" href="{% url 'home' %}#faq">Questions</a>
+          <form method="post" action="{% url 'accounts:demo' %}" class="demo-form nav__demo">{% csrf_token %}<button type="submit" class="nav__link nav__link--button">Try the demo</button></form>
           <a class="nav__link" href="{% url 'accounts:login' %}">Log in</a>
           <a class="btn btn--sm nav__cta" href="{% url 'accounts:register' %}">Create account</a>
         {% endif %}
@@ -60,15 +61,16 @@
         <div class="container subnav__inner">
           <a class="subnav__link{% if view_name == 'dashboard' %} subnav__link--active{% endif %}" href="{% url 'dashboard' %}">Dashboard</a>
           <a class="subnav__link{% if view_name == 'transactions' %} subnav__link--active{% endif %}" href="{% url 'transactions' %}">Transactions</a>
-          <a class="subnav__link{% if view_name == 'categories' %} subnav__link--active{% endif %}" href="{% url 'categories' %}">Categories</a>
-          <a class="subnav__link{% if view_name == 'wallets' %} subnav__link--active{% endif %}" href="{% url 'wallets' %}">Wallets</a>
           <a class="subnav__link{% if view_name == 'budgets' %} subnav__link--active{% endif %}" href="{% url 'budgets' %}">Budgets</a>
-          <a class="subnav__link{% if view_name == 'recurring_transactions' %} subnav__link--active{% endif %}" href="{% url 'recurring_transactions' %}">Recurring transactions</a>
           <a class="subnav__link{% if view_name == 'savings_goals' %} subnav__link--active{% endif %}" href="{% url 'savings_goals' %}">Savings goals</a>
+          <span class="subnav__sep" aria-hidden="true"></span>
           <a class="subnav__link{% if view_name == 'charts' %} subnav__link--active{% endif %}" href="{% url 'charts' %}">Charts</a>
           <a class="subnav__link{% if view_name == 'compare' %} subnav__link--active{% endif %}" href="{% url 'compare' %}">Yearly overview</a>
           <a class="subnav__link{% if view_name == 'activity_log' %} subnav__link--active{% endif %}" href="{% url 'activity_log' %}">Change history</a>
-          <a class="subnav__link{% if view_name == 'accounts:profile' %} subnav__link--active{% endif %}" href="{% url 'accounts:profile' username=user.username %}">Profile</a>
+          <span class="subnav__sep" aria-hidden="true"></span>
+          <a class="subnav__link{% if view_name == 'categories' %} subnav__link--active{% endif %}" href="{% url 'categories' %}">Categories</a>
+          <a class="subnav__link{% if view_name == 'wallets' %} subnav__link--active{% endif %}" href="{% url 'wallets' %}">Wallets</a>
+          <a class="subnav__link{% if view_name == 'recurring_transactions' %} subnav__link--active{% endif %}" href="{% url 'recurring_transactions' %}">Recurring transactions</a>
         </div>
       </nav>
     {% endwith %}
@@ -76,7 +78,7 @@
 
   {% if user.is_authenticated and user.is_demo %}
     <div class="container demo-banner" role="note">
-      <span><b>Demo mode.</b> Everything here is example data, so change whatever you like. It is deleted when you log out, or after about a day. <a href="{% url 'dashboard' %}#demo-tour">See things to try</a></span>
+      <span><b>Demo mode.</b> <span class="demo-banner__full">Everything here is example data, so change whatever you like. It is deleted when you log out, or after about a day.</span><span class="demo-banner__short">Example data, deleted when you log out.</span> <a href="{% url 'dashboard' %}#demo-tour">See things to try</a></span>
       <a class="btn btn--sm" href="{% url 'accounts:register' %}">Create account →</a>
     </div>
   {% endif %}

@@ -85,7 +85,7 @@ class LandingSectionsTests(TestCase):
 class LandingDemoButtonTests(TestCase):
     def test_landing_offers_the_demo_as_a_post_form(self):
         html = self.client.get("/").content.decode()
-        self.assertEqual(html.count('action="/auth/demo"'), 2)  # hero + final call to action
+        self.assertEqual(html.count('action="/auth/demo"'), 3)  # navbar + hero + final call to action
         self.assertIn("Try the demo", html)
         self.assertIn("csrfmiddlewaretoken", html)
         self.assertIn("Can I try it without signing up?", html)

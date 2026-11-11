@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.db import IntegrityError, models, transaction
-from django.db.models import F, ProtectedError, Sum
+from django.db.models import F, ProtectedError, Q, Sum
 from django.db.models.functions import TruncMonth, TruncYear
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -449,6 +449,10 @@ def _filtered_transactions(request):
     wallet_id = request.GET.get("wallet", "").strip()
     date_from = request.GET.get("from", "").strip()
     date_to = request.GET.get("to", "").strip()
+    search = request.GET.get("q", "").strip()[:100]
+
+    if search:
+        qs = qs.filter(Q(note__icontains=search) | Q(category__name__icontains=search))
 
     if t_type in (Transaction.INCOME, Transaction.EXPENSE):
         qs = qs.filter(type=t_type)
@@ -465,7 +469,7 @@ def _filtered_transactions(request):
     if date_to:
         qs = qs.filter(date__lte=date_to)
 
-    filters = {"type": t_type, "category": cat_id, "wallet": wallet_id, "from": date_from, "to": date_to}
+    filters = {"q": search, "type": t_type, "category": cat_id, "wallet": wallet_id, "from": date_from, "to": date_to}
     return qs, filters
 
 

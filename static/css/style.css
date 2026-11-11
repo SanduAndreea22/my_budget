@@ -139,16 +139,16 @@ body::before{
   overflow-x: auto;
 }
 .subnav.fade-r{
-  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
-          mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
+          mask-image: linear-gradient(90deg, #000 calc(100% - 56px), transparent);
 }
 .subnav.fade-l{
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px);
-          mask-image: linear-gradient(90deg, transparent, #000 36px);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 56px);
+          mask-image: linear-gradient(90deg, transparent, #000 56px);
 }
 .subnav.fade-l.fade-r{
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent);
-          mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 36px), transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 56px), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 36px, #000 calc(100% - 56px), transparent);
 }
 .subnav{scrollbar-width:none;}
 .subnav::-webkit-scrollbar{display:none;}
@@ -944,3 +944,24 @@ body:has(dialog.lightbox[open]){overflow:hidden;}
 
 /* Public navbar: "Create account" is the main action, so it is a button; "Log in" stays a text link. */
 .nav__cta{margin-left:4px;}
+
+/* ---------- Navigation clarity ---------- */
+/* Thin divider between the three groups of app tabs: daily use | reports | setup. */
+.subnav__sep{flex-shrink:0; align-self:center; width:1px; height:18px; margin:0 6px; background:rgba(255,255,255,.18);}
+
+/* Public navbar: "Try the demo" is a form button that looks like the other text links (wide screens only; the hero has it on phones). */
+.nav__demo{display:inline-flex; margin:0;}
+.nav__link--button{background:none; border:0; cursor:pointer; font:inherit;}
+@media (max-width:640px){ .nav__demo{display:none;} }
+
+/* Demo banner: a shorter sentence on phones so it leaves more of the first screen. */
+.demo-banner__short{display:none;}
+@media (max-width:640px){
+  .demo-banner__full{display:none;}
+  .demo-banner__short{display:inline;}
+  .demo-banner{padding:8px 12px; margin-top:10px; gap:8px 12px;}
+}
+
+/* Transactions search */
+.tx-search{display:flex; gap:10px; flex-wrap:wrap;}
+.tx-search input[type="search"]{flex:1 1 220px; min-width:0;}
