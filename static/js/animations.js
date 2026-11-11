@@ -250,3 +250,43 @@ document.addEventListener("DOMContentLoaded", function () {
     update();
   });
 });
+
+// Forms that ask before they do something that cannot be undone (e.g. ending the demo).
+document.addEventListener("submit", function (e) {
+  const msg = e.target.getAttribute && e.target.getAttribute("data-confirm");
+  if (msg && !window.confirm(msg)) e.preventDefault();
+});
+
+// Budgets: picking a month shows it straight away; the "Show" button stays for browsers without JS.
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll("input[data-autosubmit]").forEach(function (input) {
+    const form = input.form;
+    if (!form) return;
+    form.querySelectorAll("[data-autosubmit-button]").forEach(function (b) { b.hidden = true; });
+    input.addEventListener("change", function () { if (input.value) form.requestSubmit(); });
+  });
+});
+
+// Register: say what is still missing from the password while it is typed.
+// (The server still checks everything, including common passwords and your name or email.)
+document.addEventListener("DOMContentLoaded", function () {
+  const input = document.querySelector('form input[name="password1"]');
+  if (!input || !document.querySelector('form input[name="password2"]')) return;
+  const hint = document.createElement("div");
+  hint.className = "pw-live muted";
+  hint.setAttribute("aria-live", "polite");
+  const wrap = input.closest(".password-field") || input;
+  wrap.insertAdjacentElement("afterend", hint);
+  function update() {
+    const v = input.value;
+    hint.classList.remove("pw-live--ok");
+    if (!v) { hint.textContent = ""; return; }
+    const missing = [];
+    if (v.length < 8) missing.push("at least 8 characters");
+    if (!/[A-Za-z]/.test(v)) missing.push("a letter");
+    if (missing.length) { hint.textContent = "Still needed: " + missing.join(" and ") + "."; return; }
+    hint.textContent = "Looks good so far.";
+    hint.classList.add("pw-live--ok");
+  }
+  input.addEventListener("input", update);
+});

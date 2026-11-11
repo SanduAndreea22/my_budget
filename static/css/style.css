@@ -855,7 +855,7 @@ html{scroll-behavior:smooth;}
 .shot-link{position:relative; display:block; cursor:zoom-in; border-radius:22px;}
 .shot-link:focus-visible{outline:3px solid var(--brand); outline-offset:4px;}
 .shot-link__hint{
-  position:absolute; right:12px; bottom:12px; padding:6px 12px; border-radius:999px;
+  position:static; display:block; width:max-content; margin:10px 0 0 auto; text-decoration:none; padding:6px 12px; border-radius:999px;
   background:rgba(8,10,22,.82); border:1px solid rgba(255,255,255,.25);
   font-size:14px; font-weight:700; color:#fff; pointer-events:none;
 }
@@ -965,3 +965,22 @@ body:has(dialog.lightbox[open]){overflow:hidden;}
 /* Transactions search */
 .tx-search{display:flex; gap:10px; flex-wrap:wrap;}
 .tx-search input[type="search"]{flex:1 1 220px; min-width:0;}
+
+/* ---------- Friction fixes (zone 4) ---------- */
+/* Delete sits further from Edit on touch screens, so a tap on one does not hit the other. */
+@media (max-width:640px){
+  .btn--delete.btn--sm{margin-left:12px;}
+}
+
+/* Touch targets: at least 44px tall without changing how the links look. */
+@media (max-width:640px), (pointer:coarse){
+  .site-footer__links a, .tap-link, .demo-banner a:not(.btn), .prose-link{display:inline-flex; align-items:center; min-height:44px;}
+  .site-footer__links{gap:2px 14px;}
+  .back-link{min-height:44px;}
+}
+
+/* Live password hint on the register form */
+.pw-live{font-size:14px; min-height:20px;}
+.pw-live--ok{color:#86efac;}
+
+[hidden]{display:none !important;}

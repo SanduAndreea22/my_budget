@@ -1497,3 +1497,38 @@ class NavigationClarityTests(TestCase):
         nav = page.split('<nav class="nav">')[1].split("</nav>")[0]
         self.assertIn("Try the demo", nav)
         self.assertIn("demo", nav.split("Try the demo")[0].split("<form")[-1])
+
+
+class FrictionFixesTests(TestCase):
+    """Fixes from the UX/UI audit, zone 4."""
+
+    def setUp(self):
+        from .starter import create_starter_data
+        self.user = get_user_model().objects.create_user(username="fr", email="fr@example.com", password="pass12345")
+        create_starter_data(self.user)
+        self.client.force_login(self.user)
+
+    def test_expense_form_groups_amount_with_date_and_category_with_wallet(self):
+        page = self.client.get(reverse("add_expense")).content.decode()
+        order = [page.index(f'name="{n}"') for n in ("amount", "date", "category", "wallet")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn("<!-- Amount + Date -->", page)
+        self.assertIn("<!-- Category + Wallet -->", page)
+
+    def test_budgets_month_picker_submits_by_itself_but_keeps_the_button(self):
+        page = self.client.get(reverse("budgets")).content.decode()
+        self.assertIn("data-autosubmit", page)
+        self.assertIn(">Show</button>", page)
+
+    def test_a_demo_visitor_is_asked_before_ending_the_demo(self):
+        from accounts.demo import create_demo_user
+        demo = create_demo_user()
+        self.client.force_login(demo)
+        page = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn('data-confirm="End the demo?', page)
+        self.assertIn(">End demo</button>", page)
+
+    def test_a_normal_user_still_sees_log_out_without_a_prompt(self):
+        page = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn(">Log out</button>", page)
+        self.assertNotIn("data-confirm", page)

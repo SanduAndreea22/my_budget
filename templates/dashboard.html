@@ -92,7 +92,7 @@
       <div>
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 10px;">
           <h2 style="margin:0;font-size:22px;letter-spacing:-.02em;">Recent transactions</h2>
-          {% if transactions %}<a class="muted" href="{% url 'transactions' %}" style="font-weight:700;font-size:14px;">View all →</a>{% endif %}
+          {% if transactions %}<a class="muted tap-link" href="{% url 'transactions' %}" style="font-weight:700;font-size:14px;">View all →</a>{% endif %}
         </div>
 
         <div style="display:grid;gap:10px;">

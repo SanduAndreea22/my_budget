@@ -38,8 +38,8 @@
             </div>
 
             <div class="row-actions">
-              <a class="btn btn--ghost" href="{% url 'savings_goal_edit' r.goal.id %}">Edit</a>
-              <a class="btn btn--ghost btn--delete" href="{% url 'savings_goal_delete' r.goal.id %}">Delete</a>
+              <a class="btn btn--ghost btn--sm" href="{% url 'savings_goal_edit' r.goal.id %}">Edit</a>
+              <a class="btn btn--ghost btn--delete btn--sm" href="{% url 'savings_goal_delete' r.goal.id %}">Delete</a>
             </div>
           </div>
 
@@ -61,10 +61,10 @@
             {% endif %}
           </div>
 
-          <form method="POST" action="{% url 'savings_goal_add_funds' r.goal.id %}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;">
+          <form method="POST" action="{% url 'savings_goal_add_funds' r.goal.id %}" style="display:flex;gap:10px;align-items:center;margin-top:4px;">
             {% csrf_token %}
-            <input type="number" step="0.01" min="0.01" name="amount" placeholder="Amount in {{ currency }}" aria-label="Amount to add to {{ r.goal.name }}" style="max-width:220px;">
-            <button class="btn btn--ghost" type="submit">+ Add funds</button>
+            <input type="number" step="0.01" min="0.01" name="amount" placeholder="Amount in {{ currency }}" aria-label="Amount to add to {{ r.goal.name }}" style="flex:1 1 auto;min-width:0;max-width:260px;">
+            <button class="btn" type="submit" style="flex-shrink:0;">+ Add funds</button>
           </form>
         </div>
       {% empty %}
