@@ -9,7 +9,7 @@
 
   <div class="glass-card" style="padding:14px;">
     <div style="font-weight:950;">{{ budget.category.name }}</div>
-    <div class="muted" style="font-size:13px;">Month: {{ budget.month|date:"F Y" }}</div>
+    <div class="muted" style="font-size:14px;">Month: {{ budget.month|date:"M Y" }}</div>
     <div style="margin-top:8px;font-weight:950;">Limit: {{ budget.limit|floatformat:2|intcomma }} {{ user.currency }}</div>
   </div>
 

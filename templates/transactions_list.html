@@ -25,9 +25,9 @@
         <a class="btn" href="{% url 'add_income' %}">+ Add income</a>
         <a class="btn btn--ghost" href="{% url 'add_expense' %}">− Add expense</a>
         <details class="menu menu--right">
-          <summary class="btn btn--ghost">⬇ Export</summary>
+          <summary class="btn btn--ghost"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg> Export</summary>
           <div class="menu__panel glass-card">
-            <div class="muted" style="padding:6px 12px 8px;font-size:13px;">Exports what matches your current filters.</div>
+            <div class="muted" style="padding:6px 12px 8px;font-size:14px;">Exports what matches your current filters.</div>
             <a href="{% url 'export_transactions_csv' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">CSV <small>opens in any spreadsheet</small></a>
             <a href="{% url 'export_transactions_xlsx' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">Excel <small>an .xlsx file</small></a>
             <a href="{% url 'export_transactions_pdf' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">PDF <small>a printable report</small></a>
@@ -69,7 +69,7 @@
       <summary style="cursor:pointer;font-weight:900;color:rgba(255,255,255,.86);">
         Filters
         {% if filters.type or filters.category or filters.wallet or filters.from or filters.to %}
-          <span class="muted" style="font-weight:700;font-size:13px;">· {{ active_filter_count }} applied</span>
+          <span class="muted" style="font-weight:700;font-size:14px;">· {{ active_filter_count }} applied</span>
         {% endif %}
       </summary>
 

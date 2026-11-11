@@ -163,7 +163,7 @@ body::before{
   text-decoration:none;
   color: rgba(255,255,255,.65);
   font-weight:700;
-  font-size:13px;
+  font-size:13px;   /* 14px would not fit eleven tabs on a 1366px screen */
   padding:8px 12px;
   border-radius:999px;
   border:1px solid transparent;
@@ -242,10 +242,12 @@ body::before{
   border-color: rgba(239,68,68,.45);
 }
 
+.btn{min-height:44px;}
 .btn--sm{
+  min-height:36px;
   padding:8px 12px;
   border-radius:12px;
-  font-size:13px;
+  font-size:14px;
   box-shadow:none;
 }
 .btn--sm:hover{transform: translateY(-1px);}
@@ -421,7 +423,7 @@ a{color: rgba(255,255,255,.92)}
 }
 
 .dash-action-group__label{
-  font-size:12px;
+  font-size:13px;
   font-weight:800;
   text-transform:uppercase;
   letter-spacing:.06em;
@@ -458,7 +460,7 @@ a{color: rgba(255,255,255,.92)}
 /* ---------- Typography: big numbers ---------- */
 .num{font-variant-numeric: tabular-nums; letter-spacing:-.02em;}
 .stat-label{
-  font-size:12px; font-weight:800; text-transform:uppercase;
+  font-size:13px; font-weight:800; text-transform:uppercase;
   letter-spacing:.08em; color:var(--muted);
 }
 .stat-number{
@@ -608,7 +610,7 @@ a{color: rgba(255,255,255,.92)}
   display:inline-flex; align-items:center; gap:10px;
   padding:8px 12px; border-radius:999px;
   border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.06);
-  font-weight:700; font-size:13px; color:rgba(255,255,255,.86);
+  font-weight:700; font-size:14px; color:rgba(255,255,255,.86);
 }
 .hero-badge__dot{width:10px; height:10px; border-radius:999px; background:var(--g2); box-shadow:0 0 0 4px rgba(255,255,255,.06);}
 
@@ -708,7 +710,7 @@ a{color: rgba(255,255,255,.92)}
 .pick--swatch{border-radius:50%; background:var(--c); border:2px solid rgba(255,255,255,.25);}
 .pick--swatch:hover{background:var(--c); filter:brightness(1.1);}
 .pick--swatch.is-selected{border-color:#fff; box-shadow:0 0 0 3px rgba(255,255,255,.25);}
-.field-hint{font-size:13px; margin-top:6px;}
+.field-hint{font-size:14px; margin-top:6px;}
 
 
 /* Expense counterpart of the primary (teal) button: solid red, dark text. */
@@ -935,3 +937,10 @@ body:has(dialog.lightbox[open]){overflow:hidden;}
 .pw-rules > summary::-webkit-details-marker{display:none;}
 .pw-rules > summary::before{content:"▸ "; }
 .pw-rules[open] > summary::before{content:"▾ ";}
+
+/* "Back" link above the page title on forms, so the top-right slot stays free for "+ Add" style actions. */
+.back-link{display:inline-flex; align-items:center; min-height:36px; margin:0 0 6px -4px; padding:0 4px; font-weight:700; font-size:14px; color:rgba(255,255,255,.7); text-decoration:none;}
+.back-link:hover{color:#fff; text-decoration:underline;}
+
+/* Public navbar: "Create account" is the main action, so it is a button; "Log in" stays a text link. */
+.nav__cta{margin-left:4px;}

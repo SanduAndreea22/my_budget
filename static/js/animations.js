@@ -227,3 +227,26 @@ document.addEventListener("DOMContentLoaded", function () {
   const tour = document.getElementById("demo-tour");
   if (tour && window.matchMedia("(min-width: 861px)").matches) tour.open = true;
 });
+
+// Date fields show the date in the browser's own format ("11/11/2026"), which can be read
+// as day/month or month/day. Spell the chosen date out in the label ("Date · Nov 11, 2026").
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll('input[type="date"][name="date"]').forEach(function (input) {
+    const label = input.parentElement && input.parentElement.querySelector("label");
+    if (!label) return;
+    const hint = document.createElement("span");
+    hint.className = "muted";
+    hint.style.fontWeight = "600";
+    hint.setAttribute("aria-live", "polite");
+    label.appendChild(hint);
+    function update() {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input.value);
+      if (!m) { hint.textContent = ""; return; }
+      const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+      hint.textContent = " · " + d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+    }
+    input.addEventListener("input", update);
+    input.addEventListener("change", update);
+    update();
+  });
+});

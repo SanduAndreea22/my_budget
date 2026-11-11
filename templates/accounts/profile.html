@@ -16,6 +16,7 @@
   "></div>
 
   <div style="position:relative;">
+    <a class="back-link" href="/app/">← Dashboard</a>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Profile</h1>
@@ -23,9 +24,6 @@
         {% if user.is_demo %}<p class="muted" style="margin:8px 0 0;"><b>Demo account:</b> profile changes are turned off. <a href="{% url 'accounts:register' %}">Create an account</a> to set up your own.</p>{% endif %}
       </div>
 
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a class="btn btn--ghost" href="/app/">← Dashboard</a>
-      </div>
     </div>
 
     <div style="margin-top:18px;display:grid;grid-template-columns: 360px 1fr;gap:18px;align-items:start;">
@@ -50,7 +48,7 @@
             <div style="font-weight:950;font-size:18px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
               {% if user.is_demo %}Demo account{% elif user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}Your account{% endif %}
             </div>
-            <div class="muted" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <div class="muted" style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
               {% if not user.is_demo %}{{ user.email }}{% endif %}
             </div>
 
@@ -107,7 +105,7 @@
             <a class="btn btn--ghost" href="/app/">Back without saving</a>
           </div>
 
-          <div class="muted" style="font-size:13px;margin-top:6px;">
+          <div class="muted" style="font-size:14px;margin-top:6px;">
             Your currency is shown on every amount, chart and export.
             {% if not user.is_demo %}<br><a href="{% url 'accounts:delete_account' %}" style="color:#fca5a5;">Delete account</a>{% endif %}
           </div>

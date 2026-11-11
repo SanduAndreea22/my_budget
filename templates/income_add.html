@@ -16,18 +16,18 @@
   "></div>
 
   <div style="position:relative;">
+    <a class="back-link" href="{% url 'dashboard' %}">← Dashboard</a>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Add income</h1>
       </div>
 
-      <a class="btn btn--ghost" href="{% url 'dashboard' %}">← Dashboard</a>
     </div>
 
     <!-- mini preview card -->
     <div class="glass-card" data-preview data-sign="+" data-currency="{{ user.currency }}" style="margin-top:14px;padding:14px;display:flex;justify-content:space-between;align-items:center;">
       <div>
-        <div class="muted" style="font-weight:800;font-size:13px;">Preview (updates as you type)</div>
+        <div class="muted" style="font-weight:800;font-size:14px;">Preview (updates as you type)</div>
         <div style="font-weight:950;letter-spacing:-.01em;">Income · {{ user.currency }}</div>
       </div>
       <div style="

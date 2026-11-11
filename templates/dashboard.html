@@ -66,12 +66,12 @@
             padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
             border-color:{% if a.is_over %}rgba(239,68,68,.35){% else %}rgba(234,179,8,.35){% endif %};
           ">
-            <span style="font-size:20px;">{% if a.is_over %}🔴{% else %}⚠️{% endif %}</span>
+            <span style="display:inline-flex;flex-shrink:0;">{% if a.is_over %}<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>{% else %}<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>{% endif %}</span>
             <div style="flex:1;min-width:0;">
               <div style="font-weight:900;">
                 {{ a.category.name }} {% if a.is_over %}is over budget{% else %}is near its limit{% endif %}
               </div>
-              <div class="muted" style="font-size:13px;">
+              <div class="muted" style="font-size:14px;">
                 {{ a.spent|floatformat:2|intcomma }} of {{ a.limit|floatformat:2|intcomma }} {{ currency }} spent · {{ a.pct }}% this month
               </div>
             </div>
@@ -102,7 +102,7 @@
                 <div class="cat-badge" style="--c:{{ t.category.color|default:'#14b8a6' }};">{{ t.category.icon|default:"🏷️" }}</div>
                 <div style="min-width:0;">
                   <div class="tx-row__title">{{ t.category.name }}</div>
-                  <div class="muted" style="font-size:13px;">
+                  <div class="muted" style="font-size:14px;">
                     {{ t.date|date:"M j, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
                   </div>
                 </div>
@@ -131,7 +131,7 @@
             <div class="donut-center">
               <div class="stat-label">Spent</div>
               <div class="stat-number" style="font-size:26px;margin-top:2px;">{{ month_expense|floatformat:2|intcomma }}</div>
-              <div class="muted" style="font-size:12px;">{{ currency }}</div>
+              <div class="muted" style="font-size:14px;">{{ currency }}</div>
             </div>
           </div>
           <a class="btn btn--ghost btn--sm" href="{% url 'charts' %}" style="margin-top:12px;width:100%;">Open charts →</a>

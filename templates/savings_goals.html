@@ -31,7 +31,7 @@
               <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                 {{ r.goal.name }}{% if r.is_complete %} 🎉{% endif %}
               </div>
-              <div class="muted" style="font-size:13px;">
+              <div class="muted" style="font-size:14px;">
                 {{ r.goal.saved_amount|floatformat:2|intcomma }} of {{ r.goal.target_amount|floatformat:2|intcomma }} {{ currency }} saved
                 {% if r.goal.target_date %} · Target: {{ r.goal.target_date|date:"M Y" }}{% endif %}
               </div>
@@ -52,7 +52,7 @@
             "></div>
           </div>
 
-          <div class="muted" style="font-size:13px;display:flex;justify-content:space-between;gap:10px;">
+          <div class="muted" style="font-size:14px;display:flex;justify-content:space-between;gap:10px;">
             <span>{{ r.pct }}%</span>
             {% if r.is_complete %}
               <span style="color:#86efac;font-weight:900;">Goal reached</span>

@@ -7,7 +7,7 @@
 
   <!-- glow decoration -->
   <div style="
-    position:absolute; inset:-140px auto auto -180px;
+    position:absolute; inset:-140px -200px auto auto;
     width:460px;height:460px;border-radius:999px;
     background: radial-gradient(circle at 30% 30%, rgba(34,211,238,.55), transparent 60%),
                 radial-gradient(circle at 70% 70%, rgba(20,184,166,.50), transparent 60%);
@@ -36,10 +36,10 @@
             {% if field.name == "password1" %}
               <details class="pw-rules muted"{% if field.errors %} open{% endif %}>
                 <summary>Password rules</summary>
-                <div style="font-size:13px;">{{ field.help_text }}</div>
+                <div style="font-size:14px;">{{ field.help_text }}</div>
               </details>
             {% else %}
-              <div class="muted" style="font-size:13px;">{{ field.help_text }}</div>
+              <div class="muted" style="font-size:14px;">{{ field.help_text }}</div>
             {% endif %}
           {% endif %}
 
@@ -67,7 +67,7 @@
         </a>
       </div>
 
-      <div class="muted" style="margin-top:8px;font-size:13px;">
+      <div class="muted" style="margin-top:8px;font-size:14px;">
         Your budget data is visible only to you. <a href="{% url 'privacy' %}">How your data is handled</a>
       </div>
     </form>

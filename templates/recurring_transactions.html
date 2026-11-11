@@ -31,7 +31,7 @@
               {{ item.category.icon|default:"🏷️" }} {{ item.category.name }}
               {% if not item.is_active %}<span class="muted" style="font-weight:700;">· paused</span>{% endif %}
             </div>
-            <div class="muted" style="font-size:13px;">
+            <div class="muted" style="font-size:14px;">
               {{ item.get_type_display }} · {{ item.wallet.icon|default:"💳" }} {{ item.wallet.name }} · day {{ item.day_of_month }} of every month
               {% if item.note %} · {{ item.note }}{% endif %}
             </div>

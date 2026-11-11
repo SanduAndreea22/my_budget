@@ -1074,7 +1074,7 @@ class DashboardCopyAuditTests(TestCase):
         from .models import BudgetLimit
         b = BudgetLimit.objects.create(user=self.user, category=self.cat, month=date(2026, 11, 1), limit=200)
         page = self.client.get(reverse("budget_delete", args=[b.pk])).content.decode()
-        self.assertIn("Month: November 2026", page)
+        self.assertIn("Month: Nov 2026", page)
         self.assertNotIn("2026-11", page)
 
     def test_amount_signs_have_no_space_on_any_list(self):

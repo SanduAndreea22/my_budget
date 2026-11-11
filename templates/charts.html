@@ -55,11 +55,13 @@
           filter: blur(18px); opacity:.7; pointer-events:none;"></div>
 
         <div style="position:relative;">
-          <h2 style="margin:0;font-size:22px;">Income vs expenses</h2>
-          <p class="muted" style="margin:6px 0 10px;">Month by month</p>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
+            <h2 style="margin:0;font-size:22px;">Income vs expenses</h2>
+            <span class="muted">Month by month</span>
+          </div>
 
           {% if chart_labels %}
-            <div class="chart-box" style="height:300px;">
+            <div class="chart-box" style="margin-top:20px;height:300px;">
               <div class="chart-skeleton"></div>
               <canvas id="lineChart"></canvas>
             </div>
