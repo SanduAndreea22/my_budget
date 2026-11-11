@@ -98,7 +98,8 @@ body::before{
   filter: drop-shadow(0 8px 18px rgba(var(--brand-rgb),.45));
   transition: transform .25s cubic-bezier(.16,.84,.44,1);
 }
-.nav__brand:hover .nav__logo{transform: rotate(-8deg) scale(1.08);}
+.nav__brand:hover .nav__logo{transform: rotate(40deg);}
+.nav__my{font-weight:500;}
 
 .nav__right{display:flex;gap:10px;align-items:center; flex-wrap:nowrap}
 .nav__inner{gap:12px;}

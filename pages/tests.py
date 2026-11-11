@@ -117,3 +117,26 @@ class HeroFirstImpressionTests(TestCase):
     def test_wallet_claim_no_longer_suggests_a_currency_per_wallet(self):
         self.assertNotIn("Separate wallets, in RON", self.html)
         self.assertIn("Separate wallets for card, cash and savings", self.hero)
+
+
+class BrandMarkTests(TestCase):
+    def test_navbar_uses_the_donut_mark_and_two_weight_wordmark(self):
+        html = self.client.get("/").content.decode()
+        nav = html.split('<nav class="nav">')[1].split("</nav>")[0]
+        self.assertEqual(nav.count("<circle"), 3)          # three donut segments
+        self.assertNotIn("logoG", html)                    # the old gradient "M" square is gone
+        self.assertIn('<span class="nav__my">My</span>Budget', nav)
+
+    def test_every_icon_size_exists_and_is_linked(self):
+        from django.contrib.staticfiles import finders
+        html = self.client.get("/").content.decode()
+        for path in ("favicon.svg", "img/favicon-32.png", "img/apple-touch-icon.png", "img/og-image.jpg"):
+            self.assertIsNotNone(finders.find(path), path)
+        self.assertIn('rel="apple-touch-icon"', html)
+        self.assertIn('sizes="32x32"', html)
+
+    def test_favicon_is_the_donut_on_a_teal_square(self):
+        from django.contrib.staticfiles import finders
+        svg = open(finders.find("favicon.svg")).read()
+        self.assertEqual(svg.count("<circle"), 3)
+        self.assertIn("<rect", svg)
