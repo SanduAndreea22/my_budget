@@ -29,7 +29,7 @@
     <div class="totals-grid" style="margin-top:18px;">
 
       <div class="glass-card" style="padding:16px;">
-        <div class="stat-label">Total Income</div>
+        <div class="stat-label">Total income · all time</div>
         <div id="dash-income" class="stat-number" style="color:#22c55e;"
              data-countup="{{ total_income }}" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
@@ -37,7 +37,7 @@
       </div>
 
       <div class="glass-card" style="padding:16px;">
-        <div class="stat-label">Total Expense</div>
+        <div class="stat-label">Total expense · all time</div>
         <div id="dash-expense" class="stat-number" style="color:#ef4444;"
              data-countup="{{ total_expense }}" data-countup-suffix=" {{ currency }}">
           0.00 {{ currency }}
@@ -45,7 +45,7 @@
       </div>
 
       <div class="glass-card" style="padding:16px;">
-        <div class="stat-label">Balance</div>
+        <div class="stat-label">Balance · all time</div>
         <div class="stat-number stat-number--hero" style="
           color:{% if balance >= 0 %}#22c55e{% else %}#ef4444{% endif %};
         "

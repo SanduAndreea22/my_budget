@@ -9,7 +9,6 @@
 
   <!-- Decorative glow blobs -->
   <div class="hero-glow hero-glow--a"></div>
-  <div class="hero-glow hero-glow--b"></div>
 
   <div class="hero">
     <!-- COPY: what it is, what it solves, what to do next -->
@@ -37,34 +36,14 @@
       <p class="hero__reassure muted">No sign-up needed to look around. Free while in testing, no credit card. <a href="{% url 'privacy' %}">How your data is handled</a></p>
     </div>
 
-    <!-- PREVIEW: example screen (not interactive) -->
-    <figure class="hero__phone" aria-label="Example of the MyBudget dashboard">
-      <div class="phone" aria-hidden="true">
+    <!-- PREVIEW: the real app (example data) -->
+    <figure class="hero__phone">
+      <div class="phone">
         <div class="phone__notch"></div>
-        <div class="phone__screen">
-          <div class="phone__top">
-            <div class="phone__brand">MyBudget</div>
-            <div class="phone__cur">{{ user.currency|default:"RON" }}</div>
-          </div>
-
-          <div class="phone__rows">
-            <div class="phone__row"><span>Income</span><b>+ 5,200 {{ user.currency|default:"RON" }}</b></div>
-            <div class="phone__row"><span>Expenses</span><b>- 3,450 {{ user.currency|default:"RON" }}</b></div>
-            <div class="phone__row phone__row--strong"><span>Balance</span><b>1,750 {{ user.currency|default:"RON" }}</b></div>
-          </div>
-
-          <div class="phone__quick">
-            <div class="phone__quick-title">Quick actions</div>
-            <div class="phone__quick-btns">
-              <div class="phone__q phone__q--in">+ Income</div>
-              <div class="phone__q phone__q--out">- Expense</div>
-            </div>
-          </div>
-
-          <div class="phone__tabs"><span>Dashboard</span><span>Transactions</span><span>Charts</span></div>
-        </div>
+        <img class="phone__img" src="{% static 'img/shots/hero.jpg' %}" width="585" height="1200" fetchpriority="high" decoding="async"
+             alt="The MyBudget dashboard on a phone: income, expense and balance totals, and two budget warnings.">
       </div>
-      <figcaption class="hero__caption muted">Example data</figcaption>
+      <figcaption class="hero__caption muted">The real app, with example data</figcaption>
     </figure>
 
     <!-- DETAILS: what you get + why trust it -->
@@ -72,14 +51,14 @@
       <ul class="feature-list">
         <li>Budgets by category, with a warning before you overspend</li>
         <li>Bills and salary that log themselves every month</li>
-        <li>Separate wallets, in RON, EUR, USD or GBP</li>
-        <li>Export to Excel, CSV or PDF</li>
+        <li>Separate wallets for card, cash and savings</li>
+        <li>Charts that show where each month's money went</li>
       </ul>
 
       <div class="trust-row">
-        <div class="trust"><div class="trust__icon">🔒</div><div><div class="trust__title">Private</div><div class="muted trust__text">Only you see your data</div></div></div>
-        <div class="trust"><div class="trust__icon">⚡</div><div><div class="trust__title">Fast</div><div class="muted trust__text">Add transactions in seconds</div></div></div>
-        <div class="trust"><div class="trust__icon">📊</div><div><div class="trust__title">Clear</div><div class="muted trust__text">Income, expenses and what's left at a glance</div></div></div>
+        <div class="trust"><div class="trust__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div><div class="trust__title">Private</div><div class="muted trust__text">Each account sees only its own data</div></div></div>
+        <div class="trust"><div class="trust__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19c-6.5 0-10-7-10-7a18.7 18.7 0 0 1 4.1-4.9M9.9 5.2A9.7 9.7 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.2 3.2M1 1l22 22"/></svg></div><div><div class="trust__title">No tracking</div><div class="muted trust__text">No ads, trackers or third-party scripts</div></div></div>
+        <div class="trust"><div class="trust__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg></div><div><div class="trust__title">Yours to take</div><div class="muted trust__text">Export to CSV, Excel or PDF anytime</div></div></div>
       </div>
     </div>
   </div>
@@ -154,9 +133,9 @@
       <p class="muted" style="margin:0;">MyBudget is a testing version, so here is exactly what to expect.</p>
     </div>
     <ul class="feature-list">
-      <li>Each account only sees its own data</li>
-      <li>No ads, no trackers, no third-party scripts</li>
-      <li>Export to CSV, Excel or PDF whenever you like</li>
+      <li>Passwords are stored hashed, never readable</li>
+      <li>HTTPS and secure cookies in production</li>
+      <li>Demo accounts are deleted when you leave</li>
     </ul>
     <a class="btn btn--ghost" href="{% url 'privacy' %}">How your data is handled →</a>
   </div>

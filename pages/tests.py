@@ -56,13 +56,15 @@ class LandingSectionsTests(TestCase):
         from django.contrib.staticfiles import finders
         imgs = re.findall(r"<img[^>]+>", self.html)
         shots = [i for i in imgs if "shots/" in i]
-        self.assertEqual(len(shots), 3)
+        self.assertEqual(len(shots), 4)  # the hero phone + three feature screenshots
         for tag in shots:
             self.assertRegex(tag, r'alt="[^"]{20,}"')
             self.assertIn("width=", tag)
             self.assertIn("height=", tag)
-            self.assertIn('loading="lazy"', tag)
-        for name in ("dashboard", "budgets", "goals"):
+            if "hero" not in tag:
+                self.assertIn('loading="lazy"', tag)
+        self.assertIn('fetchpriority="high"', [t for t in shots if "hero" in t][0])
+        for name in ("hero", "dashboard", "budgets", "goals"):
             self.assertIsNotNone(finders.find(f"img/shots/{name}.jpg"))
 
     def test_how_it_works_has_three_steps(self):
@@ -89,3 +91,29 @@ class LandingDemoButtonTests(TestCase):
 
     def test_privacy_page_describes_demo_accounts(self):
         self.assertContains(self.client.get("/privacy"), "Demo accounts")
+
+
+class HeroFirstImpressionTests(TestCase):
+    def setUp(self):
+        self.html = self.client.get("/").content.decode()
+        self.hero = self.html.split('id="screenshots"')[0]
+
+    def test_hero_shows_the_real_app_not_a_drawing(self):
+        self.assertIn("phone__img", self.hero)
+        self.assertNotIn("phone__row", self.hero)
+        self.assertIn("The real app, with example data", self.hero)
+
+    def test_hero_uses_svg_icons_not_emoji(self):
+        import re
+        self.assertIsNone(re.search(r"[\U0001F300-\U0001FAFF\u2600-\u27BF]", self.hero))
+        self.assertGreaterEqual(self.hero.count("<svg"), 3)
+
+    def test_trust_row_makes_only_checkable_claims(self):
+        for text in ("Each account sees only its own data", "No ads, trackers or third-party scripts", "Export to CSV, Excel or PDF anytime"):
+            self.assertIn(text, self.hero)
+        for vague in ("Add transactions in seconds", "what&#x27;s left at a glance", "at a glance"):
+            self.assertNotIn(vague, self.hero)
+
+    def test_wallet_claim_no_longer_suggests_a_currency_per_wallet(self):
+        self.assertNotIn("Separate wallets, in RON", self.html)
+        self.assertIn("Separate wallets for card, cash and savings", self.hero)

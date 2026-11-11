@@ -28,11 +28,11 @@ def create_demo_data(user, today=None):
         )
 
     # three earlier months, so the trend chart has a story
-    for ago, (food, transport, fun, shop) in {3: (520, 210, 140, 190), 2: (560, 160, 170, 240), 1: (610, 190, 75, 205)}.items():
+    for ago, (food, transport, fun, shop) in {3: (512.40, 208.00, 138.50, 187.90), 2: (561.30, 161.20, 171.00, 239.60), 1: (607.80, 189.50, 76.40, 204.30)}.items():
         b = _month_start(today, ago)
-        tx("Salary", 6400, "income", b, "Salary")
-        tx("Housing", 1800, "expense", b + timedelta(days=1), "Rent")
-        tx("Bills", 230, "expense", b + timedelta(days=4), "Utilities")
+        tx("Salary", 6380, "income", b, "Salary")
+        tx("Housing", 1750, "expense", b + timedelta(days=1), "Rent")
+        tx("Bills", 238.40, "expense", b + timedelta(days=4), "Utilities")
         tx("Food", food, "expense", b + timedelta(days=9), "Groceries")
         tx("Transport", transport, "expense", b + timedelta(days=11), "Fuel & metro")
         tx("Entertainment", fun, "expense", b + timedelta(days=15), "Cinema & games")
@@ -42,25 +42,25 @@ def create_demo_data(user, today=None):
     def ago(n):
         return max(m0, today - timedelta(days=n))
 
-    tx("Salary", 6400, "income", m0, "Salary")
-    tx("Housing", 1800, "expense", min(today, m0 + timedelta(days=1)), "Rent")
-    tx("Bills", 230, "expense", ago(8), "Utilities")
-    tx("Food", 210, "expense", ago(7), "Weekly groceries")
-    tx("Shopping", 310, "expense", ago(6), "New sneakers")
-    tx("Transport", 140, "expense", ago(5), "Monthly metro pass")
-    tx("Food", 85, "expense", ago(3), "Dinner out")
-    tx("Entertainment", 95, "expense", ago(2), "Cinema night")
-    tx("Food", 120, "expense", ago(1), "Groceries")
-    tx("Food", 64.5, "expense", today, "Lunch & coffee", cash)
-    tx("Health", 60, "expense", today, "Pharmacy", cash)
+    tx("Salary", 6380, "income", m0, "Salary")
+    tx("Housing", 1750, "expense", min(today, m0 + timedelta(days=1)), "Rent")
+    tx("Bills", 238.40, "expense", ago(8), "Utilities")
+    tx("Food", 214.30, "expense", ago(7), "Weekly groceries")
+    tx("Shopping", 312.40, "expense", ago(6), "New sneakers")
+    tx("Transport", 142.00, "expense", ago(5), "Monthly metro pass")
+    tx("Food", 86.50, "expense", ago(3), "Dinner out")
+    tx("Entertainment", 94.50, "expense", ago(2), "Cinema night")
+    tx("Food", 119.80, "expense", ago(1), "Groceries")
+    tx("Food", 63.90, "expense", today, "Lunch & coffee", cash)
+    tx("Health", 58.70, "expense", today, "Pharmacy", cash)
 
     # budgets: one near its limit, one over, the rest on track
-    for name, limit in [("Food", 600), ("Transport", 300), ("Shopping", 250), ("Entertainment", 200), ("Housing", 1900)]:
+    for name, limit in [("Food", 650), ("Transport", 300), ("Shopping", 250), ("Entertainment", 200), ("Housing", 1850)]:
         BudgetLimit.objects.create(user=user, category=cat[name], month=m0, limit=D(limit))
 
-    SavingsGoal.objects.create(user=user, name="Emergency fund", target_amount=D(10000), saved_amount=D(6500),
+    SavingsGoal.objects.create(user=user, name="Emergency fund", target_amount=D(10000), saved_amount=D(6420),
                                target_date=date(today.year + 1, 3, 1))
     SavingsGoal.objects.create(user=user, name="Summer trip", target_amount=D(2500), saved_amount=D(2500),
                                target_date=date(today.year + 1, 6, 1))
-    SavingsGoal.objects.create(user=user, name="New laptop", target_amount=D(4000), saved_amount=D(1200),
+    SavingsGoal.objects.create(user=user, name="New laptop", target_amount=D(4200), saved_amount=D(1260),
                                target_date=date(today.year + 1, 1, 1))

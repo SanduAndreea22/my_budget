@@ -334,3 +334,23 @@ class DemoAccountTests(TestCase):
         out = StringIO()
         call_command("cleanup_demo_users", stdout=out)
         self.assertIn("Deleted 0 demo account(s).", out.getvalue())
+
+
+class DemoDataLooksRealTests(TestCase):
+    def test_demo_amounts_are_not_all_round_numbers(self):
+        from decimal import Decimal
+        from accounts.demo import create_demo_user
+        from budget.models import Transaction
+        user = create_demo_user()
+        amounts = list(Transaction.objects.filter(user=user).values_list("amount", flat=True))
+        with_cents = [a for a in amounts if a != a.to_integral_value()]
+        self.assertGreater(len(with_cents) / len(amounts), 0.5)
+
+    def test_demo_keeps_one_near_limit_and_one_over_budget_story(self):
+        from accounts.demo import create_demo_user
+        user = create_demo_user()
+        self.client.force_login(user)
+        page = self.client.get(reverse("dashboard"))
+        self.assertContains(page, "Housing is close to its limit")
+        self.assertContains(page, "Shopping is over budget")
+        self.assertNotContains(page, "Food is close to its limit")
