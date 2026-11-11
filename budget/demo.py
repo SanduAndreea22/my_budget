@@ -2,7 +2,9 @@
 from datetime import date, timedelta
 from decimal import Decimal as D
 
-from .models import BudgetLimit, Category, SavingsGoal, Transaction, Wallet
+from django.urls import reverse
+
+from .models import ActivityLog, BudgetLimit, Category, SavingsGoal, Transaction, Wallet
 from .starter import create_starter_data
 
 
@@ -64,3 +66,32 @@ def create_demo_data(user, today=None):
                                target_date=date(today.year + 1, 6, 1))
     SavingsGoal.objects.create(user=user, name="New laptop", target_amount=D(4200), saved_amount=D(1260),
                                target_date=date(today.year + 1, 1, 1))
+
+
+def tour_steps(user):
+    """The "Things to try" guide shown to demo visitors. A step is done when the visitor really did it
+    (the seed data is created without activity-log entries, so it never counts)."""
+    done = set(ActivityLog.objects.filter(user=user).values_list("model_name", "action"))
+    did = lambda *pairs: any(p in done for p in pairs)
+
+    goal = SavingsGoal.objects.filter(user=user, name="New laptop").first()
+    if goal and goal.saved_amount < goal.target_amount:
+        gap = f"{goal.target_amount - goal.saved_amount:,.2f}"
+        goal_hint = f"Add {gap} {user.currency} to “{goal.name}” and watch it complete, with a small celebration."
+    else:
+        goal_hint = "Add money to one of your savings goals and watch the bar move."
+
+    steps = [
+        {"key": "expense", "title": "Add an expense",
+         "hint": f"Try 100 {user.currency} in Food. The Food budget moves from on track to near its limit, and the totals and donut update.",
+         "url": reverse("add_expense"), "done": did(("Transaction", "create"))},
+        {"key": "budget", "title": "Give Health a budget",
+         "hint": f"Health has no limit yet. Set one (say 100 {user.currency}) and its progress bar appears.",
+         "url": reverse("budget_add"), "done": did(("Budget Limit", "create"), ("Budget Limit", "update"))},
+        {"key": "goal", "title": "Finish a savings goal",
+         "hint": goal_hint, "url": reverse("savings_goals"), "done": did(("Savings Goal", "update"))},
+        {"key": "recurring", "title": "Make a bill log itself",
+         "hint": f"Add a recurring expense, like a 40 {user.currency} subscription. It is logged for you every month.",
+         "url": reverse("recurring_add"), "done": did(("Recurring Transaction", "create"))},
+    ]
+    return {"steps": steps, "done_count": sum(s["done"] for s in steps), "total": len(steps)}

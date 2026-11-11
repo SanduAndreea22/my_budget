@@ -219,3 +219,10 @@ document.addEventListener("DOMContentLoaded", function () {
     if (e.target === dialog || e.target.classList.contains("lightbox__scroll")) dialog.close();
   });
 });
+
+// Demo guide: open by default on wide screens; on a phone it stays closed so the totals
+// remain in the first screen (the summary line is still visible and tappable).
+document.addEventListener("DOMContentLoaded", function () {
+  const tour = document.getElementById("demo-tour");
+  if (tour && window.matchMedia("(min-width: 861px)").matches) tour.open = true;
+});

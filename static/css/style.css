@@ -870,3 +870,45 @@ body:has(dialog.lightbox[open]){overflow:hidden;}
 .errorlist{list-style:none; margin:4px 0 0; padding:10px 12px; border-radius:14px; background:rgba(239,68,68,.14); border:1px solid rgba(239,68,68,.30); font-weight:700;}
 .changelog{display:grid; gap:6px;}
 .changelog h2{margin:22px 0 8px; font-size:20px; letter-spacing:-.02em;}
+
+
+/* ---------- Demo guide: "Things to try" ---------- */
+.visually-hidden{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
+.demo-tour{
+  margin-top:18px; border-radius:20px; padding:0;
+  background:rgba(var(--brand-rgb),.10); border:1px solid rgba(var(--brand-rgb),.40);
+}
+.demo-tour > summary{
+  list-style:none; cursor:pointer; padding:14px 18px; min-height:44px;
+  display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.demo-tour > summary::-webkit-details-marker{display:none;}
+.demo-tour__title{font-weight:800; font-size:18px; letter-spacing:-.02em;}
+.demo-tour__count{font-size:14px; font-weight:700; color:var(--brand-light);}
+.demo-tour__list{list-style:none; margin:0; padding:0 14px 6px; display:grid; gap:10px;}
+.tour-step{
+  display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+  padding:12px; border-radius:16px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+}
+.tour-step__check{
+  width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-weight:800; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.25);
+}
+.tour-step--done{border-color:rgba(34,197,94,.45); background:rgba(34,197,94,.08);}
+.tour-step--done .tour-step__check{background:#22c55e; border-color:#22c55e; color:#04201c;}
+.tour-step__title{font-weight:800;}
+.tour-step__hint{font-size:14px; line-height:1.45; color:rgba(255,255,255,.80); margin-top:2px;}
+.demo-tour__more{padding:6px 18px 14px; font-size:14px; color:var(--muted);}
+.demo-tour__finish{
+  margin:0 14px 14px; padding:12px 14px; border-radius:16px; font-size:15px; line-height:1.5;
+  background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.40);
+  display:flex; align-items:center; justify-content:space-between; gap:10px 16px; flex-wrap:wrap;
+}
+@media (max-width:640px){
+  .tour-step{grid-template-columns:auto 1fr;}
+  .tour-step .btn{grid-column:1 / -1;}
+}
+
+.demo-tour > summary::after{content:"\25B8"; margin-left:auto; color:var(--brand-light); font-size:18px; transition:transform .2s ease;}
+.demo-tour[open] > summary::after{transform:rotate(90deg);}
+.demo-tour__count{order:2;}

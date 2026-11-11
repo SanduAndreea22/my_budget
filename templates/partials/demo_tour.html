@@ -1,0 +1,28 @@
+<details class="demo-tour" id="demo-tour">
+  <summary>
+    <span class="demo-tour__title">Things to try</span>
+    <span class="demo-tour__count">{{ demo_tour.done_count }} of {{ demo_tour.total }} done</span>
+  </summary>
+  <ol class="demo-tour__list">
+    {% for step in demo_tour.steps %}
+      <li class="tour-step{% if step.done %} tour-step--done{% endif %}">
+        <span class="tour-step__check" aria-hidden="true">{% if step.done %}✓{% else %}{{ forloop.counter }}{% endif %}</span>
+        <div class="tour-step__body">
+          <div class="tour-step__title">{{ step.title }}{% if step.done %} <span class="visually-hidden">(done)</span>{% endif %}</div>
+          <div class="tour-step__hint">{{ step.hint }}</div>
+        </div>
+        <a class="btn btn--ghost btn--sm" href="{{ step.url }}">{% if step.done %}Again{% else %}Try it{% endif %} →</a>
+      </li>
+    {% endfor %}
+  </ol>
+  <div class="demo-tour__more">
+    <span>Then look around:</span>
+    <a href="{% url 'charts' %}">Charts</a> · <a href="{% url 'compare' %}">Compare</a> · <a href="{% url 'transactions' %}">Export from Transactions</a>
+  </div>
+  {% if demo_tour.done_count == demo_tour.total %}
+    <div class="demo-tour__finish">
+      <b>You have tried the main parts.</b> Create an account to keep your own data (this demo is deleted when you leave).
+      <a class="btn btn--sm" href="{% url 'accounts:register' %}">Create your account →</a>
+    </div>
+  {% endif %}
+</details>

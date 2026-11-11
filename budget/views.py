@@ -178,6 +178,9 @@ def dashboard_view(request):
         "month_expense": month_expense,
         "month_label": today.strftime("%B"),
     }
+    if request.user.is_demo:
+        from .demo import tour_steps
+        context["demo_tour"] = tour_steps(request.user)
 
     return render(request, "dashboard.html", context)
 

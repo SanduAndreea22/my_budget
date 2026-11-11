@@ -430,3 +430,68 @@ class DeleteAccountTests(TestCase):
         response = self.client.post(reverse("accounts:delete_account"), {"password": "x"})
         self.assertEqual(response.status_code, 302)
         self.assertTrue(User.objects.filter(pk=demo.pk).exists())  # demo cleanup is handled elsewhere
+
+
+class DemoGuideTests(TestCase):
+    """The "Things to try" guide must be true to the demo data and tick off real actions only."""
+
+    def setUp(self):
+        cache.clear()
+        from accounts.demo import create_demo_user
+        from budget.models import Category, SavingsGoal, Wallet
+        self.user = create_demo_user()
+        self.client.force_login(self.user)
+        self.cat = lambda n: Category.objects.get(user=self.user, name=n)
+        self.wallet = Wallet.objects.get(user=self.user, name="Card")
+        self.goal = SavingsGoal.objects.get(user=self.user, name="New laptop")
+
+    def _tour(self):
+        return self.client.get(reverse("dashboard")).context["demo_tour"]
+
+    def test_guide_starts_at_zero_and_example_data_never_counts(self):
+        tour = self._tour()
+        self.assertEqual((tour["done_count"], tour["total"]), (0, 4))
+        self.assertContains(self.client.get(reverse("dashboard")), "Things to try")
+        self.assertContains(self.client.get(reverse("dashboard")), "0 of 4 done")
+
+    def test_real_users_do_not_see_the_guide(self):
+        real = User.objects.create_user(username="real", email="real@example.com", password="pass12345")
+        self.client.force_login(real)
+        page = self.client.get(reverse("dashboard"))
+        self.assertNotIn("demo_tour", page.context)
+        self.assertNotContains(page, "Things to try")
+
+    def test_each_step_is_ticked_by_the_real_action(self):
+        from datetime import date
+        self.client.post(reverse("add_expense"), {"amount": "100", "date": date.today().isoformat(), "category": self.cat("Food").pk, "wallet": self.wallet.pk, "note": ""})
+        self.assertEqual([s["done"] for s in self._tour()["steps"]], [True, False, False, False])
+        self.client.post(reverse("budget_add"), {"category": self.cat("Health").pk, "month": date.today().strftime("%Y-%m"), "limit": "100"})
+        self.assertEqual([s["done"] for s in self._tour()["steps"]], [True, True, False, False])
+        remaining = self.goal.target_amount - self.goal.saved_amount
+        self.client.post(reverse("savings_goal_add_funds", args=[self.goal.pk]), {"amount": str(remaining)})
+        self.assertEqual([s["done"] for s in self._tour()["steps"]], [True, True, True, False])
+        self.client.post(reverse("recurring_add"), {"type": "expense", "amount": "40", "category": self.cat("Bills").pk, "wallet": self.wallet.pk,
+                                                     "day_of_month": "5", "start_date": date.today().isoformat(), "note": "", "is_active": "on"})
+        tour = self._tour()
+        self.assertEqual(tour["done_count"], 4)
+        self.assertContains(self.client.get(reverse("dashboard")), "You have tried the main parts.")
+
+    def test_the_food_hint_is_true(self):
+        from datetime import date
+        self.assertNotContains(self.client.get(reverse("dashboard")), "Food is close to its limit")
+        self.client.post(reverse("add_expense"), {"amount": "100", "date": date.today().isoformat(), "category": self.cat("Food").pk, "wallet": self.wallet.pk, "note": ""})
+        self.assertContains(self.client.get(reverse("dashboard")), "Food is close to its limit")
+
+    def test_the_goal_hint_names_the_exact_remaining_amount_and_it_celebrates(self):
+        remaining = self.goal.target_amount - self.goal.saved_amount
+        hint = [s for s in self._tour()["steps"] if s["key"] == "goal"][0]["hint"]
+        self.assertIn(f"{remaining:,.2f}", hint)
+        response = self.client.post(reverse("savings_goal_add_funds", args=[self.goal.pk]), {"amount": str(remaining)})
+        self.assertIn("celebrate=", response["Location"])
+
+    def test_health_has_no_limit_yet_so_its_hint_is_true(self):
+        from budget.models import BudgetLimit
+        self.assertFalse(BudgetLimit.objects.filter(user=self.user, category=self.cat("Health")).exists())
+
+    def test_banner_links_to_the_guide(self):
+        self.assertContains(self.client.get(reverse("budgets")), 'href="/app/#demo-tour"')
