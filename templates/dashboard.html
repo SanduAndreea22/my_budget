@@ -25,8 +25,6 @@
       Your totals, budget alerts and latest transactions.
     </p>
 
-    {% if demo_tour %}{% include "partials/demo_tour.html" %}{% endif %}
-
     <!-- SUMMARY -->
     <div class="totals-grid" style="margin-top:18px;">
 
@@ -57,6 +55,8 @@
       </div>
 
     </div>
+
+    {% if demo_tour %}{% include "partials/demo_tour.html" %}{% endif %}
 
     <!-- BUDGET ALERTS -->
     {% if budget_alerts %}
@@ -146,8 +146,8 @@
 
 {% if transactions %}
 <div class="fab-group">
-  <a href="{% url 'add_income' %}" class="btn fab">+ Add income</a>
-  <a href="{% url 'add_expense' %}" class="btn btn--ghost fab">− Add expense</a>
+  <a href="{% url 'add_income' %}" class="btn fab"><span aria-hidden="true">+</span><span class="fab__label"> Add income</span></a>
+  <a href="{% url 'add_expense' %}" class="btn btn--ghost fab"><span aria-hidden="true">−</span><span class="fab__label"> Add expense</span></a>
 </div>
 {% endif %}
 {% endblock %}

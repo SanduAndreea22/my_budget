@@ -361,7 +361,9 @@ a{color: rgba(255,255,255,.92)}
   /* room so the FAB never sits on top of the last piece of content */
   .page{padding-bottom:96px;}
   .fab-group{display:flex;right:14px;bottom:14px;}
-  .fab{padding:12px 16px;font-size:14px;}
+  /* Round icon buttons: a small target in the corner instead of two wide pills over the content. */
+  .fab{width:52px; height:52px; padding:0; display:flex; align-items:center; justify-content:center; font-size:26px; line-height:1;}
+  .fab__label{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap;}
 
   /* On mobile the FAB floats over the bottom-right corner of whatever's
      currently in view — a budget alert's "View budgets" link wrapping to
@@ -401,6 +403,9 @@ a{color: rgba(255,255,255,.92)}
 
 @media (max-width:900px){
   .totals-grid{grid-template-columns:1fr;}
+  /* Transactions: three one-line rows instead of three tall cards. */
+  .totals-grid--rows{gap:8px;}
+  .totals-grid--rows > .glass-card{display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 14px !important;}
 }
 
 /* Dashboard actions: primary CTAs full-size, everything else grouped
@@ -681,6 +686,7 @@ a{color: rgba(255,255,255,.92)}
   min-width:220px; padding:8px; display:grid; gap:2px;
   background:rgba(14,18,38,.96);
 }
+.menu--right .menu__panel{left:auto; right:0;}
 .menu__panel:hover{transform:none;}
 .menu__panel a{
   display:flex; align-items:center; gap:10px; min-height:44px; padding:0 12px;
@@ -775,7 +781,7 @@ html{scroll-behavior:smooth;}
 }
 .data-band:hover{transform:none;}
 
-.faq{display:grid; gap:10px; margin-top:18px; max-width:820px;}
+.faq{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; gap:10px 16px; margin-top:18px;}
 .faq__item{padding:0;}
 .faq__item:hover{transform:none;}
 .faq__item summary{
@@ -790,12 +796,13 @@ html{scroll-behavior:smooth;}
 .faq__item[open] summary::after{content:"\2212";}
 .faq__item p{margin:0; padding:0 18px 18px; line-height:1.6; color:rgba(255,255,255,.82);}
 
-.lp-cta{text-align:center; padding:12px 0 8px;}
+.lp-cta{text-align:left; padding:12px 0 8px;}
 
 @media (max-width:860px){
   .feature{grid-template-columns:1fr;}
   .feature--flip .feature__text{order:0;}
   .steps{grid-template-columns:1fr;}
+  .faq{grid-template-columns:1fr;}
   .data-band{grid-template-columns:1fr;}
   .lp-section{margin-top:44px;}
   .nav__link--anchor{display:none;}
@@ -823,7 +830,7 @@ html{scroll-behavior:smooth;}
 
 /* ---------- Landing: audience line + "Why MyBudget" ---------- */
 .hero__who{
-  margin:0 0 20px; max-width:56ch; font-size:16px; line-height:1.55;
+  margin:20px 0 0; max-width:56ch; font-size:15px; line-height:1.55;
   color:rgba(255,255,255,.92);
   border-left:3px solid var(--brand); padding-left:14px;
 }
@@ -912,3 +919,19 @@ body:has(dialog.lightbox[open]){overflow:hidden;}
 .demo-tour > summary::after{content:"\25B8"; margin-left:auto; color:var(--brand-light); font-size:18px; transition:transform .2s ease;}
 .demo-tour[open] > summary::after{transform:rotate(90deg);}
 .demo-tour__count{order:2;}
+
+
+/* ---------- Categories: grouped by type ---------- */
+.cat-group__title{margin:22px 0 10px; font-size:18px; letter-spacing:-.01em; color:rgba(255,255,255,.88);}
+.cat-grid{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px;}
+@media (max-width:980px){ .cat-grid{grid-template-columns:repeat(2, minmax(0, 1fr));} }
+@media (max-width:640px){ .cat-grid{grid-template-columns:1fr;} }
+
+/* Add income/expense preview: the "Type an amount" hint is neutral, so it never reads as an error. */
+[data-preview-amount].is-empty{color:rgba(255,255,255,.6) !important; font-weight:600 !important; font-size:16px !important;}
+
+/* Register: password rules are one line until opened (they open by themselves when the password is rejected). */
+.pw-rules > summary{cursor:pointer; font-size:14px; min-height:24px; list-style:none;}
+.pw-rules > summary::-webkit-details-marker{display:none;}
+.pw-rules > summary::before{content:"▸ "; }
+.pw-rules[open] > summary::before{content:"▾ ";}

@@ -665,3 +665,11 @@ class BulkUserDeleteTests(TestCase):
         response = self.client.post("/admin/accounts/customuser/", {"action": "delete_selected", "_selected_action": [victim.pk], "post": "yes"}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(User.objects.filter(pk=victim.pk).exists())
+
+
+class RegisterFieldOrderTests(TestCase):
+    def test_essential_fields_come_before_the_optional_names(self):
+        page = self.client.get(reverse("accounts:register")).content.decode()
+        order = [page.index(f'name="{n}"') for n in ("email", "password1", "password2", "currency", "first_name", "last_name")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn("Password rules", page)

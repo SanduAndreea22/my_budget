@@ -173,6 +173,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const placeholder = out.textContent;
   function update() {
     const v = parseFloat(input.value);
+    out.classList.toggle("is-empty", Number.isNaN(v) || v <= 0);
     out.textContent = Number.isNaN(v) || v <= 0
       ? placeholder
       : card.dataset.sign + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + card.dataset.currency;

@@ -933,7 +933,7 @@ class UsabilityPolishTests(TestCase):
         Transaction.objects.create(user=self.user, category=cat, wallet=wallet, type="expense", amount=10, date=date.today())
         self.client.force_login(self.user)
         response = self.client.get(reverse("transactions"), {"type": "expense"})
-        self.assertContains(response, 'class="menu"')
+        self.assertContains(response, 'class="menu menu--right"')
         for name in ("export_transactions_csv", "export_transactions_xlsx", "export_transactions_pdf"):
             self.assertContains(response, reverse(name) + "?type=expense")
 
@@ -1402,3 +1402,48 @@ class GoalsListCopyTests(TestCase):
         self.assertNotIn("1,260.00 / 4,200.00", page)
         self.assertIn("Goal reached</span>", page)
         self.assertNotIn("Goal reached!", page)
+
+
+class VisualHierarchyTests(TestCase):
+    """Fixes from the UX/UI audit: what matters comes first on each page."""
+
+    def setUp(self):
+        from .starter import create_starter_data
+        self.user = get_user_model().objects.create_user(username="vh", email="vh@example.com", password="pass12345")
+        create_starter_data(self.user)
+        self.client.force_login(self.user)
+
+    def test_budgets_list_the_most_used_limit_first_and_unbudgeted_last(self):
+        today = date.today().replace(day=1)
+        food = Category.objects.get(user=self.user, name="Food")
+        housing = Category.objects.get(user=self.user, name="Housing")
+        wallet = Wallet.objects.get(user=self.user, name="Cash")
+        BudgetLimit.objects.create(user=self.user, category=food, month=today, limit=1000)
+        BudgetLimit.objects.create(user=self.user, category=housing, month=today, limit=100)
+        Transaction.objects.create(user=self.user, category=food, wallet=wallet, type="expense", amount=100, date=date.today())
+        Transaction.objects.create(user=self.user, category=housing, wallet=wallet, type="expense", amount=95, date=date.today())
+        rows = self.client.get(reverse("budgets")).context["rows"]
+        names = [r["category"].name for r in rows]
+        self.assertEqual(names[:2], ["Housing", "Food"])
+        self.assertTrue(all(r["limit"] is None for r in rows[2:]))
+
+    def test_categories_are_grouped_by_type(self):
+        page = self.client.get(reverse("categories")).content.decode()
+        self.assertLess(page.index("Expense categories"), page.index("Income categories"))
+        self.assertLess(page.index("Housing"), page.index("Income categories"))
+        self.assertGreater(page.index("Salary"), page.index("Income categories"))
+
+    def test_dashboard_floating_buttons_keep_accessible_names(self):
+        t = Transaction.objects.create(
+            user=self.user, category=Category.objects.get(user=self.user, name="Food"),
+            wallet=Wallet.objects.get(user=self.user, name="Cash"), type="expense", amount=5, date=date.today())
+        page = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn('class="fab__label"', page)
+        self.assertIn("Add income", page)
+
+    def test_transaction_row_puts_the_wallet_in_the_details_line(self):
+        Transaction.objects.create(
+            user=self.user, category=Category.objects.get(user=self.user, name="Food"),
+            wallet=Wallet.objects.get(user=self.user, name="Cash"), type="expense", amount=5, date=date.today(), note="Lunch")
+        page = self.client.get(reverse("transactions")).content.decode()
+        self.assertIn("· 💵 Cash · Lunch", page)

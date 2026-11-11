@@ -13,49 +13,30 @@
     </div>
   </div>
 
-  <div style="margin-top:16px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:12px;">
-    {% for c in categories %}
-      <div class="glass-card" style="padding:14px;display:grid;gap:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+  {% regroup categories by type as groups %}
+  {% for group in groups %}
+    <h2 class="cat-group__title">{% if group.grouper == "income" %}Income categories{% else %}Expense categories{% endif %}</h2>
+    <div class="cat-grid">
+      {% for c in group.list %}
+        <div class="glass-card" style="padding:14px;display:grid;gap:10px;">
           <div style="display:flex;align-items:center;gap:12px;min-width:0;">
             <div class="cat-badge" style="--c:{{ c.color|default:'#14b8a6' }};">{{ c.icon|default:"🏷️" }}</div>
-
-            <div style="min-width:0;">
-              <div style="font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                {{ c.name }}
-              </div>
-              <div class="muted" style="font-size:12px;">
-                {% if c.type == "income" %}Income{% else %}Expense{% endif %}
-              </div>
-            </div>
+            <div style="min-width:0;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ c.name }}</div>
           </div>
 
-          <div style="
-            width:14px;height:14px;border-radius:999px;flex-shrink:0;
-            background: {{ c.color|default:"rgba(255,255,255,.35)" }};
-            border:1px solid rgba(255,255,255,.18);
-            box-shadow: 0 12px 30px rgba(0,0,0,.25);
-          "></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a class="btn btn--ghost btn--sm" href="{% url 'category_edit' c.id %}">Edit</a>
+            <a class="btn btn--ghost btn--sm btn--delete" href="{% url 'category_delete' c.id %}">Delete</a>
+          </div>
         </div>
-
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <a class="btn btn--ghost btn--sm" href="{% url 'category_edit' c.id %}">Edit</a>
-          <a class="btn btn--ghost btn--sm btn--delete" href="{% url 'category_delete' c.id %}">Delete</a>
-        </div>
-      </div>
-    {% empty %}
-      {% url 'category_add' as add_url %}
+      {% endfor %}
+    </div>
+  {% empty %}
+    {% url 'category_add' as add_url %}
+    <div style="margin-top:16px;">
       {% include "partials/empty_state.html" with art="folder" title="Give your money some labels" text="Categories (Food, Rent, Salary…) turn a pile of numbers into patterns you can act on." url=add_url label="+ Create your first one" %}
-    {% endfor %}
-  </div>
+    </div>
+  {% endfor %}
 
-  <style>
-    @media (max-width: 980px){
-      div[style*="grid-template-columns:repeat(3"]{grid-template-columns:repeat(2, minmax(0, 1fr)) !important;}
-    }
-    @media (max-width: 640px){
-      div[style*="grid-template-columns:repeat(3"]{grid-template-columns:1fr !important;}
-    }
-  </style>
 </section>
 {% endblock %}

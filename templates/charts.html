@@ -109,7 +109,29 @@
 
         const ctxPie = document.getElementById("pieChart");
         if (ctxPie) {
+          const total = values.reduce(function(a, b){ return a + b; }, 0);
+          // Total in the hole of the donut, centred on the ring (not on the legend below it).
+          const centerText = {
+            id: "centerText",
+            afterDraw: function(chart){
+              const a = chart.chartArea, ctx = chart.ctx;
+              const x = (a.left + a.right) / 2, y = (a.top + a.bottom) / 2;
+              ctx.save();
+              ctx.textAlign = "center";
+              ctx.fillStyle = "rgba(255,255,255,.65)";
+              ctx.font = "700 12px Manrope, sans-serif";
+              ctx.fillText("SPENT", x, y - 18);
+              ctx.fillStyle = "#fff";
+              ctx.font = "800 24px Manrope, sans-serif";
+              ctx.fillText(total.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2}), x, y + 8);
+              ctx.fillStyle = "rgba(255,255,255,.65)";
+              ctx.font = "500 12px Manrope, sans-serif";
+              ctx.fillText(CURRENCY, x, y + 26);
+              ctx.restore();
+            }
+          };
           new Chart(ctxPie, {
+            plugins: [centerText],
             type: "doughnut",
             data: {
               labels: labels,
@@ -126,7 +148,15 @@
               animation:{ onComplete:function(){ window.markChartReady(ctxPie); } },
               cutout:"70%",
               plugins:{
-                legend:{ position:"bottom", labels:{ color:"rgba(255,255,255,.85)", boxWidth:12, padding:15, font:{size: 14} } },
+                legend:{ position:"bottom", labels:{ color:"rgba(255,255,255,.85)", boxWidth:12, padding:15, font:{size: 14},
+                  // Show each category's share next to its name, so it can be read without hovering.
+                  generateLabels:function(chart){
+                    const base = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
+                    base.forEach(function(item){
+                      item.text += " · " + Math.round(values[item.index] / total * 100) + "%";
+                    });
+                    return base;
+                  } } },
                 tooltip:{ backgroundColor: 'rgba(0,0,0,0.8)', padding: 12,
                   callbacks:{ label:function(c){ return ' ' + c.label + ': ' + window.fmtMoney(c.parsed, CURRENCY); } } }
               }
@@ -176,7 +206,7 @@
               animation: { onComplete: function(){ window.markChartReady(ctxLine); } },
               scales: {
                 x: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { display: false } },
-                y: { ticks: { color: "rgba(255,255,255,0.6)" }, grid: { color: "rgba(255,255,255,0.1)" },
+                y: { beginAtZero: true, ticks: { color: "rgba(255,255,255,0.6)" }, grid: { color: "rgba(255,255,255,0.1)" },
                      title: { display: true, text: CURRENCY, color: "rgba(255,255,255,0.6)" } }
               },
               plugins: {

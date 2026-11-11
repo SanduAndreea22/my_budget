@@ -71,8 +71,8 @@
 
             <div class="row-actions">
               {% if r.budget %}
-                <a class="btn btn--ghost" href="{% url 'budget_edit' r.budget.id %}">Edit</a>
-                <a class="btn btn--ghost btn--delete" href="{% url 'budget_delete' r.budget.id %}">Delete</a>
+                <a class="btn btn--ghost btn--sm" href="{% url 'budget_edit' r.budget.id %}">Edit</a>
+                <a class="btn btn--ghost btn--delete btn--sm" href="{% url 'budget_delete' r.budget.id %}">Delete</a>
               {% else %}
                 <a class="btn btn--ghost btn--sm" href="{% url 'budget_add' %}">Set budget</a>
               {% endif %}

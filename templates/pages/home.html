@@ -28,13 +28,12 @@
         what came <b>in</b>, what went <b>out</b> and what's left.
       </p>
 
-      <p class="hero__who">Made for people who enter their own transactions and would rather not connect a bank.</p>
-
       <div class="hero__cta">
         <a class="btn" href="{% url 'accounts:register' %}">Create account <span aria-hidden="true">→</span></a>
         <form method="post" action="{% url 'accounts:demo' %}" class="demo-form">{% csrf_token %}<button type="submit" class="btn btn--ghost">Try the demo <span aria-hidden="true">→</span></button></form>
       </div>
       <p class="hero__reassure muted">No sign-up needed to try the demo. Free while in testing, with no credit card.</p>
+      <p class="hero__who">Made for people who enter their own transactions and would rather not connect a bank.</p>
     </div>
 
     <!-- PREVIEW: the real app (example data) -->
@@ -96,10 +95,10 @@
   <div class="feature">
     <div class="feature__text">
       <h3>The whole month on one screen</h3>
-      <p>Income, expenses and balance, your latest transactions with their category icons, and a chart of where this month's money went. Budget alerts appear here too.</p>
+      <p>Income, expenses and balance, budget alerts, and your latest transactions with their category icons. A chart of where the month's money went sits right below.</p>
     </div>
     <figure class="feature__shot">
-      <a class="shot-link" href="{% static 'img/shots/dashboard.jpg' %}" data-lightbox aria-label="Enlarge screenshot: MyBudget dashboard: totals for income, expense and balance, two budget warnings, recent transactions and a chart of this month's spending."><img src="{% static 'img/shots/dashboard.jpg' %}" width="1296" height="1331" loading="lazy" decoding="async"
+      <a class="shot-link" href="{% static 'img/shots/dashboard.jpg' %}" data-lightbox aria-label="Enlarge screenshot: MyBudget dashboard: totals for income, expense and balance, two budget warnings, recent transactions and a chart of this month's spending."><img src="{% static 'img/shots/dashboard.jpg' %}" width="966" height="1350" loading="lazy" decoding="async"
            alt="MyBudget dashboard: totals for income, expense and balance, two budget warnings, recent transactions and a chart of this month's spending."><span class="shot-link__hint" aria-hidden="true">⤢ Enlarge</span></a>
     </figure>
   </div>
@@ -110,7 +109,7 @@
       <p>Decide how much you want to spend on Food, Transport or Shopping each month. The bar fills as you spend, turns amber near the limit and red when you go over.</p>
     </div>
     <figure class="feature__shot feature__shot--tall">
-      <a class="shot-link" href="{% static 'img/shots/budgets.jpg' %}" data-lightbox aria-label="Enlarge screenshot: MyBudget budgets page: a progress bar for each category, with one marked near its limit and one over budget."><img src="{% static 'img/shots/budgets.jpg' %}" width="1296" height="1631" loading="lazy" decoding="async"
+      <a class="shot-link" href="{% static 'img/shots/budgets.jpg' %}" data-lightbox aria-label="Enlarge screenshot: MyBudget budgets page: a progress bar for each category, with one marked near its limit and one over budget."><img src="{% static 'img/shots/budgets.jpg' %}" width="966" height="1140" loading="lazy" decoding="async"
            alt="MyBudget budgets page: a progress bar for each category, with one marked near its limit and one over budget."><span class="shot-link__hint" aria-hidden="true">⤢ Enlarge</span></a>
     </figure>
   </div>
@@ -121,7 +120,7 @@
       <p>Set a target, add money whenever you can and watch the bar fill. When you reach it, you get a small celebration.</p>
     </div>
     <figure class="feature__shot">
-      <a class="shot-link" href="{% static 'img/shots/goals.jpg' %}" data-lightbox aria-label="Enlarge screenshot: MyBudget savings goals: three goals with progress bars, one completed and marked as reached."><img src="{% static 'img/shots/goals.jpg' %}" width="1296" height="1073" loading="lazy" decoding="async"
+      <a class="shot-link" href="{% static 'img/shots/goals.jpg' %}" data-lightbox aria-label="Enlarge screenshot: MyBudget savings goals: three goals with progress bars, one completed and marked as reached."><img src="{% static 'img/shots/goals.jpg' %}" width="966" height="1073" loading="lazy" decoding="async"
            alt="MyBudget savings goals: three goals with progress bars, one completed and marked as reached."><span class="shot-link__hint" aria-hidden="true">⤢ Enlarge</span></a>
     </figure>
   </div>
@@ -220,7 +219,7 @@
 <section class="lp-section lp-cta">
   <h2 class="lp-title">Ready to try it?</h2>
   <p class="muted" style="margin:0 0 18px;">No credit card needed.</p>
-  <div class="hero__cta" style="justify-content:center;">
+  <div class="hero__cta">
     <a class="btn" href="{% url 'accounts:register' %}">Create account <span aria-hidden="true">→</span></a>
     <form method="post" action="{% url 'accounts:demo' %}" class="demo-form">{% csrf_token %}<button type="submit" class="btn btn--ghost">Try the demo <span aria-hidden="true">→</span></button></form>
   </div>

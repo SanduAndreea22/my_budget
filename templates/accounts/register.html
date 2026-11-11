@@ -33,7 +33,14 @@
           {{ field }}
 
           {% if field.help_text %}
-            <div class="muted" style="font-size:13px;">{{ field.help_text }}</div>
+            {% if field.name == "password1" %}
+              <details class="pw-rules muted"{% if field.errors %} open{% endif %}>
+                <summary>Password rules</summary>
+                <div style="font-size:13px;">{{ field.help_text }}</div>
+              </details>
+            {% else %}
+              <div class="muted" style="font-size:13px;">{{ field.help_text }}</div>
+            {% endif %}
           {% endif %}
 
           {% for error in field.errors %}

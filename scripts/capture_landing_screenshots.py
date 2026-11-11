@@ -34,14 +34,14 @@ def start_demo(page):
     page.wait_for_timeout(1500)
 
 
-def tidy(page):
+def tidy(page, extra=""):
     page.evaluate(
         """css => {
             document.querySelectorAll('.toast').forEach(t => t.remove());
             const s = document.createElement('style'); s.textContent = css; document.head.appendChild(s);
             window.scrollTo(0, 0);
         }""",
-        HIDE,
+        HIDE + extra,
     )
     page.wait_for_timeout(300)
 
@@ -63,19 +63,22 @@ def main():
         ctx = browser.new_context(viewport={"width": 390, "height": 800}, device_scale_factor=1.5, has_touch=True, is_mobile=True)
         page = ctx.new_page()
         start_demo(page)
-        tidy(page)
+        tidy(page, ".subnav{display:none!important}")  # no half-cut tabs in the phone frame
         save(page.screenshot(clip={"x": 0, "y": 0, "width": 390, "height": 800}), "hero")
         ctx.close()
 
         print("Desktop cards")
-        ctx = browser.new_context(viewport={"width": 940, "height": 1500}, device_scale_factor=1.5)
+        ctx = browser.new_context(viewport={"width": 700, "height": 1500}, device_scale_factor=1.5)
         page = ctx.new_page()
         start_demo(page)
-        for name, path, wait in (("dashboard", "/app/", 1700), ("budgets", "/app/budgets/", 900), ("goals", "/app/goals/", 1400)):
+        # Narrow viewport = bigger text once the image is shrunk on the landing page.
+        # max_h crops long pages so each screenshot stays about as tall as it is wide.
+        for name, path, wait, max_h in (("dashboard", "/app/", 1700, 900), ("budgets", "/app/budgets/", 900, 760), ("goals", "/app/goals/", 1400, 760)):
             page.goto(BASE_URL + path)
             page.wait_for_timeout(wait)
             tidy(page)
             box = page.locator("main > section.glass-card").first.bounding_box()
+            box["height"] = min(box["height"], max_h)
             save(page.screenshot(clip=box), name)
         ctx.close()
         browser.close()

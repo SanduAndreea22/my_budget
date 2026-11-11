@@ -291,7 +291,7 @@ def add_expense_view(request):
 
 @login_required
 def categories_view(request):
-    cats = Category.objects.filter(user=request.user).order_by("name")
+    cats = Category.objects.filter(user=request.user).order_by("type", "name")  # expense first, then income
     return render(request, "categories.html", {"categories": cats})
 
 
@@ -703,6 +703,8 @@ def budgets_view(request):
     month_end = _month_end(selected)
 
     rows = _budget_status_rows(request.user, month_start, month_end)
+    # Most urgent first: the highest share of its limit used, then categories without a limit.
+    rows.sort(key=lambda r: (r["limit"] is None, -r["pct"], r["category"].name.lower()))
 
     total_spent = sum((r["spent"] for r in rows), Decimal("0"))
     total_limit = sum((r["limit"] for r in rows if r["limit"] is not None), Decimal("0"))

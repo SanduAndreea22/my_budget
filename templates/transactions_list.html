@@ -24,25 +24,23 @@
         {% if has_filters or transactions %}
         <a class="btn" href="{% url 'add_income' %}">+ Add income</a>
         <a class="btn btn--ghost" href="{% url 'add_expense' %}">− Add expense</a>
+        <details class="menu menu--right">
+          <summary class="btn btn--ghost">⬇ Export</summary>
+          <div class="menu__panel glass-card">
+            <div class="muted" style="padding:6px 12px 8px;font-size:13px;">Exports what matches your current filters.</div>
+            <a href="{% url 'export_transactions_csv' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">CSV <small>opens in any spreadsheet</small></a>
+            <a href="{% url 'export_transactions_xlsx' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">Excel <small>an .xlsx file</small></a>
+            <a href="{% url 'export_transactions_pdf' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">PDF <small>a printable report</small></a>
+          </div>
+        </details>
         {% endif %}
       </div>
     </div>
 
     {% if has_filters or transactions %}
-    <!-- Export -->
-    <details class="menu" style="margin-top:14px;">
-      <summary class="btn btn--ghost btn--sm">⬇ Export</summary>
-      <div class="menu__panel glass-card">
-        <div class="muted" style="padding:6px 12px 8px;font-size:13px;">Exports what matches your current filters.</div>
-        <a href="{% url 'export_transactions_csv' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">CSV <small>opens in any spreadsheet</small></a>
-        <a href="{% url 'export_transactions_xlsx' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">Excel <small>an .xlsx file</small></a>
-        <a href="{% url 'export_transactions_pdf' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">PDF <small>a printable report</small></a>
-      </div>
-    </details>
-
     <!-- Totals -->
     <div class="muted" style="margin-top:14px;font-size:14px;">Totals for all transactions that match your filters.</div>
-    <div class="totals-grid" style="margin-top:16px;">
+    <div class="totals-grid totals-grid--rows" style="margin-top:16px;">
       <div class="glass-card" style="padding:14px;">
         <div class="muted">Income</div>
         <div style="font-weight:950;font-size:22px;">
@@ -138,10 +136,9 @@
             <div style="min-width:0;">
               <div class="tx-row__title">
                 {{ t.category.name }}
-                <span class="muted" style="font-weight:700;">· {{ t.wallet.icon|default:"💳" }} {{ t.wallet.name }}</span>
               </div>
-              <div class="muted" style="font-size:13px;">
-                {{ t.date|date:"M j, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
+              <div class="muted" style="font-size:14px;">
+                {{ t.date|date:"M j, Y" }} · {{ t.wallet.icon|default:"💳" }} {{ t.wallet.name }}{% if t.note %} · {{ t.note }}{% endif %}
               </div>
             </div>
           </div>
@@ -151,8 +148,8 @@
               {% if t.type == 'income' %}+{% else %}-{% endif %}{{ t.amount|floatformat:2|intcomma }} {{ currency }}
             </div>
 
-            <a class="btn btn--ghost" href="{% url 'transaction_edit' t.id %}">Edit</a>
-            <a class="btn btn--ghost btn--delete" href="{% url 'transaction_delete' t.id %}">
+            <a class="btn btn--ghost btn--sm" href="{% url 'transaction_edit' t.id %}">Edit</a>
+            <a class="btn btn--ghost btn--delete btn--sm" href="{% url 'transaction_delete' t.id %}">
               Delete
             </a>
           </div>

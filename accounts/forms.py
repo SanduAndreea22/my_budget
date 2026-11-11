@@ -14,6 +14,9 @@ class UserRegistrationForm(UserCreationForm):
         model = get_user_model()
         fields = ['first_name', 'last_name', 'email', 'currency', 'password1', 'password2']
 
+    # Essentials first; the optional name fields come last.
+    field_order = ['email', 'password1', 'password2', 'currency', 'first_name', 'last_name']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['currency'].help_text = "You can change this later in your profile."
