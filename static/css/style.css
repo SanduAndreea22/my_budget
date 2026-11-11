@@ -819,3 +819,24 @@ html{scroll-behavior:smooth;}
   .hero__cta .btn, .hero__cta .demo-form{width:100%;}
   .hero__cta .demo-form .btn{width:100%;}
 }
+
+
+/* ---------- Landing: audience line + "Why MyBudget" ---------- */
+.hero__who{
+  margin:0 0 20px; max-width:56ch; font-size:16px; line-height:1.55;
+  color:rgba(255,255,255,.92);
+  border-left:3px solid var(--brand); padding-left:14px;
+}
+.why{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:20px;}
+.why__item{padding:22px;}
+.why__item:hover{transform:none;}
+.why__icon{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:42px; height:42px; border-radius:14px; margin-bottom:12px;
+  background:rgba(var(--brand-rgb),.16); border:1px solid rgba(var(--brand-rgb),.35); color:var(--brand-light);
+}
+.why__item h3{margin:0 0 8px; font-size:20px; letter-spacing:-.02em;}
+.why__item p{margin:0; line-height:1.55; color:rgba(255,255,255,.82);}
+.why__note{margin:16px 2px 0; font-size:15px; line-height:1.5;}
+.why__note b{color:#fff;}
+@media (max-width:860px){ .why{grid-template-columns:1fr;} }

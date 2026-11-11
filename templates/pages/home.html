@@ -29,6 +29,8 @@
         — the moment you open it.
       </p>
 
+      <p class="hero__who">Made for people who log their money by hand and want to see the month clearly, without connecting a bank.</p>
+
       <div class="hero__cta">
         <a class="btn" href="{% url 'accounts:register' %}">Create account <span aria-hidden="true">→</span></a>
         <form method="post" action="{% url 'accounts:demo' %}" class="demo-form">{% csrf_token %}<button type="submit" class="btn btn--ghost">Try the demo <span aria-hidden="true">→</span></button></form>
@@ -62,6 +64,29 @@
       </div>
     </div>
   </div>
+</section>
+
+<!-- WHY MYBUDGET -->
+<section class="lp-section" id="why">
+  <h2 class="lp-title">Why MyBudget</h2>
+  <div class="why">
+    <div class="glass-card why__item">
+      <span class="why__icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 13 9 5 9-5"/></svg></span>
+      <h3>Built in, not built by you</h3>
+      <p>No formulas to maintain. Budgets, recurring bills and charts are ready from the first day.</p>
+    </div>
+    <div class="glass-card why__item">
+      <span class="why__icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+      <h3>You decide what goes in</h3>
+      <p>There is no bank connection to set up. You add what you want to track, and nothing is pulled from your accounts.</p>
+    </div>
+    <div class="glass-card why__item">
+      <span class="why__icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg></span>
+      <h3>It warns you, not just records</h3>
+      <p>Budgets turn amber near the limit and red when you go over, and your dashboard tells you before the month does.</p>
+    </div>
+  </div>
+  <p class="why__note muted"><b>Good to know:</b> MyBudget has no bank sync, uses one currency per account, and is made for one person per account.</p>
 </section>
 
 <!-- SEE IT IN ACTION -->
@@ -148,6 +173,10 @@
     <details class="glass-card faq__item">
       <summary>Can I try it without signing up?</summary>
       <p>Yes. "Try the demo" opens a private copy of the app filled with example data: change anything you like. It is deleted when you log out, when you create a real account, or after about a day.</p>
+    </details>
+    <details class="glass-card faq__item">
+      <summary>Does it connect to my bank?</summary>
+      <p>No. You add transactions yourself, which keeps things simple and private: nothing is pulled from your bank.</p>
     </details>
     <details class="glass-card faq__item">
       <summary>Is it free?</summary>

@@ -48,7 +48,7 @@ class LandingSectionsTests(TestCase):
         self.html = self.client.get("/").content.decode()
 
     def test_has_the_sections_below_the_hero(self):
-        for anchor in ('id="screenshots"', 'id="how-it-works"', 'id="your-data"', 'id="faq"'):
+        for anchor in ('id="why"', 'id="screenshots"', 'id="how-it-works"', 'id="your-data"', 'id="faq"'):
             self.assertIn(anchor, self.html)
 
     def test_screenshots_are_real_files_with_alt_text_and_dimensions(self):
@@ -71,7 +71,7 @@ class LandingSectionsTests(TestCase):
         self.assertEqual(self.html.count('class="glass-card step"'), 3)
 
     def test_faq_answers_match_what_the_app_does(self):
-        self.assertEqual(self.html.count('class="glass-card faq__item"'), 8)
+        self.assertEqual(self.html.count('class="glass-card faq__item"'), 9)
         self.assertIn("RON, EUR, USD or GBP", self.html)
         self.assertIn("free while it is in testing", self.html)
         self.assertIn("no automatic password reset", self.html)
@@ -140,3 +140,28 @@ class BrandMarkTests(TestCase):
         svg = open(finders.find("favicon.svg")).read()
         self.assertEqual(svg.count("<circle"), 3)
         self.assertIn("<rect", svg)
+
+
+class AudienceAndDifferenceTests(TestCase):
+    def setUp(self):
+        self.html = self.client.get("/").content.decode()
+        self.hero = self.html.split('id="why"')[0]
+
+    def test_hero_says_who_it_is_for(self):
+        self.assertIn("Made for people who log their money by hand", self.hero)
+        self.assertIn("without connecting a bank", self.hero)
+
+    def test_why_section_has_three_points_and_the_limits(self):
+        why = self.html.split('id="why"')[1].split('id="screenshots"')[0]
+        self.assertEqual(why.count('class="glass-card why__item"'), 3)
+        self.assertIn("No formulas to maintain", why)
+        self.assertIn("no bank sync, uses one currency per account, and is made for one person per account", why)
+
+    def test_faq_answers_the_bank_question_without_overclaiming(self):
+        self.assertIn("Does it connect to my bank?", self.html)
+        self.assertIn("nothing is pulled from your bank", self.html)
+
+    def test_no_competitor_names_or_usage_claims(self):
+        lowered = self.html.lower()
+        for word in ("ynab", "mint", "excel spreadsheet", "thousands of users", "trusted by"):
+            self.assertNotIn(word, lowered)
