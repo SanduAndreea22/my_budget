@@ -22,5 +22,13 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
 
+    def get_deleted_objects(self, objs, request):
+        """Admin refuses to delete a user whose categories/wallets are PROTECTed by transactions.
+        CustomUser.delete() (and the queryset's) clear those rows first, so nothing is actually
+        blocked: show the full list of what will go, and do not report protected objects."""
+        deleted_objects, model_count, perms_needed, _protected = super().get_deleted_objects(objs, request)
+        return deleted_objects, model_count, perms_needed, []
+
+
 admin.site.register(CustomUser, CustomUserAdmin)
 

@@ -633,3 +633,35 @@ class DemoCopyAuditTests(TestCase):
         hint = [s for s in tour_steps(create_demo_user())["steps"] if s["key"] == "goal"][0]["hint"]
         self.assertIn("2,940 RON", hint)
         self.assertNotIn("2,940.00", hint)
+
+
+class BulkUserDeleteTests(TestCase):
+    def test_deleting_users_in_bulk_removes_their_data_instead_of_raising_protected_error(self):
+        from datetime import date
+        from budget.models import BudgetLimit, Category, Transaction, Wallet
+        from budget.starter import create_starter_data
+        keep = User.objects.create_user(username="keep", email="keep@example.com", password="pass12345")
+        gone = [User.objects.create_user(username=f"gone{i}", email=f"gone{i}@example.com", password="pass12345") for i in range(2)]
+        for u in gone + [keep]:
+            create_starter_data(u)
+            cat, wal = Category.objects.get(user=u, name="Food"), Wallet.objects.get(user=u, name="Cash")
+            Transaction.objects.create(user=u, category=cat, wallet=wal, type="expense", amount=5, date=date.today())
+            BudgetLimit.objects.create(user=u, category=cat, month=date.today().replace(day=1), limit=50)
+        count, _ = User.objects.filter(username__startswith="gone").delete()
+        self.assertEqual(count, 2)
+        self.assertFalse(Transaction.objects.filter(user__username__startswith="gone").exists())
+        self.assertTrue(Transaction.objects.filter(user=keep).exists())      # untouched
+
+    def test_admin_delete_selected_works_for_users_with_data(self):
+        from datetime import date
+        from budget.models import Category, Transaction, Wallet
+        from budget.starter import create_starter_data
+        boss = User.objects.create_superuser(username="boss", email="boss@example.com", password="pass12345")
+        victim = User.objects.create_user(username="victim", email="victim@example.com", password="pass12345")
+        create_starter_data(victim)
+        Transaction.objects.create(user=victim, category=Category.objects.get(user=victim, name="Food"),
+                                   wallet=Wallet.objects.get(user=victim, name="Cash"), type="expense", amount=5, date=date.today())
+        self.client.force_login(boss)
+        response = self.client.post("/admin/accounts/customuser/", {"action": "delete_selected", "_selected_action": [victim.pk], "post": "yes"}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(User.objects.filter(pk=victim.pk).exists())

@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, UserManager
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.functions import Lower
@@ -12,7 +12,25 @@ def validate_image_size(image):
     if image.size > max_bytes:
         raise ValidationError("Image must be 2MB or smaller.")
 
+class CustomUserQuerySet(models.QuerySet):
+    def delete(self):
+        """Bulk deletion (e.g. admin's "Delete selected users") must go through each user's own
+        delete(), which first clears the protected rows; QuerySet.delete() would skip that and raise
+        ProtectedError for any user with transactions."""
+        count = 0
+        for user in list(self):
+            user.delete()
+            count += 1
+        return count, {"accounts.CustomUser": count}
+
+
+class CustomUserManager(UserManager.from_queryset(CustomUserQuerySet)):
+    pass
+
+
 class CustomUser(AbstractUser):
+    objects = CustomUserManager()
+
     email = models.EmailField(unique=True)
     description = models.TextField("Description", max_length=600, default="", blank=True)
     image = models.ImageField(

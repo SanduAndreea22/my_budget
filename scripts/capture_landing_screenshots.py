@@ -8,7 +8,7 @@ Run this whenever the interface changes, or every few months, then commit the im
     python scripts/capture_landing_screenshots.py   # in another
 
 It clicks "Try the demo" (a fresh demo account is created and deleted, so no real data is
-touched), hides the demo banner and floating buttons, and writes four JPEGs to
+touched), hides the demo banner, the demo guide and the floating buttons (so the images show what a normal account sees), and writes four JPEGs to
 static/img/shots/: hero (phone), dashboard, budgets, goals.
 
 Needs (dev only, not in requirements.txt):  pip install playwright pillow  &&  playwright install chromium
@@ -24,7 +24,7 @@ from playwright.sync_api import sync_playwright
 
 BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000").rstrip("/")
 OUT = Path(__file__).resolve().parent.parent / "static" / "img" / "shots"
-HIDE = ".demo-banner,.fab-group{display:none!important}"
+HIDE = ".demo-banner,.demo-tour,.fab-group{display:none!important}"
 
 
 def start_demo(page):
