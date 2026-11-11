@@ -15,7 +15,7 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Change history</h1>
-        <p class="muted" style="margin:6px 0 0;">A record of every transaction and budget limit you've created, changed or deleted.</p>
+        <p class="muted" style="margin:6px 0 0;">A record of what you added, changed or deleted: transactions, budgets, savings goals and recurring transactions.</p>
       </div>
     </div>
 
@@ -27,7 +27,7 @@
               <span style="
                 color:{% if entry.action == 'create' %}#86efac{% elif entry.action == 'delete' %}#fca5a5{% else %}#93c5fd{% endif %};
               ">{{ entry.get_action_display }}</span>
-              {{ entry.model_name }}
+              {{ entry.kind }}
             </div>
             <div class="muted" style="font-size:13px;">{{ entry.display }}</div>
           </div>
@@ -36,8 +36,7 @@
           </div>
         </div>
       {% empty %}
-        {% url 'add_expense' as expense_url %}
-        {% include "partials/empty_state.html" with plain=1 art="receipt" title="Nothing here yet" text="Every transaction or budget you add, change or delete is recorded here, so you can always see what happened." url=expense_url label="− Add expense" %}
+        {% include "partials/empty_state.html" with plain=1 art="receipt" title="Nothing here yet" text="Whatever you add, change or delete (transactions, budgets, savings goals, recurring transactions) is recorded here." %}
       {% endfor %}
     </div>
 

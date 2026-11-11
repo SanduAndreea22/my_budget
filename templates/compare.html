@@ -19,7 +19,7 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Yearly overview</h1>
-        <p class="muted" style="margin:6px 0 0;">Month-by-month and year-over-year overview.</p>
+        <p class="muted" style="margin:6px 0 0;">Income, expenses and balance for the year you pick, month by month, and next to your other years.</p>
       </div>
     </div>
 
@@ -68,7 +68,7 @@
       {% else %}
         <div class="empty-state">
           <div class="empty-state__title">No transactions in {{ selected_year }} yet.</div>
-          <p class="muted empty-state__text">Log an income or expense and your month-by-month chart appears here.</p>
+          <p class="muted empty-state__text">Add an income or expense and your month-by-month chart appears here.</p>
           <a class="btn" href="{% url 'add_expense' %}">− Add expense</a>
         </div>
       {% endif %}
@@ -76,7 +76,7 @@
 
     <!-- Year over year table -->
     <div class="glass-card" style="margin-top:14px;padding:16px;">
-      <h2 style="margin:0 0 12px;font-size:20px;">Yearly comparison</h2>
+      <h2 style="margin:0 0 12px;font-size:20px;">Year by year</h2>
       <div style="display:grid;gap:10px;">
         <div class="compare-row compare-header muted">
           <span>Year</span><span>Income</span><span>Expense</span><span>Balance</span>
@@ -91,7 +91,7 @@
             </span>
           </div>
         {% empty %}
-          <div class="muted">No transactions yet.</div>
+          <div class="muted">Nothing here yet. Your years appear once you add transactions.</div>
         {% endfor %}
       </div>
     </div>

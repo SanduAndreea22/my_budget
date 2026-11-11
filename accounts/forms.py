@@ -93,3 +93,4 @@ class UserUpdateForm(forms.ModelForm):
     class Meta:
         model = get_user_model()
         fields = ['first_name', 'last_name', 'email', 'image', 'description', "currency"]
+        labels = {'first_name': 'First name (optional)', 'last_name': 'Last name (optional)', 'image': 'Photo (optional)', 'description': 'About you (optional)'}

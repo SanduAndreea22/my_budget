@@ -165,7 +165,7 @@ class CategoryFormTests(TestCase):
 
     def test_overly_long_icon_gets_a_friendly_error_message(self):
         response = self.client.post(reverse("category_add"), {"name": "Long", "type": "expense", "icon": "x" * 40, "color": ""})
-        self.assertContains(response, "try a single emoji instead")
+        self.assertContains(response, "Use a single emoji.")
         self.assertEqual(Category.objects.filter(name="Long").count(), 0)
 
 
@@ -211,7 +211,7 @@ class CategoryDeleteProtectionTests(TestCase):
         )
         response = self.client.get(reverse("category_delete", args=[self.category.id]))
         self.assertContains(response, "You can't delete this category")
-        self.assertNotContains(response, "Yes, delete")
+        self.assertNotContains(response, "btn--danger")
 
 
 class TransactionsPaginationTests(TestCase):
@@ -1229,3 +1229,176 @@ class FormsAndListsCopyAuditTests(TestCase):
         self.assertContains(r3, "Give the category a name.")
         r4 = self.client.post(reverse("wallet_add"), {"name": ""})
         self.assertContains(r4, "Give the wallet a name.")
+
+
+class SectionsCopyAuditTests(TestCase):
+    """Copy fixes from the text audit: categories, wallets, budgets, recurring, goals, charts, history, messages."""
+
+    def setUp(self):
+        from .starter import create_starter_data
+        self.user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        create_starter_data(self.user)
+        self.client.force_login(self.user)
+        self.food = Category.objects.get(user=self.user, name="Food")
+        self.cash = Wallet.objects.get(user=self.user, name="Cash")
+
+    def html(self, name, *args):
+        return self.client.get(reverse(name, args=args)).content.decode()
+
+    # --- categories & wallets -------------------------------------------------
+    def test_categories_and_wallets_say_what_they_are_for(self):
+        self.assertIn("Group your income and spending, so your charts and budgets make sense.", self.html("categories"))
+        self.assertIn("Keep your card, cash and savings apart, so each balance means something.", self.html("wallets"))
+        self.assertNotIn("whatever accounts you use", self.html("wallet_add"))
+        self.assertIn("Name it after where the money is", self.html("wallet_add"))
+
+    def test_edit_forms_have_their_own_subtitle(self):
+        self.assertIn("Change the name, type, emoji or color.", self.html("category_edit", self.food.pk))
+        self.assertNotIn("Change the name, type, emoji or color.", self.html("category_add"))
+        self.assertIn("Change the name or emoji.", self.html("wallet_edit", self.cash.pk))
+
+    def test_emoji_and_color_fields_use_one_word_and_name_their_swatches(self):
+        page = self.html("category_add")
+        self.assertIn("Emoji (optional)", page)
+        self.assertNotIn(">Icon<", page)
+        self.assertIn('aria-label="Use teal"', page)
+        self.assertNotIn("#14b8a6\"", page.split("aria-label")[1][:30])
+        self.assertIn("click the swatch above for any color", page)
+        self.assertNotIn("the box above", page)
+        self.assertNotIn("type or paste", page)
+
+    def test_blocked_delete_explains_how_to_unblock_and_links_to_the_transactions(self):
+        Transaction.objects.create(user=self.user, category=self.food, wallet=self.cash, type="expense", amount=5, date=date.today())
+        cat = self.html("category_delete", self.food.pk)
+        self.assertIn("Move or delete those first", cat)
+        self.assertIn(f'href="/app/transactions/?category={self.food.pk}"', cat)
+        self.assertIn("Back to categories", cat)
+        self.assertNotIn("Remove or reassign", cat)
+        wal = self.html("wallet_delete", self.cash.pk)
+        self.assertIn(f'href="/app/transactions/?wallet={self.cash.pk}"', wal)
+        self.assertIn("Back to wallets", wal)
+
+    def test_confirm_buttons_name_what_they_delete_and_numbers_are_formatted(self):
+        from .models import RecurringTransaction
+        budget = BudgetLimit.objects.create(user=self.user, category=self.food, month=date(2026, 11, 1), limit=1200)
+        goal = SavingsGoal.objects.create(user=self.user, name="Trip", target_amount=4200, saved_amount=1260)
+        rec = RecurringTransaction.objects.create(user=self.user, type="expense", amount=1500, category=self.food, wallet=self.cash, day_of_month=5, start_date=date.today())
+        tx = Transaction.objects.create(user=self.user, category=self.food, wallet=self.cash, type="expense", amount=2500, date=date.today())
+        pages = {"Delete budget": self.html("budget_delete", budget.pk), "Delete goal": self.html("savings_goal_delete", goal.pk),
+                 "Delete recurring transaction": self.html("recurring_delete", rec.pk), "Delete transaction": self.html("transaction_delete", tx.pk)}
+        for button, page in pages.items():
+            self.assertIn(f">{button}</button>", page.replace("\n", "").replace("  ", ""), button)
+            self.assertNotIn("Yes, delete", page)
+            self.assertNotIn("This action cannot be undone", page)
+            if "recurring" not in button:
+                self.assertIn("This can't be undone.", page)
+        self.assertIn("1,200.00 RON", pages["Delete budget"])
+        self.assertIn("1,260.00 of 4,200.00 RON saved", pages["Delete goal"])
+        self.assertIn("1,500.00 RON", pages["Delete recurring transaction"])
+        self.assertIn("2,500.00 RON", pages["Delete transaction"])
+        self.assertIn("Future transactions stop.", pages["Delete recurring transaction"])
+
+    # --- budgets ------------------------------------------------------------------
+    def test_budgets_explain_the_thresholds_and_do_not_compare_unlike_totals(self):
+        housing = Category.objects.get(user=self.user, name="Housing")
+        month = date.today().replace(day=1)
+        BudgetLimit.objects.create(user=self.user, category=self.food, month=month, limit=100)
+        Transaction.objects.create(user=self.user, category=self.food, wallet=self.cash, type="expense", amount=40, date=date.today())
+        Transaction.objects.create(user=self.user, category=housing, wallet=self.cash, type="expense", amount=500, date=date.today())
+        page = self.html("budgets")
+        self.assertIn("Bars turn amber at 80% and red above 100%.", page)
+        self.assertIn("40% used", page)
+        self.assertIn("Total spent: <b", page)
+        self.assertIn("540.00 RON", page)                                   # everything spent
+        self.assertIn("In budgeted categories: <b", page)
+        self.assertIn("40.00 RON</b> of <b", page)                           # only the category with a limit
+        self.assertNotIn("Total limits", page)
+
+    def test_budget_edit_has_its_own_subtitle(self):
+        b = BudgetLimit.objects.create(user=self.user, category=self.food, month=date(2026, 11, 1), limit=100)
+        self.assertIn("Change the category, month or limit.", self.html("budget_edit", b.pk))
+        self.assertIn("Choose an expense category, a month and the most you want to spend on it.", self.html("budget_add"))
+
+    # --- recurring ------------------------------------------------------------------
+    def test_recurring_pages_use_one_name_and_plain_sentences(self):
+        page = self.html("recurring_transactions")
+        self.assertIn("Salary, rent and subscriptions that are added to your transactions every month.", page)
+        self.assertIn("Add your salary, rent or a subscription once and it is added every month.", page)
+        self.assertIn("+ Add recurring transaction", page)
+        for gone in ("add themselves automatically", "from then on", "Add your first one", "it&#x27;ll be logged"):
+            self.assertNotIn(gone, page)
+        form = self.html("recurring_add")
+        self.assertIn(">Add recurring transaction<", form.replace("\n", "").replace("  ", ""))
+        self.assertIn("It is added to your transactions on the day you choose, every month.", form)
+        self.assertNotIn("this day", form)
+
+    # --- savings goals ---------------------------------------------------------------
+    def test_goals_copy_and_labelled_add_funds_field(self):
+        goal = SavingsGoal.objects.create(user=self.user, name="Trip", target_amount=100)
+        page = self.html("savings_goals")
+        self.assertIn("Set a target and see how close you are.", page)
+        self.assertIn('placeholder="Amount in RON"', page)
+        self.assertIn('aria-label="Amount to add to Trip"', page)
+        self.assertNotIn("Add funds in RON (e.g. 100)", page)
+        self.assertIn("Give it a name and the amount you want to save.", self.html("savings_goal_add"))
+        self.assertIn("Change the name, target or date.", self.html("savings_goal_edit", goal.pk))
+
+    # --- charts, yearly overview, change history ----------------------------------------------
+    def test_charts_and_yearly_overview_say_what_they_show(self):
+        charts = self.html("charts")
+        self.assertIn("This month's spending by category, and income against expenses month by month.", charts)
+        self.assertIn("Spending by category", charts)
+        self.assertIn("Income vs expenses", charts)
+        for gone in ("Visual overview", "Expenses by category", "Income vs Expense"):
+            self.assertNotIn(gone, charts)
+        overview = self.html("compare")
+        self.assertIn("for the year you pick, month by month, and next to your other years.", overview)
+        self.assertIn("Year by year", overview)
+        self.assertNotIn("year-over-year", overview)
+        self.assertNotIn("Yearly comparison", overview)
+        self.assertIn("Nothing here yet. Your years appear once you add transactions.", overview)
+
+    def test_change_history_uses_plain_names_and_lists_everything_it_records(self):
+        self.client.post(reverse("budget_add"), {"category": self.food.pk, "month": date.today().strftime("%Y-%m"), "limit": "100"})
+        self.client.post(reverse("savings_goal_add"), {"name": "Trip", "target_amount": "500"})
+        page = self.html("activity_log")
+        self.assertIn("transactions, budgets, savings goals and recurring transactions", page)
+        self.assertNotIn("budget limit you", page)
+        for name in ("Created</span>\n              budget", "Created</span>\n              savings goal"):
+            self.assertIn(name, page)
+        self.assertNotIn("Budget Limit", page)
+        self.assertNotIn("Savings Goal", page)
+        self.assertIn("· limit 100.00 RON", page)
+
+    def test_change_history_empty_state_has_no_unrelated_button(self):
+        page = self.html("activity_log")
+        self.assertNotIn("Add expense", page)
+        self.assertIn("is recorded here", page)
+
+    # --- messages ----------------------------------------------------------------------------
+    def test_confirmation_messages_use_one_tone_without_exclamation_marks(self):
+        for url, data, msg in [("category_add", {"name": "Pets", "type": "expense"}, "Category created."),
+                               ("wallet_add", {"name": "Savings"}, "Wallet created."),
+                               ("savings_goal_add", {"name": "Bike", "target_amount": "300"}, "Savings goal created.")]:
+            response = self.client.post(reverse(url), data, follow=True)
+            self.assertContains(response, msg)
+        self.assertNotContains(self.client.get(reverse("dashboard")), "created!")
+
+    def test_reaching_a_goal_celebrates_without_repeating_itself(self):
+        goal = SavingsGoal.objects.create(user=self.user, name="Bike", target_amount=100)
+        response = self.client.post(reverse("savings_goal_add_funds", args=[goal.pk]), {"amount": "100"}, follow=True)
+        self.assertContains(response, "You reached your target for &quot;Bike&quot;.")
+        self.assertNotContains(response, "You hit")
+
+
+class GoalsListCopyTests(TestCase):
+    def test_goal_amounts_read_like_the_rest_of_the_app_and_no_stray_exclamation(self):
+        user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        SavingsGoal.objects.create(user=user, name="Trip", target_amount=4200, saved_amount=1260)
+        SavingsGoal.objects.create(user=user, name="Bike", target_amount=100, saved_amount=100)
+        self.client.force_login(user)
+        page = self.client.get(reverse("savings_goals")).content.decode()
+        self.assertIn("1,260.00 of 4,200.00 RON saved", page)
+        self.assertNotIn("1,260.00 / 4,200.00", page)
+        self.assertIn("Goal reached</span>", page)
+        self.assertNotIn("Goal reached!", page)

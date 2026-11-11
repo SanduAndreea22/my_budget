@@ -19,16 +19,12 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Profile</h1>
-        <p class="muted" style="margin:0;">Update your avatar, description and preferred currency.</p>
+        <p class="muted" style="margin:0;">Your name, email, photo and currency.</p>
         {% if user.is_demo %}<p class="muted" style="margin:8px 0 0;"><b>Demo account:</b> profile changes are turned off. <a href="{% url 'accounts:register' %}">Create an account</a> to set up your own.</p>{% endif %}
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <a class="btn btn--ghost" href="/app/">← Dashboard</a>
-        <form method="POST" action="{% url 'accounts:logout' %}" style="display:contents;">
-          {% csrf_token %}
-          <button type="submit" class="btn btn--ghost">Log out</button>
-        </form>
       </div>
     </div>
 
@@ -46,16 +42,16 @@
             {% if user.image %}
               <img src="{{ user.image.url }}" alt="Profile" style="width:100%;height:100%;object-fit:cover;display:block;">
             {% else %}
-              <div class="avatar" style="font-size:38px;">{{ user.username|slice:":1"|upper }}</div>
+              <div class="avatar" style="font-size:38px;">{{ user.first_name|default:user.email|slice:":1"|upper }}</div>
             {% endif %}
           </div>
 
           <div style="min-width:0;">
             <div style="font-weight:950;font-size:18px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              {{ user.username }}
+              {% if user.is_demo %}Demo account{% elif user.first_name %}{{ user.first_name }} {{ user.last_name }}{% else %}Your account{% endif %}
             </div>
             <div class="muted" style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              {{ user.email }}
+              {% if not user.is_demo %}{{ user.email }}{% endif %}
             </div>
 
             <div style="margin-top:10px;display:inline-flex;align-items:center;gap:8px;
@@ -108,12 +104,12 @@
             <button type="submit" class="btn"{% if user.is_demo %} disabled title="Turned off in the demo"{% endif %}>
               Save changes <span style="margin-left:10px;opacity:.75">→</span>
             </button>
-            <a class="btn btn--ghost" href="/app/">Cancel</a>
+            <a class="btn btn--ghost" href="/app/">Back without saving</a>
           </div>
 
           <div class="muted" style="font-size:13px;margin-top:6px;">
-            Your currency will be used across dashboard, transactions and charts.
-            {% if not user.is_demo %}<br><a href="{% url 'accounts:delete_account' %}" style="color:#fca5a5;">Delete my account</a>{% endif %}
+            Your currency is shown on every amount, chart and export.
+            {% if not user.is_demo %}<br><a href="{% url 'accounts:delete_account' %}" style="color:#fca5a5;">Delete account</a>{% endif %}
           </div>
         </form>
       </div>

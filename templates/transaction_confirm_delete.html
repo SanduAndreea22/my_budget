@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block title %}Delete transaction · MyBudget{% endblock %}
 
 {% block content %}
@@ -12,7 +13,7 @@
 
   <div style="position:relative;">
     <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Delete transaction?</h1>
-    <p class="muted" style="margin:0 0 14px;">This action cannot be undone.</p>
+    <p class="muted" style="margin:0 0 14px;">This can't be undone.</p>
 
     <div class="glass-card" style="padding:14px;">
       <div style="font-weight:950;">{{ tx.category.name }}</div>
@@ -20,14 +21,14 @@
         {{ tx.date|date:"M j, Y" }}{% if tx.note %} · {{ tx.note }}{% endif %}
       </div>
       <div style="margin-top:8px;font-weight:950;">
-        {{ tx.type|title }} · {{ tx.amount }} {{ user.currency }}
+        {{ tx.type|title }} · {{ tx.amount|floatformat:2|intcomma }} {{ user.currency }}
       </div>
     </div>
 
     <form method="POST" style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;">
       {% csrf_token %}
       <button class="btn btn--danger" type="submit">
-        Yes, delete →
+        Delete transaction
       </button>
       <a class="btn btn--ghost" href="{% url 'transactions' %}">Cancel</a>
     </form>

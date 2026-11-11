@@ -4,7 +4,7 @@
 {% block content %}
 <section class="glass-card" style="max-width:520px;margin:auto;padding:22px;">
   <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">{% if mode == "edit" %}Edit wallet{% else %}Add wallet{% endif %}</h1>
-  <p class="muted" style="margin:0 0 14px;">Card, cash, savings — whatever accounts you use.</p>
+  <p class="muted" style="margin:0 0 14px;">{% if mode == "edit" %}Change the name or emoji.{% else %}Name it after where the money is, like Card, Cash or Savings.{% endif %}</p>
 
   <form method="POST" style="display:grid;gap:12px;">
     {% csrf_token %}
@@ -17,7 +17,7 @@
         {{ field }}
         {% if field.name == "icon" %}
           <div class="picker"><button type="button" class="pick" data-pick="💳" data-target="id_icon" aria-label="Use 💳">💳</button><button type="button" class="pick" data-pick="💵" data-target="id_icon" aria-label="Use 💵">💵</button><button type="button" class="pick" data-pick="🏦" data-target="id_icon" aria-label="Use 🏦">🏦</button><button type="button" class="pick" data-pick="👛" data-target="id_icon" aria-label="Use 👛">👛</button><button type="button" class="pick" data-pick="🪙" data-target="id_icon" aria-label="Use 🪙">🪙</button><button type="button" class="pick" data-pick="💰" data-target="id_icon" aria-label="Use 💰">💰</button><button type="button" class="pick" data-pick="🏧" data-target="id_icon" aria-label="Use 🏧">🏧</button><button type="button" class="pick" data-pick="🐖" data-target="id_icon" aria-label="Use 🐖">🐖</button></div>
-          <div class="muted field-hint">Pick one, or type or paste your own emoji.</div>
+          <div class="muted field-hint">Pick one, or paste your own.</div>
         {% endif %}
         {% for error in field.errors %}
           <div style="padding:10px 12px;border-radius:14px;background: rgba(239,68,68,.14);border: 1px solid rgba(239,68,68,.25);font-weight:800;">

@@ -8,7 +8,7 @@
       <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">
         {% if mode == "edit" %}Edit budget{% else %}Add budget{% endif %}
       </h1>
-      <p class="muted" style="margin:6px 0 0;">Pick an expense category, the month, and the most you want to spend on it.</p>
+      <p class="muted" style="margin:6px 0 0;">{% if mode == "edit" %}Change the category, month or limit.{% else %}Choose an expense category, a month and the most you want to spend on it.{% endif %}</p>
     </div>
     <a class="btn btn--ghost" href="{% url 'budgets' %}">← Budgets</a>
   </div>

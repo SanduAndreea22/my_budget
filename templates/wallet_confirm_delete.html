@@ -12,9 +12,9 @@
       {% if tx_count %}<li>{{ tx_count }} transaction{{ tx_count|pluralize }}</li>{% endif %}
       {% if recurring_count %}<li>{{ recurring_count }} recurring transaction{{ recurring_count|pluralize }}</li>{% endif %}
     </ul>
-    <p class="muted" style="margin:0 0 14px;">Remove or reassign those first, then come back here to delete it.</p>
+    <p class="muted" style="margin:0 0 14px;">Move or delete those first, then come back to delete it. You can change a transaction's wallet by editing it. <a href="{% url 'transactions' %}?wallet={{ wallet.id }}">Show the transactions</a></p>
   {% else %}
-    <p class="muted" style="margin:0 0 14px;">This action cannot be undone.</p>
+    <p class="muted" style="margin:0 0 14px;">This can't be undone.</p>
   {% endif %}
 
   <div class="glass-card" style="padding:14px;display:flex;align-items:center;gap:12px;">
@@ -30,9 +30,9 @@
   <form method="POST" style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;">
     {% csrf_token %}
     {% if not in_use %}
-      <button class="btn btn--danger" type="submit">Yes, delete →</button>
+      <button class="btn btn--danger" type="submit">Delete wallet</button>
     {% endif %}
-    <a class="btn btn--ghost" href="{% url 'wallets' %}">{% if in_use %}Back{% else %}Cancel{% endif %}</a>
+    <a class="btn btn--ghost" href="{% url 'wallets' %}">{% if in_use %}Back to wallets{% else %}Cancel{% endif %}</a>
   </form>
 </section>
 {% endblock %}

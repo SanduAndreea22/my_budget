@@ -10,12 +10,12 @@
     </p>
     <ul class="muted" style="margin:0 0 14px;padding-left:20px;">
       {% if tx_count %}<li>{{ tx_count }} transaction{{ tx_count|pluralize }}</li>{% endif %}
-      {% if budget_count %}<li>{{ budget_count }} budget limit{{ budget_count|pluralize }}</li>{% endif %}
+      {% if budget_count %}<li>{{ budget_count }} budget{{ budget_count|pluralize }}</li>{% endif %}
       {% if recurring_count %}<li>{{ recurring_count }} recurring transaction{{ recurring_count|pluralize }}</li>{% endif %}
     </ul>
-    <p class="muted" style="margin:0 0 14px;">Remove or reassign those first, then come back here to delete it.</p>
+    <p class="muted" style="margin:0 0 14px;">Move or delete those first, then come back to delete it. You can change a transaction's category by editing it. <a href="{% url 'transactions' %}?category={{ category.id }}">Show the transactions</a></p>
   {% else %}
-    <p class="muted" style="margin:0 0 14px;">This action cannot be undone.</p>
+    <p class="muted" style="margin:0 0 14px;">This can't be undone.</p>
   {% endif %}
 
   <div class="glass-card" style="padding:14px;display:flex;align-items:center;gap:12px;">
@@ -31,9 +31,9 @@
   <form method="POST" style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;">
     {% csrf_token %}
     {% if not in_use %}
-      <button class="btn btn--danger" type="submit">Yes, delete →</button>
+      <button class="btn btn--danger" type="submit">Delete category</button>
     {% endif %}
-    <a class="btn btn--ghost" href="{% url 'categories' %}">{% if in_use %}Back{% else %}Cancel{% endif %}</a>
+    <a class="btn btn--ghost" href="{% url 'categories' %}">{% if in_use %}Back to categories{% else %}Cancel{% endif %}</a>
   </form>
 </section>
 {% endblock %}

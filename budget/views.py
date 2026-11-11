@@ -62,7 +62,7 @@ def _transaction_repr(tx):
 
 
 def _budget_limit_repr(b):
-    return f"{b.category.name} · {b.month:%b %Y} limit · {b.limit:.2f} {CURRENCY_TOKEN}"
+    return f"{b.category.name} · {b.month:%b %Y} · limit {b.limit:.2f} {CURRENCY_TOKEN}"
 
 
 def _next_occurrence(d, day_of_month):
@@ -303,7 +303,7 @@ def category_add_view(request):
         form = CategoryForm(request.POST, user=request.user)
         if form.is_valid():
             if _save_avoiding_race(form, "name", "You already have a category with this name."):
-                messages.success(request, "Category created!")
+                messages.success(request, "Category created.")
                 return redirect(next_url) if next_url else redirect("categories")
     else:
         initial = {}
@@ -392,7 +392,7 @@ def wallet_add_view(request):
         form = WalletForm(request.POST, user=request.user)
         if form.is_valid():
             if _save_avoiding_race(form, "name", "You already have a wallet with this name."):
-                messages.success(request, "Wallet created!")
+                messages.success(request, "Wallet created.")
                 return redirect(next_url) if next_url else redirect("wallets")
     else:
         form = WalletForm(user=request.user)
@@ -706,6 +706,7 @@ def budgets_view(request):
 
     total_spent = sum((r["spent"] for r in rows), Decimal("0"))
     total_limit = sum((r["limit"] for r in rows if r["limit"] is not None), Decimal("0"))
+    budgeted_spent = sum((r["spent"] for r in rows if r["limit"] is not None), Decimal("0"))
 
     return render(request, "budgets.html", {
         "rows": rows,
@@ -713,6 +714,7 @@ def budgets_view(request):
         "currency": request.user.currency,
         "total_spent": total_spent,
         "total_limit": total_limit,
+        "budgeted_spent": budgeted_spent,
     })
 
 
@@ -952,7 +954,7 @@ def savings_goal_add_view(request):
             obj.user = request.user
             obj.save()
             _log_activity(request.user, ActivityLog.CREATE, "Savings Goal", _savings_goal_repr(obj))
-            messages.success(request, "Savings goal created!")
+            messages.success(request, "Savings goal created.")
             return redirect("savings_goals")
     else:
         form = SavingsGoalForm()
@@ -1002,7 +1004,7 @@ def savings_goal_add_funds_view(request, pk):
 
             just_completed = (not was_complete) and goal.saved_amount >= goal.target_amount
             if just_completed:
-                messages.success(request, f"🎉 Goal reached! You hit your target for \"{goal.name}\".")
+                messages.success(request, f'🎉 You reached your target for "{goal.name}".')
                 return redirect(f"{reverse('savings_goals')}?celebrate={goal.pk}")
 
             messages.success(request, "Funds added to your goal.")
@@ -1031,6 +1033,7 @@ def activity_log_view(request):
     page_obj = paginator.get_page(request.GET.get("page"))
     for entry in page_obj:
         entry.display = entry.object_repr.replace(CURRENCY_TOKEN, request.user.currency)
+        entry.kind = {"Budget Limit": "budget", "Savings Goal": "savings goal", "Recurring Transaction": "recurring transaction"}.get(entry.model_name, entry.model_name.lower())
 
     return render(request, "activity_log.html", {"page_obj": page_obj})
 
@@ -1066,7 +1069,7 @@ def recurring_add_view(request):
             obj.user = request.user
             obj.save()
             _log_activity(request.user, ActivityLog.CREATE, "Recurring Transaction", _recurring_repr(obj))
-            messages.success(request, "Recurring transaction created!")
+            messages.success(request, "Recurring transaction created.")
             return redirect("recurring_transactions")
     else:
         form = RecurringTransactionForm(user=request.user, initial={"start_date": date.today(), "day_of_month": 1})

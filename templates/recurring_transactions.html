@@ -16,10 +16,10 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Recurring transactions</h1>
-        <p class="muted" style="margin:6px 0 0;">Subscriptions and salaries that add themselves automatically every month.</p>
+        <p class="muted" style="margin:6px 0 0;">Salary, rent and subscriptions that are added to your transactions every month.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        {% if items %}<a class="btn" href="{% url 'recurring_add' %}">+ Add recurring</a>{% endif %}
+        {% if items %}<a class="btn" href="{% url 'recurring_add' %}">+ Add recurring transaction</a>{% endif %}
       </div>
     </div>
 
@@ -50,8 +50,8 @@
       {% empty %}
         <div class="glass-card" style="padding:22px;text-align:center;">
           <div style="font-weight:900;font-size:16px;margin-bottom:8px;">No recurring transactions yet</div>
-          <p class="muted" style="margin:0 0 16px;">Add your salary or a subscription once — it'll be logged automatically every month from then on.</p>
-          <a class="btn" href="{% url 'recurring_add' %}">+ Add your first one</a>
+          <p class="muted" style="margin:0 0 16px;">Add your salary, rent or a subscription once and it is added every month.</p>
+          <a class="btn" href="{% url 'recurring_add' %}">+ Add recurring transaction</a>
         </div>
       {% endfor %}
     </div>

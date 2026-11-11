@@ -18,7 +18,7 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Charts</h1>
-        <p class="muted" style="margin:6px 0 0;">Visual overview of your money.</p>
+        <p class="muted" style="margin:6px 0 0;">This month's spending by category, and income against expenses month by month.</p>
       </div>
     </div>
 
@@ -32,7 +32,7 @@
 
         <div style="position:relative;">
           <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;">
-            <h2 style="margin:0;font-size:22px;">Expenses by category</h2>
+            <h2 style="margin:0;font-size:22px;">Spending by category</h2>
             <span class="muted">{{ month_label }}</span>
           </div>
 
@@ -55,8 +55,8 @@
           filter: blur(18px); opacity:.7; pointer-events:none;"></div>
 
         <div style="position:relative;">
-          <h2 style="margin:0;font-size:22px;">Income vs Expense</h2>
-          <p class="muted" style="margin:6px 0 10px;">Monthly trend</p>
+          <h2 style="margin:0;font-size:22px;">Income vs expenses</h2>
+          <p class="muted" style="margin:6px 0 10px;">Month by month</p>
 
           {% if chart_labels %}
             <div class="chart-box" style="height:300px;">

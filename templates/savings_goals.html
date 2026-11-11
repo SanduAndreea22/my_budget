@@ -16,7 +16,7 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Savings goals</h1>
-        <p class="muted" style="margin:6px 0 0;">Set a target and track how close you are.</p>
+        <p class="muted" style="margin:6px 0 0;">Set a target and see how close you are.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         {% if rows %}<a class="btn" href="{% url 'savings_goal_add' %}">+ Add goal</a>{% endif %}
@@ -32,7 +32,7 @@
                 {{ r.goal.name }}{% if r.is_complete %} 🎉{% endif %}
               </div>
               <div class="muted" style="font-size:13px;">
-                {{ r.goal.saved_amount|floatformat:2|intcomma }} / {{ r.goal.target_amount|floatformat:2|intcomma }} {{ currency }}
+                {{ r.goal.saved_amount|floatformat:2|intcomma }} of {{ r.goal.target_amount|floatformat:2|intcomma }} {{ currency }} saved
                 {% if r.goal.target_date %} · Target: {{ r.goal.target_date|date:"M Y" }}{% endif %}
               </div>
             </div>
@@ -55,7 +55,7 @@
           <div class="muted" style="font-size:13px;display:flex;justify-content:space-between;gap:10px;">
             <span>{{ r.pct }}%</span>
             {% if r.is_complete %}
-              <span style="color:#86efac;font-weight:900;">Goal reached!</span>
+              <span style="color:#86efac;font-weight:900;">Goal reached</span>
             {% else %}
               <span>{{ r.remaining|floatformat:2|intcomma }} {{ currency }} to go</span>
             {% endif %}
@@ -63,7 +63,7 @@
 
           <form method="POST" action="{% url 'savings_goal_add_funds' r.goal.id %}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:4px;">
             {% csrf_token %}
-            <input type="number" step="0.01" min="0.01" name="amount" placeholder="Add funds in {{ currency }} (e.g. 100)" style="max-width:220px;">
+            <input type="number" step="0.01" min="0.01" name="amount" placeholder="Amount in {{ currency }}" aria-label="Amount to add to {{ r.goal.name }}" style="max-width:220px;">
             <button class="btn btn--ghost" type="submit">+ Add funds</button>
           </form>
         </div>

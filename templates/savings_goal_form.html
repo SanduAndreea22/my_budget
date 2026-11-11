@@ -8,7 +8,7 @@
       <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">
         {% if mode == "edit" %}Edit goal{% else %}Add goal{% endif %}
       </h1>
-      <p class="muted" style="margin:6px 0 0;">Give it a name and a target amount to save.</p>
+      <p class="muted" style="margin:6px 0 0;">{% if mode == "edit" %}Change the name, target or date.{% else %}Give it a name and the amount you want to save.{% endif %}</p>
     </div>
     <a class="btn btn--ghost" href="{% url 'savings_goals' %}">← Savings goals</a>
   </div>

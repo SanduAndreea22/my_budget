@@ -424,10 +424,10 @@ class DeleteAccountTests(TestCase):
     def test_profile_offers_deletion_but_demo_accounts_do_not(self):
         from accounts.demo import create_demo_user
         self.client.force_login(self.user)
-        self.assertContains(self.client.get(reverse("accounts:profile", args=[self.user.username])), "Delete my account")
+        self.assertContains(self.client.get(reverse("accounts:profile", args=[self.user.username])), "Delete account")
         demo = create_demo_user()
         self.client.force_login(demo)
-        self.assertNotContains(self.client.get(reverse("accounts:profile", args=[demo.username])), "Delete my account")
+        self.assertNotContains(self.client.get(reverse("accounts:profile", args=[demo.username])), "Delete account")
         response = self.client.post(reverse("accounts:delete_account"), {"password": "x"})
         self.assertEqual(response.status_code, 302)
         self.assertTrue(User.objects.filter(pk=demo.pk).exists())  # demo cleanup is handled elsewhere

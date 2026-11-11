@@ -91,7 +91,7 @@ def profile_view(request, username):
         form = UserUpdateForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Your profile has been updated!')
+            messages.success(request, 'Profile updated.')
             return redirect('accounts:profile', username=request.user.username)
     else:
         form = UserUpdateForm(instance=request.user)

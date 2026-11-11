@@ -1,3 +1,4 @@
+import re
 from django.test import TestCase
 
 
@@ -163,7 +164,8 @@ class AudienceAndDifferenceTests(TestCase):
         self.assertIn("nothing is imported from your bank", self.html)
 
     def test_no_competitor_names_or_usage_claims(self):
-        lowered = self.html.lower()
+        # the demo form carries a random CSRF token; strip it so letters in it can't match a word
+        lowered = re.sub(r'name="csrfmiddlewaretoken" value="[^"]*"', "", self.html).lower()
         for word in ("ynab", "mint", "excel spreadsheet", "thousands of users", "trusted by"):
             self.assertNotIn(word, lowered)
 

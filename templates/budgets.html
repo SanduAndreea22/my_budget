@@ -16,7 +16,7 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Budgets</h1>
-        <p class="muted" style="margin:6px 0 0;">Set a monthly limit for each category and track your progress.</p>
+        <p class="muted" style="margin:6px 0 0;">Set a monthly limit for each category. Bars turn amber at 80% and red above 100%.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         {% if rows %}<a class="btn" href="{% url 'budget_add' %}">+ Add budget</a>{% endif %}
@@ -34,7 +34,7 @@
       <div class="muted" style="margin-left:auto;">
         Total spent: <b style="color:rgba(255,255,255,.86)">{{ total_spent|floatformat:2|intcomma }} {{ currency }}</b>
         {% if total_limit %}
-          · Total limits: <b style="color:rgba(255,255,255,.86)">{{ total_limit|floatformat:2|intcomma }} {{ currency }}</b>
+          <br>In budgeted categories: <b>{{ budgeted_spent|floatformat:2|intcomma }} {{ currency }}</b> of <b>{{ total_limit|floatformat:2|intcomma }} {{ currency }}</b> in limits
         {% endif %}
       </div>
 
@@ -91,7 +91,7 @@
             </div>
 
             <div class="muted" style="font-size:13px;display:flex;justify-content:space-between;gap:10px;">
-              <span>{{ r.pct }}%</span>
+              <span>{{ r.pct }}% used</span>
               {% if r.is_over %}
                 <span style="color:#fca5a5;font-weight:900;">Over budget</span>
               {% elif r.is_near %}
