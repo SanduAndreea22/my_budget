@@ -186,3 +186,36 @@ document.addEventListener("DOMContentLoaded", function () {
 window.fmtMoney = function (value, currency) {
   return Number(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + currency;
 };
+
+// Lightbox for landing screenshots: the links open the image on their own without JS;
+// with JS they open a full-screen dialog you can scroll and pinch (Esc, Close button or
+// a click outside the image closes it).
+document.addEventListener("DOMContentLoaded", function () {
+  const links = document.querySelectorAll("a[data-lightbox]");
+  if (!links.length || typeof HTMLDialogElement === "undefined") return;
+
+  const dialog = document.createElement("dialog");
+  dialog.className = "lightbox";
+  dialog.setAttribute("aria-label", "Enlarged screenshot");
+  dialog.innerHTML =
+    '<span class="lightbox__hint">Scroll or pinch to look around</span>' +
+    '<button type="button" class="lightbox__close">Close ✕</button>' +
+    '<div class="lightbox__scroll"><img class="lightbox__img" alt=""></div>';
+  document.body.appendChild(dialog);
+  const img = dialog.querySelector(".lightbox__img");
+
+  links.forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      const thumb = link.querySelector("img");
+      img.src = link.getAttribute("href");
+      img.alt = thumb ? thumb.alt : "";
+      dialog.showModal();
+      dialog.querySelector(".lightbox__scroll").scrollTo(0, 0);
+    });
+  });
+  dialog.querySelector(".lightbox__close").addEventListener("click", function () { dialog.close(); });
+  dialog.addEventListener("click", function (e) {
+    if (e.target === dialog || e.target.classList.contains("lightbox__scroll")) dialog.close();
+  });
+});

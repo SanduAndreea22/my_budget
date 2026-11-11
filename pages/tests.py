@@ -165,3 +165,33 @@ class AudienceAndDifferenceTests(TestCase):
         lowered = self.html.lower()
         for word in ("ynab", "mint", "excel spreadsheet", "thousands of users", "trusted by"):
             self.assertNotIn(word, lowered)
+
+
+class ScreenshotTrustTests(TestCase):
+    def setUp(self):
+        self.html = self.client.get("/").content.decode()
+
+    def test_feature_screenshots_open_enlarged_and_work_without_javascript(self):
+        import re
+        links = re.findall(r'<a class="shot-link" href="([^"]+)" data-lightbox', self.html)
+        self.assertEqual(len(links), 3)
+        for href in links:
+            self.assertIn("/static/img/shots/", href)           # plain link to the image itself
+            self.assertIn(f'src="{href}"', self.html)             # the thumbnail is the same file
+        self.assertIn("Enlarge", self.html)
+
+    def test_section_is_upfront_that_the_example_account_is_staged(self):
+        self.assertIn("set up on purpose to show one warning and one over-budget category", self.html)
+
+    def test_screenshots_can_be_refreshed_with_one_documented_command(self):
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent
+        script = root / "scripts" / "capture_landing_screenshots.py"
+        self.assertTrue(script.exists())
+        self.assertIn("Try the demo", script.read_text())
+        self.assertIn("scripts/capture_landing_screenshots.py", (root / "README.md").read_text())
+
+    def test_no_invented_social_proof(self):
+        lowered = self.html.lower()
+        for phrase in ("testimonial", "customers love", "★", "5 stars", "rated", "users worldwide", "trusted by"):
+            self.assertNotIn(phrase, lowered)

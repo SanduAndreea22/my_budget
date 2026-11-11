@@ -33,6 +33,17 @@ MyBudget puts all of it in one place. Every wallet, every category, every recurr
 
 ---
 
+## Refreshing the landing-page screenshots
+
+The screenshots on the home page show example data and a month name, so they age. After a visual change (or every few months), with the app running locally:
+
+```bash
+pip install playwright pillow && playwright install chromium   # dev only
+python scripts/capture_landing_screenshots.py
+```
+
+It uses "Try the demo", so no real account is touched, and rewrites the images in `static/img/shots/`.
+
 ## Built by Andreea Tech
 
 MyBudget is one of the products I've built end-to-end — from the first sketch to a live, working app people can actually use. If you're looking for someone to build the digital product behind your own business — a website, a booking system, an internal tool, anything that needs to work correctly and look like it was made on purpose — this is the kind of work I do.
