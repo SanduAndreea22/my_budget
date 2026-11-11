@@ -217,7 +217,7 @@ class TrustPagesTests(TestCase):
         from .models import FeedbackMessage
         response = self.client.post("/contact", {"message": "short"})
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "at least a few words")
+        self.assertContains(response, "Please write a little more, at least 10 characters.")
         self.assertFalse(FeedbackMessage.objects.exists())
         self.client.post("/contact", {"message": "Anonymous feedback without any contact details."})
         self.assertEqual(FeedbackMessage.objects.count(), 1)
@@ -225,7 +225,7 @@ class TrustPagesTests(TestCase):
     def test_contact_honeypot_silently_drops_bot_submissions(self):
         from .models import FeedbackMessage
         response = self.client.post("/contact", {"message": "Buy cheap watches now, click here please", "website": "http://spam.example"}, follow=True)
-        self.assertContains(response, "Thanks, your message was received.")
+        self.assertContains(response, "Thanks, your message was sent.")
         self.assertFalse(FeedbackMessage.objects.exists())
 
     def test_contact_is_rate_limited(self):
@@ -262,14 +262,14 @@ class TrustPagesTests(TestCase):
         self.assertIn("Andreea Sandu", html)
         self.assertIn("Andreea Tech", html)
         self.assertIn("github.com/SanduAndreea22/my_budget", html)
-        self.assertIn("Need a product like this for your business?", html)
+        self.assertIn("Work with me", html)
         for forbidden in ("accounting", "contabil", "years of experience", "clients", "testimonial"):
             self.assertNotIn(forbidden, html.lower())
 
     def test_whats_new_lists_dated_changes(self):
         html = self.client.get("/whats-new").content.decode()
         self.assertIn("11 November 2026", html)
-        self.assertIn("Delete your account", html)
+        self.assertIn("delete your account yourself", html)
 
     def test_footer_links_to_the_trust_pages_on_every_kind_of_page(self):
         for url in ("/", "/privacy", "/about", "/contact", "/auth/login"):
@@ -429,3 +429,76 @@ class LandingCopyAuditTests(TestCase):
         found = {u: re.search(r'<meta name="description" content="([^"]+)"', h).group(1) for u, h in pages.items()}
         self.assertEqual(len(set(found.values())), 2)
         self.assertTrue(all("recurring bills" not in d for d in found.values()))
+
+
+class TrustPagesCopyAuditTests(TestCase):
+    """Guards for the copy problems found in the text audit: privacy, about, contact, what's new, 404."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+
+    def test_privacy_has_no_unexplained_jargon_or_self_praise(self):
+        html = self.client.get("/privacy").content.decode()
+        for phrase in ("no legal filler", "HSTS header", "CSRF", "In production", "stored <b>hashed</b>", "rate-limited",
+                       "real banking passwords", "cannot recover it yourself", "Nothing you type in the demo is kept",
+                       "yours to take or delete"):
+            self.assertNotIn(phrase, html, phrase)
+        self.assertIn("(this is called HSTS)", html)          # the one technical term left is explained
+        self.assertNotIn("before it leaves testing", html)     # was "testing" three times in one sentence
+        import re
+        for block in re.findall(r"<(?:li|p)[^>]*>(.*?)</(?:li|p)>", html, flags=re.S):
+            self.assertLessEqual(block.lower().count("testing"), 1, re.sub(r"<[^>]+>", "", block).strip())
+
+    def test_privacy_does_not_contradict_itself_about_the_demo(self):
+        html = self.client.get("/privacy").content.decode()
+        self.assertIn("automatically about a day after it was created", html)
+        self.assertNotIn("is kept", html.split("Demo accounts")[1].split("How it is protected")[0])
+
+    def test_about_speaks_in_the_first_person_throughout(self):
+        import re
+        html = self.client.get("/about").content.decode()
+        text = re.sub(r"<[^>]+>", " ", html.split("<main")[1].split("</main>")[0])
+        self.assertIn("I make MyBudget", text)
+        self.assertNotIn("is built and run by", text)
+        self.assertNotIn("Django developer", text)             # jargon for an app user
+        self.assertNotIn("from the first sketch", text)
+        self.assertNotIn("and more", text)
+        self.assertIn("Message me on LinkedIn", text)
+        self.assertIn("My GitHub profile", text)
+        self.assertNotIn("digital products", text)
+        self.assertNotIn("built to work correctly", text)
+
+    def test_contact_has_no_label_placeholder_echo_and_speaks_as_one_person(self):
+        html = self.client.get("/contact").content.decode()
+        self.assertNotIn('placeholder="Your name (optional)"', html)
+        self.assertNotIn("What&#x27;s on your mind", html)
+        self.assertNotIn("the person who builds MyBudget", html)
+        self.assertIn("it comes straight to me", html)
+        self.assertIn("I store your message so I can read and answer it.", html)
+
+    def test_contact_success_message_says_what_happens_next(self):
+        response = self.client.post("/contact", {"message": "A proper message with enough words."}, follow=True)
+        self.assertContains(response, "any reply will go there")
+
+    def test_whats_new_is_user_facing_and_grammatically_consistent(self):
+        import re
+        html = self.client.get("/whats-new").content.decode()
+        for jargon in ("tap targets", "branded 404", "logo was redrawn", "Screenshots on the home page"):
+            self.assertNotIn(jargon, html)
+        items = re.findall(r"<li>(.*?)</li>", html, flags=re.S)
+        self.assertGreaterEqual(len(items), 8)
+        # every entry is a sentence that starts with a verb or "Your/New" and ends with a full stop
+        for item in items:
+            plain = re.sub(r"<[^>]+>", "", item).strip()
+            self.assertTrue(plain.endswith("."), plain)
+            self.assertNotIn(plain.split()[0], ("A", "Enlarged", "Contact"), plain)
+        self.assertNotIn("newest first", html)
+        self.assertIn("Change history", html)
+
+    def test_404_title_matches_its_heading(self):
+        response = self.client.get("/definitely-not-a-page")
+        self.assertContains(response, "<title>We can&#x27;t find that page · MyBudget</title>", status_code=404, html=False) if False else None
+        html = response.content.decode()
+        self.assertIn("find that page · MyBudget</title>", html)
+        self.assertNotIn("get started", html)

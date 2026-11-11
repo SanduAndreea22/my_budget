@@ -11,13 +11,13 @@ class ContactForm(forms.ModelForm):
         model = FeedbackMessage
         fields = ["name", "email", "message"]
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Your name (optional)", "maxlength": 80}),
-            "email": forms.EmailInput(attrs={"placeholder": "Your email, only if you want a reply"}),
-            "message": forms.Textarea(attrs={"placeholder": "What's on your mind? A bug, an idea, a question…", "rows": 6, "maxlength": 2000}),
+            "name": forms.TextInput(attrs={"maxlength": 80}),
+            "email": forms.EmailInput(attrs={"placeholder": "you@example.com"}),
+            "message": forms.Textarea(attrs={"rows": 6, "maxlength": 2000}),
         }
 
     def clean_message(self):
         message = self.cleaned_data["message"].strip()
         if len(message) < 10:
-            raise forms.ValidationError("Please write at least a few words (10 characters).")
+            raise forms.ValidationError("Please write a little more, at least 10 characters.")
         return message

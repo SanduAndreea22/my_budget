@@ -44,7 +44,7 @@ def contact_view(request):
                     message=form.cleaned_data["message"],
                     user=request.user if request.user.is_authenticated and not request.user.is_demo else None,
                 )
-            messages.success(request, "Thanks, your message was received.")
+            messages.success(request, "Thanks, your message was sent. If you left an email, any reply will go there.")
             return redirect("contact")
     else:
         form = ContactForm()
