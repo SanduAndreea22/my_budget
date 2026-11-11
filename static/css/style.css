@@ -963,8 +963,9 @@ body:has(dialog.lightbox[open]){overflow:hidden;}
 }
 
 /* Transactions search */
-.tx-search{display:flex; gap:10px; flex-wrap:wrap;}
-.tx-search input[type="search"]{flex:1 1 220px; min-width:0;}
+.tx-search{display:flex; gap:10px; flex-wrap:nowrap;}
+.tx-search input[type="search"]{flex:1 1 auto; min-width:0;}
+.tx-search .btn{flex-shrink:0;}
 
 /* ---------- Friction fixes (zone 4) ---------- */
 /* Delete sits further from Edit on touch screens, so a tap on one does not hit the other. */
@@ -984,3 +985,12 @@ body:has(dialog.lightbox[open]){overflow:hidden;}
 .pw-live--ok{color:#86efac;}
 
 [hidden]{display:none !important;}
+
+/* Transaction row: amount and actions sit together on the right; on phones they drop to a second line
+   (amount on the left, Edit and Delete on the right) so the details line keeps the full width. */
+.tx-row__side{display:flex; align-items:center; gap:10px; justify-content:flex-end; flex-shrink:0;}
+@media (max-width:640px){
+  .tx-row{flex-direction:column; align-items:stretch; gap:8px;}
+  .tx-row__side{justify-content:flex-start; width:100%;}
+  .tx-row__side .num{margin-right:auto;}
+}

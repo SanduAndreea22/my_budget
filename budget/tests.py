@@ -1446,7 +1446,7 @@ class VisualHierarchyTests(TestCase):
             user=self.user, category=Category.objects.get(user=self.user, name="Food"),
             wallet=Wallet.objects.get(user=self.user, name="Cash"), type="expense", amount=5, date=date.today(), note="Lunch")
         page = self.client.get(reverse("transactions")).content.decode()
-        self.assertIn("· 💵 Cash · Lunch", page)
+        self.assertIn("💵 Cash</span> · Lunch", page)
 
 
 class NavigationClarityTests(TestCase):

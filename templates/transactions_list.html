@@ -146,12 +146,12 @@
                 {{ t.category.name }}
               </div>
               <div class="muted" style="font-size:14px;">
-                {{ t.date|date:"M j, Y" }} · {{ t.wallet.icon|default:"💳" }} {{ t.wallet.name }}{% if t.note %} · {{ t.note }}{% endif %}
+                <span style="white-space:nowrap;">{{ t.date|date:"M j, Y" }} · {{ t.wallet.icon|default:"💳" }} {{ t.wallet.name }}</span>{% if t.note %} · {{ t.note }}{% endif %}
               </div>
             </div>
           </div>
 
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
+          <div class="tx-row__side">
             <div class="num" style="font-weight:800;color:{% if t.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};">
               {% if t.type == 'income' %}+{% else %}-{% endif %}{{ t.amount|floatformat:2|intcomma }} {{ currency }}
             </div>
