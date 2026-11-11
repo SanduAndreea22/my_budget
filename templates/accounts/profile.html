@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Settings · MyBudget{% endblock %}
+{% block title %}Profile · MyBudget{% endblock %}
 
 {% block content %}
 <section class="glass-card" style="padding:22px;position:relative;overflow:hidden;">
@@ -18,13 +18,13 @@
   <div style="position:relative;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
-        <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">My Profile</h1>
+        <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Profile</h1>
         <p class="muted" style="margin:0;">Update your avatar, description and preferred currency.</p>
         {% if user.is_demo %}<p class="muted" style="margin:8px 0 0;"><b>Demo account:</b> profile changes are turned off. <a href="{% url 'accounts:register' %}">Create an account</a> to set up your own.</p>{% endif %}
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <a class="btn btn--ghost" href="/app/">Back to Dashboard</a>
+        <a class="btn btn--ghost" href="/app/">← Dashboard</a>
         <form method="POST" action="{% url 'accounts:logout' %}" style="display:contents;">
           {% csrf_token %}
           <button type="submit" class="btn btn--ghost">Log out</button>

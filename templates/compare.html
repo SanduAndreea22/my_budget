@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% load humanize %}
-{% block title %}Compare · MyBudget{% endblock %}
+{% block title %}Yearly overview · MyBudget{% endblock %}
 
 {% block content %}
 <script src="{% static 'vendor/chart.umd.js' %}"></script>
@@ -18,7 +18,7 @@
   <div style="position:relative;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
-        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Compare</h1>
+        <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Yearly overview</h1>
         <p class="muted" style="margin:6px 0 0;">Month-by-month and year-over-year overview.</p>
       </div>
     </div>

@@ -13,7 +13,7 @@
     <div style="display:grid;gap:6px;"><label for="id_name">Name <span class="muted">(optional)</span></label>{{ form.name }}{{ form.name.errors }}</div>
     <div style="display:grid;gap:6px;"><label for="id_email">Email <span class="muted">(optional, only for a reply)</span></label>{{ form.email }}{{ form.email.errors }}</div>
     <div style="display:grid;gap:6px;"><label for="id_message">Message</label>{{ form.message }}{{ form.message.errors }}</div>
-    <p class="muted" style="margin:0;font-size:14px;">Your message is stored so it can be read and answered. See <a href="{% url 'privacy' %}">how your data is handled</a>.</p>
+    <p class="muted" style="margin:0;font-size:14px;">Your message is stored so it can be read and answered. <a href="{% url 'privacy' %}">How your data is handled</a></p>
     <div><button type="submit" class="btn">Send message <span aria-hidden="true">→</span></button></div>
   </form>
 </section>

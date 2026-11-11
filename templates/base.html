@@ -38,7 +38,7 @@
         {% if user.is_authenticated %}
           <a class="nav__link nav__profile" href="{% url 'accounts:profile' username=user.username %}" title="Your profile" aria-label="Your profile">
             <span class="nav__avatar">{% if user.image %}<img src="{{ user.image.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">{% else %}<span class="avatar">{{ user.username|slice:":1"|upper }}</span>{% endif %}</span>
-            <span class="nav__user">{{ user.first_name|default:user.username }}</span>
+            <span class="nav__user">{{ user.first_name|default:"Profile" }}</span>
           </a>
           <form method="POST" action="{% url 'accounts:logout' %}" style="display:contents;">
             {% csrf_token %}
@@ -46,8 +46,8 @@
           </form>
         {% else %}
           <a class="nav__link nav__link--anchor" href="{% url 'home' %}#how-it-works">How it works</a>
-          <a class="nav__link nav__link--anchor" href="{% url 'home' %}#faq">FAQ</a>
-          <a class="nav__link" href="{% url 'accounts:login' %}">Login</a>
+          <a class="nav__link nav__link--anchor" href="{% url 'home' %}#faq">Questions</a>
+          <a class="nav__link" href="{% url 'accounts:login' %}">Log in</a>
           <a class="nav__link" href="{% url 'accounts:register' %}">Create account</a>
         {% endif %}
       </div>
@@ -63,11 +63,11 @@
           <a class="subnav__link{% if view_name == 'categories' %} subnav__link--active{% endif %}" href="{% url 'categories' %}">Categories</a>
           <a class="subnav__link{% if view_name == 'wallets' %} subnav__link--active{% endif %}" href="{% url 'wallets' %}">Wallets</a>
           <a class="subnav__link{% if view_name == 'budgets' %} subnav__link--active{% endif %}" href="{% url 'budgets' %}">Budgets</a>
-          <a class="subnav__link{% if view_name == 'recurring_transactions' %} subnav__link--active{% endif %}" href="{% url 'recurring_transactions' %}">Recurring</a>
+          <a class="subnav__link{% if view_name == 'recurring_transactions' %} subnav__link--active{% endif %}" href="{% url 'recurring_transactions' %}">Recurring transactions</a>
           <a class="subnav__link{% if view_name == 'savings_goals' %} subnav__link--active{% endif %}" href="{% url 'savings_goals' %}">Savings goals</a>
           <a class="subnav__link{% if view_name == 'charts' %} subnav__link--active{% endif %}" href="{% url 'charts' %}">Charts</a>
-          <a class="subnav__link{% if view_name == 'compare' %} subnav__link--active{% endif %}" href="{% url 'compare' %}">Compare</a>
-          <a class="subnav__link{% if view_name == 'activity_log' %} subnav__link--active{% endif %}" href="{% url 'activity_log' %}">Activity</a>
+          <a class="subnav__link{% if view_name == 'compare' %} subnav__link--active{% endif %}" href="{% url 'compare' %}">Yearly overview</a>
+          <a class="subnav__link{% if view_name == 'activity_log' %} subnav__link--active{% endif %}" href="{% url 'activity_log' %}">Change history</a>
           <a class="subnav__link{% if view_name == 'accounts:profile' %} subnav__link--active{% endif %}" href="{% url 'accounts:profile' username=user.username %}">Profile</a>
         </div>
       </nav>
@@ -86,14 +86,13 @@
   </main>
 
   <footer class="container site-footer">
-    <div>MyBudget · personal budget tracker</div>
     <div class="site-footer__links">
       <a href="{% url 'about' %}">About</a>
       <a href="{% url 'whats_new' %}">What's new</a>
       <a href="{% url 'contact' %}">Contact</a>
       <a href="{% url 'privacy' %}">Privacy</a>
     </div>
-    <div class="site-footer__by">Built by <a href="{% url 'about' %}"><b>Andreea Tech</b></a></div>
+    <div class="site-footer__by">Built by <a href="{% url 'about' %}"><b>Andreea Tech</b></a> · websites and web apps</div>
   </footer>
 
   {% if messages %}

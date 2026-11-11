@@ -27,7 +27,7 @@ class FirstImpressionTests(TestCase):
     def test_privacy_page_is_public_and_linked_from_the_footer(self):
         response = self.client.get("/privacy")
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "How MyBudget handles your data")
+        self.assertContains(response, "How your data is handled")
         self.assertContains(response, "testing version")
         self.assertContains(self.client.get("/"), 'href="/privacy"')
         self.assertContains(self.client.get("/auth/register"), 'href="/privacy"')
@@ -313,3 +313,77 @@ class AdminWorksTests(TestCase):
         response = self.client.get("/admin/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Feedback messages")
+
+
+class NavigationAndFooterCopyTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+
+    def test_public_navbar_uses_verbs_and_matching_names(self):
+        nav = self.client.get("/").content.decode().split('<nav class="nav">')[1].split("</nav>")[0]
+        self.assertIn(">Log in<", nav)
+        self.assertNotIn(">Login<", nav)
+        self.assertIn(">Questions<", nav)
+        self.assertNotIn(">FAQ<", nav)
+        self.assertIn('<h2 class="lp-title">Questions</h2>', self.client.get("/").content.decode())
+
+    def test_login_page_says_log_in_in_tab_title_and_button(self):
+        html = self.client.get("/auth/login").content.decode()
+        self.assertIn("<title>Log in · MyBudget</title>", html)
+        self.assertNotIn("Login <span", html)
+        self.assertIn("Log in <span", html)
+
+    def test_each_menu_label_matches_the_title_of_its_page(self):
+        from django.contrib.auth import get_user_model
+        user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345", first_name="Sam")
+        self.client.force_login(user)
+        cases = {"recurring_transactions": "Recurring transactions", "compare": "Yearly overview",
+                 "activity_log": "Change history"}
+        from django.urls import reverse
+        home = self.client.get(reverse("dashboard")).content.decode()
+        subnav = home.split('<nav class="subnav">')[1].split("</nav>")[0]
+        for name, label in cases.items():
+            self.assertIn(f">{label}</a>", subnav, label)
+            page = self.client.get(reverse(name)).content.decode()
+            self.assertIn(f"<h1", page)
+            self.assertIn(f">{label}</h1>", page, f"H1 of {name}")
+            self.assertIn(f"<title>{label} · MyBudget</title>", page, f"title of {name}")
+        profile = self.client.get(reverse("accounts:profile", args=["sam"])).content.decode()
+        self.assertIn(">Profile</h1>", profile)
+        self.assertIn("<title>Profile · MyBudget</title>", profile)
+        self.assertNotIn("My Profile", profile)
+        self.assertNotIn("Settings ·", profile)
+        self.assertIn("← Dashboard", profile)
+        for old in (">Recurring</a>", ">Compare</a>", ">Activity</a>"):
+            self.assertNotIn(old, subnav)
+
+    def test_navbar_shows_the_first_name_or_profile_never_a_technical_username(self):
+        from django.contrib.auth import get_user_model
+        U = get_user_model()
+        named = U.objects.create_user(username="sam.t", email="sam.t@example.com", password="pass12345", first_name="Sam")
+        self.client.force_login(named)
+        self.assertIn('<span class="nav__user">Sam</span>', self.client.get("/app/").content.decode())
+        bare = U.objects.create_user(username="copy.empty", email="copy.empty@example.com", password="pass12345")
+        self.client.force_login(bare)
+        html = self.client.get("/app/").content.decode()
+        self.assertIn('<span class="nav__user">Profile</span>', html)
+        self.assertNotIn(">copy.empty<", html.split('<main')[0])
+
+    def test_footer_has_no_filler_and_explains_what_andreea_tech_is(self):
+        footer = self.client.get("/").content.decode().split('class="container site-footer"')[1]
+        self.assertNotIn("personal budget tracker", footer)
+        self.assertIn("websites and web apps", footer)
+        for label in ("About", "What's new", "Contact", "Privacy"):
+            self.assertIn(f">{label}</a>", footer)
+
+    def test_every_in_text_link_to_privacy_uses_the_same_label(self):
+        import re
+        for url in ("/", "/auth/register", "/contact"):
+            html = self.client.get(url).content.decode()
+            body = html.split("<main")[1].split("</main>")[0]
+            labels = [re.sub(r"\s+", " ", m).strip() for m in re.findall(r'<a [^>]*href="/privacy"[^>]*>([^<]+)</a>', body)]
+            for label in labels:
+                self.assertIn(label, ("How your data is handled", "How your data is handled →"), f"{url}: {label!r}")
+            self.assertTrue(labels, url)
+        self.assertIn("<h1", self.client.get("/privacy").content.decode())
