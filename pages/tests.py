@@ -71,7 +71,7 @@ class LandingSectionsTests(TestCase):
         self.assertEqual(self.html.count('class="glass-card step"'), 3)
 
     def test_faq_answers_match_what_the_app_does(self):
-        self.assertEqual(self.html.count('class="glass-card faq__item"'), 9)
+        self.assertEqual(self.html.count('class="glass-card faq__item"'), 11)
         self.assertIn("RON, EUR, USD or GBP", self.html)
         self.assertIn("free while it is in testing", self.html)
         self.assertIn("no automatic password reset", self.html)
@@ -195,3 +195,121 @@ class ScreenshotTrustTests(TestCase):
         lowered = self.html.lower()
         for phrase in ("testimonial", "customers love", "★", "5 stars", "rated", "users worldwide", "trusted by"):
             self.assertNotIn(phrase, lowered)
+
+
+class TrustPagesTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+
+    # --- contact ---------------------------------------------------------
+    def test_contact_page_is_public_and_saves_a_message(self):
+        from .models import FeedbackMessage
+        self.assertEqual(self.client.get("/contact").status_code, 200)
+        response = self.client.post("/contact", {"name": "Sam", "email": "sam@example.com", "message": "The budgets page is great, one idea: dark mode."})
+        self.assertRedirects(response, "/contact")
+        msg = FeedbackMessage.objects.get()
+        self.assertEqual((msg.name, msg.email), ("Sam", "sam@example.com"))
+        self.assertIsNone(msg.user)
+
+    def test_contact_needs_a_real_message_but_not_a_name_or_email(self):
+        from .models import FeedbackMessage
+        response = self.client.post("/contact", {"message": "short"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "at least a few words")
+        self.assertFalse(FeedbackMessage.objects.exists())
+        self.client.post("/contact", {"message": "Anonymous feedback without any contact details."})
+        self.assertEqual(FeedbackMessage.objects.count(), 1)
+
+    def test_contact_honeypot_silently_drops_bot_submissions(self):
+        from .models import FeedbackMessage
+        response = self.client.post("/contact", {"message": "Buy cheap watches now, click here please", "website": "http://spam.example"}, follow=True)
+        self.assertContains(response, "Thanks, your message was received.")
+        self.assertFalse(FeedbackMessage.objects.exists())
+
+    def test_contact_is_rate_limited(self):
+        from .models import FeedbackMessage
+        for i in range(7):
+            self.client.post("/contact", {"message": f"Message number {i} with enough words"})
+        self.assertEqual(FeedbackMessage.objects.count(), 5)
+
+    def test_logged_in_users_are_linked_but_demo_users_are_not(self):
+        from django.contrib.auth import get_user_model
+        from accounts.demo import create_demo_user
+        from .models import FeedbackMessage
+        real = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        self.client.force_login(real)
+        self.client.post("/contact", {"message": "A message from a signed-in user."})
+        self.assertEqual(FeedbackMessage.objects.get().user, real)
+        FeedbackMessage.objects.all().delete()
+        self.client.force_login(create_demo_user())
+        self.client.post("/contact", {"message": "A message from a demo visitor here."})
+        self.assertIsNone(FeedbackMessage.objects.get().user)
+
+    def test_messages_are_readable_in_django_admin(self):
+        from django.contrib.auth import get_user_model
+        from .models import FeedbackMessage
+        FeedbackMessage.objects.create(name="Sam", message="Hello from the form")
+        admin = get_user_model().objects.create_superuser(username="boss", email="boss@example.com", password="pass12345")
+        self.client.force_login(admin)
+        response = self.client.get("/admin/pages/feedbackmessage/")
+        self.assertContains(response, "Hello from the form")
+
+    # --- about, what's new, footer ---------------------------------------
+    def test_about_says_who_is_behind_it_without_inventing_anything(self):
+        html = self.client.get("/about").content.decode()
+        self.assertIn("Andreea Sandu", html)
+        self.assertIn("Andreea Tech", html)
+        self.assertIn("github.com/SanduAndreea22/my_budget", html)
+        self.assertIn("Need a product like this for your business?", html)
+        for forbidden in ("accounting", "contabil", "years of experience", "clients", "testimonial"):
+            self.assertNotIn(forbidden, html.lower())
+
+    def test_whats_new_lists_dated_changes(self):
+        html = self.client.get("/whats-new").content.decode()
+        self.assertIn("11 November 2026", html)
+        self.assertIn("Delete your account", html)
+
+    def test_footer_links_to_the_trust_pages_on_every_kind_of_page(self):
+        for url in ("/", "/privacy", "/about", "/contact", "/auth/login"):
+            html = self.client.get(url).content.decode()
+            footer = html.split('class="container site-footer"')[1]
+            for href in ('href="/about"', 'href="/whats-new"', 'href="/contact"', 'href="/privacy"'):
+                self.assertIn(href, footer, f"{href} missing on {url}")
+
+    # --- landing wording --------------------------------------------------
+    def test_landing_repeats_testing_less_and_answers_what_comes_after(self):
+        html = self.client.get("/").content.decode()
+        self.assertLessEqual(html.lower().count("testing"), 3)
+        self.assertIn("What happens after testing?", html)
+        self.assertIn("No pricing has been decided", html)
+        self.assertIn("Who builds it, and how do I reach them?", html)
+
+    def test_private_claim_links_to_its_proof(self):
+        html = self.client.get("/").content.decode()
+        self.assertIn('href="/privacy#protected"', html)
+        self.assertIn('id="protected"', self.client.get("/privacy").content.decode())
+
+    def test_privacy_page_covers_who_runs_it_contact_messages_and_deletion(self):
+        html = self.client.get("/privacy").content.decode()
+        self.assertIn("Who runs MyBudget", html)
+        self.assertIn("Messages you send through the contact form", html)
+        self.assertIn("delete your account yourself", html)
+        self.assertNotIn("Deleting an account is not self-service yet", html)
+
+
+class AdminWorksTests(TestCase):
+    """APP_DIRS was False since the first commit, so no admin page could render."""
+
+    def test_admin_login_page_renders(self):
+        response = self.client.get("/admin/login/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Log in")
+
+    def test_admin_index_renders_for_a_superuser_and_lists_the_contact_inbox(self):
+        from django.contrib.auth import get_user_model
+        boss = get_user_model().objects.create_superuser(username="boss", email="boss@example.com", password="pass12345")
+        self.client.force_login(boss)
+        response = self.client.get("/admin/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Feedback messages")

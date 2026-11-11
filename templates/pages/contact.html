@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Contact · MyBudget{% endblock %}
+{% block description %}Send feedback, report a problem or ask a question about MyBudget.{% endblock %}
+{% block content %}
+<section class="glass-card" style="max-width:640px;margin:0 auto;padding:26px;">
+  <h1 style="margin:0 0 8px;font-size:clamp(26px,5vw,36px);letter-spacing:-.03em;">Contact</h1>
+  <p class="muted" style="margin:0 0 18px;line-height:1.55;">Found a bug, have an idea or a question? Write here. Messages go to the person who builds MyBudget. Leave an email only if you would like a reply.</p>
+
+  <form method="POST" style="display:grid;gap:14px;">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="hp" aria-hidden="true"><label for="id_website">Leave this empty</label>{{ form.website }}</div>
+    <div style="display:grid;gap:6px;"><label for="id_name">Name <span class="muted">(optional)</span></label>{{ form.name }}{{ form.name.errors }}</div>
+    <div style="display:grid;gap:6px;"><label for="id_email">Email <span class="muted">(optional, only for a reply)</span></label>{{ form.email }}{{ form.email.errors }}</div>
+    <div style="display:grid;gap:6px;"><label for="id_message">Message</label>{{ form.message }}{{ form.message.errors }}</div>
+    <p class="muted" style="margin:0;font-size:14px;">Your message is stored so it can be read and answered. See <a href="{% url 'privacy' %}">how your data is handled</a>.</p>
+    <div><button type="submit" class="btn">Send message <span aria-hidden="true">→</span></button></div>
+  </form>
+</section>
+{% endblock %}

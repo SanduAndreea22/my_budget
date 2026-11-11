@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}About · MyBudget{% endblock %}
+{% block description %}Who builds MyBudget and how it is made.{% endblock %}
+{% block og_title %}Who is behind MyBudget{% endblock %}
+{% block content %}
+<section class="glass-card" style="max-width:760px;margin:0 auto;padding:26px;">
+  <h1 style="margin:0 0 6px;font-size:clamp(28px,5vw,38px);letter-spacing:-.03em;">Who is behind MyBudget</h1>
+  <p class="muted" style="margin:0 0 22px;">So you know who handles your data.</p>
+
+  <p style="line-height:1.65;font-size:17px;">MyBudget is built and run by <b>Andreea Sandu</b>, a full-stack Django developer, under <b>Andreea Tech</b>. It is one of my own products.</p>
+
+  <h2 class="prose-h">How it is made</h2>
+  <ul class="prose-list">
+    <li>Designed, written, tested and deployed by one person, from the first sketch to the live app.</li>
+    <li>The source code is public on <a href="https://github.com/SanduAndreea22/my_budget" target="_blank" rel="noopener">GitHub</a>, so you can see exactly what it does.</li>
+    <li>It has an automated test suite covering accounts, budgets, privacy between accounts and more.</li>
+  </ul>
+
+  <h2 class="prose-h">Questions, bugs, ideas</h2>
+  <p style="line-height:1.65;">Use the <a href="{% url 'contact' %}">contact form</a>. Changes are listed on <a href="{% url 'whats_new' %}">What's new</a>.</p>
+
+  <h2 class="prose-h">Need a product like this for your business?</h2>
+  <p style="line-height:1.65;">Andreea Tech builds digital products for businesses: websites, booking and ticketing systems, dashboards and automations, built to work correctly. If you have something in mind, write on LinkedIn and see more of my work on GitHub.</p>
+  <p style="margin:18px 0 0;display:flex;gap:10px;flex-wrap:wrap;">
+    <a class="btn" href="https://www.linkedin.com/in/andreealuizasandu" target="_blank" rel="noopener">Talk about a project →</a>
+    <a class="btn btn--ghost" href="https://github.com/SanduAndreea22" target="_blank" rel="noopener">See my work on GitHub</a>
+  </p>
+</section>
+{% endblock %}

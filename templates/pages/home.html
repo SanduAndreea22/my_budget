@@ -58,7 +58,7 @@
       </ul>
 
       <div class="trust-row">
-        <div class="trust"><div class="trust__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div><div class="trust__title">Private</div><div class="muted trust__text">Each account sees only its own data</div></div></div>
+        <div class="trust"><div class="trust__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div><div><div class="trust__title">Private</div><div class="muted trust__text">Each account sees only its own data. <a href="{% url 'privacy' %}#protected">How it is protected</a></div></div></div>
         <div class="trust"><div class="trust__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.9 17.9A10.9 10.9 0 0 1 12 19c-6.5 0-10-7-10-7a18.7 18.7 0 0 1 4.1-4.9M9.9 5.2A9.7 9.7 0 0 1 12 5c6.5 0 10 7 10 7a18.5 18.5 0 0 1-2.2 3.2M1 1l22 22"/></svg></div><div><div class="trust__title">No tracking</div><div class="muted trust__text">No ads, trackers or third-party scripts</div></div></div>
         <div class="trust"><div class="trust__icon"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 11 5 5 5-5"/><path d="M5 20h14"/></svg></div><div><div class="trust__title">Yours to take</div><div class="muted trust__text">Export to CSV, Excel or PDF anytime</div></div></div>
       </div>
@@ -155,7 +155,7 @@
   <div class="glass-card data-band">
     <div>
       <h2 class="lp-title" style="margin-bottom:6px;">Your data stays yours</h2>
-      <p class="muted" style="margin:0;">MyBudget is a testing version, so here is exactly what to expect.</p>
+      <p class="muted" style="margin:0;">Here is exactly what to expect.</p>
     </div>
     <ul class="feature-list">
       <li>Passwords are stored hashed, never readable</li>
@@ -180,7 +180,11 @@
     </details>
     <details class="glass-card faq__item">
       <summary>Is it free?</summary>
-      <p>Yes, MyBudget is free while it is in testing, and no credit card is needed. The app may change before it leaves testing.</p>
+      <p>Yes, MyBudget is free while it is in testing, and no credit card is needed. The app may still change.</p>
+    </details>
+    <details class="glass-card faq__item">
+      <summary>What happens after testing?</summary>
+      <p>No pricing has been decided. Whatever happens, you can export your data or delete your account yourself at any time.</p>
     </details>
     <details class="glass-card faq__item">
       <summary>Which currencies can I use?</summary>
@@ -203,8 +207,12 @@
       <p>Yes. Export any list of transactions, with your filters applied, as CSV, Excel or PDF.</p>
     </details>
     <details class="glass-card faq__item">
+      <summary>Who builds it, and how do I reach them?</summary>
+      <p>MyBudget is built by Andreea Sandu, under Andreea Tech. See <a href="{% url 'about' %}">About</a>, or write through the <a href="{% url 'contact' %}">contact form</a>.</p>
+    </details>
+    <details class="glass-card faq__item">
       <summary>What if I forget my password?</summary>
-      <p>There is no automatic password reset yet while MyBudget is in testing, so keep your password somewhere safe.</p>
+      <p>There is no automatic password reset yet, so keep your password somewhere safe.</p>
     </details>
   </div>
 </section>
@@ -212,7 +220,7 @@
 <!-- FINAL CTA -->
 <section class="lp-section lp-cta">
   <h2 class="lp-title">Ready to see where your money goes?</h2>
-  <p class="muted" style="margin:0 0 18px;">Free while in testing, no credit card needed.</p>
+  <p class="muted" style="margin:0 0 18px;">No credit card needed.</p>
   <div class="hero__cta" style="justify-content:center;">
     <a class="btn" href="{% url 'accounts:register' %}">Create account <span aria-hidden="true">→</span></a>
     <form method="post" action="{% url 'accounts:demo' %}" class="demo-form">{% csrf_token %}<button type="submit" class="btn btn--ghost">Try the demo <span aria-hidden="true">→</span></button></form>

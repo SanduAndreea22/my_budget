@@ -86,12 +86,14 @@
   </main>
 
   <footer class="container site-footer">
-    <div>MyBudget · free while in testing</div>
+    <div>MyBudget · personal budget tracker</div>
     <div class="site-footer__links">
+      <a href="{% url 'about' %}">About</a>
+      <a href="{% url 'whats_new' %}">What's new</a>
+      <a href="{% url 'contact' %}">Contact</a>
       <a href="{% url 'privacy' %}">Privacy</a>
-      <a href="https://github.com/SanduAndreea22/my_budget" target="_blank" rel="noopener">Source on GitHub</a>
     </div>
-    <div class="site-footer__by">Built by <b>Andreea Tech</b> · <a href="https://www.linkedin.com/in/andreealuizasandu" target="_blank" rel="noopener">LinkedIn</a></div>
+    <div class="site-footer__by">Built by <a href="{% url 'about' %}"><b>Andreea Tech</b></a></div>
   </footer>
 
   {% if messages %}

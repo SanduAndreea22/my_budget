@@ -97,3 +97,24 @@ def profile_view(request, username):
     else:
         form = UserUpdateForm(instance=request.user)
     return render(request, 'accounts/profile.html', {'form': form})
+
+
+@login_required
+@ratelimit_post('delete_account', limit=5, period_seconds=3600)
+def delete_account_view(request):
+    """Self-service account deletion: the account and everything in it, after confirming the password."""
+    user = request.user
+    if user.is_demo:
+        messages.info(request, "Demo accounts are deleted automatically when you leave.")
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        if user.check_password(request.POST.get('password', '')):
+            if user.image:
+                user.image.delete(save=False)  # the uploaded avatar file too
+            logout(request)
+            user.delete()  # CustomUser.delete() clears protected rows, then cascades the rest
+            messages.success(request, "Your account and all its data were deleted.")
+            return redirect('home')
+        messages.error(request, "That password isn't right, so nothing was deleted.")
+    return render(request, 'accounts/delete_account.html')

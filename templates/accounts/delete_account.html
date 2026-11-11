@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Delete account · MyBudget{% endblock %}
+{% block content %}
+<section class="glass-card" style="max-width:560px;margin:0 auto;padding:26px;">
+  <h1 style="margin:0 0 8px;font-size:clamp(26px,5vw,34px);letter-spacing:-.03em;">Delete your account?</h1>
+  <p class="muted" style="margin:0 0 14px;line-height:1.55;">This permanently deletes your account and everything in it: transactions, categories, wallets, budgets, savings goals, recurring items, activity history and your profile photo. It happens right away and cannot be undone.</p>
+  <p class="muted" style="margin:0 0 18px;line-height:1.55;">Want a copy first? Export your transactions from the <a href="{% url 'transactions' %}">Transactions</a> page (CSV, Excel or PDF).</p>
+
+  <form method="POST" style="display:grid;gap:12px;">
+    {% csrf_token %}
+    <label for="id_password">Type your password to confirm</label>
+    <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
+      <button type="submit" class="btn btn--danger">Delete my account</button>
+      <a class="btn btn--ghost" href="{% url 'accounts:profile' username=user.username %}">Cancel</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

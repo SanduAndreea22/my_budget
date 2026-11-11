@@ -354,3 +354,79 @@ class DemoDataLooksRealTests(TestCase):
         self.assertContains(page, "Housing is close to its limit")
         self.assertContains(page, "Shopping is over budget")
         self.assertNotContains(page, "Food is close to its limit")
+
+
+class DeleteAccountTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        from budget.starter import create_starter_data
+        self.user = User.objects.create_user(username="sam", email="sam@example.com", password="Right-Pass-77")
+        self.other = User.objects.create_user(username="kim", email="kim@example.com", password="Other-Pass-77")
+        for u in (self.user, self.other):
+            create_starter_data(u)
+
+    def _make_data(self, user):
+        from datetime import date
+        from budget.models import BudgetLimit, Category, RecurringTransaction, SavingsGoal, Transaction, Wallet
+        cat = Category.objects.get(user=user, name="Food"); wal = Wallet.objects.get(user=user, name="Cash")
+        Transaction.objects.create(user=user, category=cat, wallet=wal, type="expense", amount=10, date=date.today())
+        BudgetLimit.objects.create(user=user, category=cat, month=date.today().replace(day=1), limit=100)
+        RecurringTransaction.objects.create(user=user, type="expense", amount=5, category=cat, wallet=wal, day_of_month=1, start_date=date.today())
+        SavingsGoal.objects.create(user=user, name="Trip", target_amount=100)
+
+    def test_requires_login(self):
+        response = self.client.get(reverse("accounts:delete_account"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("accounts:login"), response["Location"])
+
+    def test_wrong_password_deletes_nothing(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse("accounts:delete_account"), {"password": "nope"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "nothing was deleted")
+        self.assertTrue(User.objects.filter(pk=self.user.pk).exists())
+
+    def test_correct_password_deletes_the_account_and_all_its_data_only(self):
+        from budget.models import ActivityLog, BudgetLimit, Category, RecurringTransaction, SavingsGoal, Transaction, Wallet
+        for u in (self.user, self.other):
+            self._make_data(u)
+        ActivityLog.objects.create(user=self.user, action="create", model_name="Transaction", object_repr="x")
+        self.client.force_login(self.user)
+        response = self.client.post(reverse("accounts:delete_account"), {"password": "Right-Pass-77"}, follow=True)
+        self.assertRedirects(response, reverse("home"))
+        self.assertContains(response, "Your account and all its data were deleted.")
+        uid = self.user.pk
+        self.assertFalse(User.objects.filter(pk=uid).exists())
+        for model in (Transaction, BudgetLimit, RecurringTransaction, SavingsGoal, Category, Wallet, ActivityLog):
+            self.assertFalse(model.objects.filter(user_id=uid).exists(), model.__name__)
+        # the other account is untouched
+        self.assertTrue(User.objects.filter(pk=self.other.pk).exists())
+        self.assertTrue(Transaction.objects.filter(user=self.other).exists())
+        self.assertTrue(Category.objects.filter(user=self.other).exists())
+        # and the visitor is logged out
+        self.assertEqual(self.client.get(reverse("dashboard")).status_code, 302)
+
+    def test_the_uploaded_avatar_file_is_removed_too(self):
+        import io, os, tempfile
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        from django.test import override_settings
+        from PIL import Image
+        buf = io.BytesIO(); Image.new("RGB", (8, 8), "teal").save(buf, "PNG")
+        with tempfile.TemporaryDirectory() as media, override_settings(MEDIA_ROOT=media):
+            self.user.image.save("me.png", SimpleUploadedFile("me.png", buf.getvalue(), "image/png"), save=True)
+            path = self.user.image.path
+            self.assertTrue(os.path.exists(path))
+            self.client.force_login(self.user)
+            self.client.post(reverse("accounts:delete_account"), {"password": "Right-Pass-77"})
+            self.assertFalse(os.path.exists(path))
+
+    def test_profile_offers_deletion_but_demo_accounts_do_not(self):
+        from accounts.demo import create_demo_user
+        self.client.force_login(self.user)
+        self.assertContains(self.client.get(reverse("accounts:profile", args=[self.user.username])), "Delete my account")
+        demo = create_demo_user()
+        self.client.force_login(demo)
+        self.assertNotContains(self.client.get(reverse("accounts:profile", args=[demo.username])), "Delete my account")
+        response = self.client.post(reverse("accounts:delete_account"), {"password": "x"})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(User.objects.filter(pk=demo.pk).exists())  # demo cleanup is handled elsewhere

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}What's new · MyBudget{% endblock %}
+{% block description %}Recent changes to MyBudget.{% endblock %}
+{% block content %}
+<section class="glass-card" style="max-width:760px;margin:0 auto;padding:26px;">
+  <h1 style="margin:0 0 6px;font-size:clamp(28px,5vw,38px);letter-spacing:-.03em;">What's new</h1>
+  <p class="muted" style="margin:0 0 8px;">Recent changes to MyBudget, newest first.</p>
+
+  <div class="changelog">
+    <article>
+      <h2>11 November 2026</h2>
+      <ul class="prose-list">
+        <li><b>Contact form</b> and an <b>About</b> page, so you can reach the person behind MyBudget.</li>
+        <li><b>Delete your account</b> yourself from your profile; everything in it is removed right away.</li>
+        <li><b>Try the demo</b>: explore the app with example data, no sign-up needed.</li>
+        <li>Screenshots on the home page can be enlarged, and the logo was redrawn.</li>
+      </ul>
+    </article>
+    <article>
+      <h2>10 November 2026</h2>
+      <ul class="prose-list">
+        <li>Your currency now shows on every amount, including charts, forms and your activity history.</li>
+        <li>Amounts use one format everywhere (for example 1,800.00 RON).</li>
+        <li>New accounts start with a Cash wallet and common categories, and today's date is filled in when you add a transaction.</li>
+        <li>A privacy page that explains what is stored and how it is protected.</li>
+        <li>Enlarged tap targets on phones, a branded 404 page and one Export menu on the Transactions page.</li>
+      </ul>
+    </article>
+  </div>
+</section>
+{% endblock %}

@@ -113,6 +113,7 @@
 
           <div class="muted" style="font-size:13px;margin-top:6px;">
             Your currency will be used across dashboard, transactions and charts.
+            {% if not user.is_demo %}<br><a href="{% url 'accounts:delete_account' %}" style="color:#fca5a5;">Delete my account</a>{% endif %}
           </div>
         </form>
       </div>

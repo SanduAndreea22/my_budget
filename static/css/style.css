@@ -863,3 +863,10 @@ html{scroll-behavior:smooth;}
 }
 .lightbox__hint{position:fixed; left:16px; top:20px; z-index:2; font-size:14px; color:rgba(255,255,255,.75);}
 body:has(dialog.lightbox[open]){overflow:hidden;}
+
+
+/* ---------- Contact / About / What's new ---------- */
+.hp{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;}
+.errorlist{list-style:none; margin:4px 0 0; padding:10px 12px; border-radius:14px; background:rgba(239,68,68,.14); border:1px solid rgba(239,68,68,.30); font-weight:700;}
+.changelog{display:grid; gap:6px;}
+.changelog h2{margin:22px 0 8px; font-size:20px; letter-spacing:-.02em;}
