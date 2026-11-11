@@ -76,22 +76,23 @@ def tour_steps(user):
 
     goal = SavingsGoal.objects.filter(user=user, name="New laptop").first()
     if goal and goal.saved_amount < goal.target_amount:
-        gap = f"{goal.target_amount - goal.saved_amount:,.2f}"
-        goal_hint = f"Add {gap} {user.currency} to “{goal.name}” and watch it complete, with a small celebration."
+        diff = goal.target_amount - goal.saved_amount
+        gap = f"{diff:,.0f}" if diff == diff.to_integral_value() else f"{diff:,.2f}"
+        goal_hint = f'Add {gap} {user.currency} to "{goal.name}" to reach your target and see a small celebration.'
     else:
-        goal_hint = "Add money to one of your savings goals and watch the bar move."
+        goal_hint = "Add money to one of your savings goals and watch the bar fill."
 
     steps = [
         {"key": "expense", "title": "Add an expense",
-         "hint": f"Try 100 {user.currency} in Food. The Food budget moves from on track to near its limit, and the totals and donut update.",
-         "url": reverse("add_expense"), "done": did(("Transaction", "create"))},
+         "hint": f"Add 100 {user.currency} under Food. Watch your Food budget get near its limit, and the totals and chart update.",
+         "cta": "Add expense", "url": reverse("add_expense"), "done": did(("Transaction", "create"))},
         {"key": "budget", "title": "Give Health a budget",
-         "hint": f"Health has no limit yet. Set one (say 100 {user.currency}) and its progress bar appears.",
-         "url": reverse("budget_add"), "done": did(("Budget Limit", "create"), ("Budget Limit", "update"))},
+         "hint": f"Health has no budget yet. Set a limit (for example 100 {user.currency}) and a progress bar appears.",
+         "cta": "Set a budget", "url": reverse("budget_add"), "done": did(("Budget Limit", "create"), ("Budget Limit", "update"))},
         {"key": "goal", "title": "Finish a savings goal",
-         "hint": goal_hint, "url": reverse("savings_goals"), "done": did(("Savings Goal", "update"))},
-        {"key": "recurring", "title": "Make a bill log itself",
-         "hint": f"Add a recurring expense, like a 40 {user.currency} subscription. It is logged for you every month.",
-         "url": reverse("recurring_add"), "done": did(("Recurring Transaction", "create"))},
+         "hint": goal_hint, "cta": "Open goals", "url": reverse("savings_goals"), "done": did(("Savings Goal", "update"))},
+        {"key": "recurring", "title": "Add a recurring transaction",
+         "hint": f"Add a subscription, for example 40 {user.currency} a month. From then on it is added for you every month.",
+         "cta": "Add recurring", "url": reverse("recurring_add"), "done": did(("Recurring Transaction", "create"))},
     ]
     return {"steps": steps, "done_count": sum(s["done"] for s in steps), "total": len(steps)}

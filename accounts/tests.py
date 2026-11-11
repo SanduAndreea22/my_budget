@@ -352,9 +352,9 @@ class DemoDataLooksRealTests(TestCase):
         user = create_demo_user()
         self.client.force_login(user)
         page = self.client.get(reverse("dashboard"))
-        self.assertContains(page, "Housing is close to its limit")
+        self.assertContains(page, "Housing is near its limit")
         self.assertContains(page, "Shopping is over budget")
-        self.assertNotContains(page, "Food is close to its limit")
+        self.assertNotContains(page, "Food is near its limit")
 
 
 class DeleteAccountTests(TestCase):
@@ -475,18 +475,18 @@ class DemoGuideTests(TestCase):
                                                      "day_of_month": "5", "start_date": date.today().isoformat(), "note": "", "is_active": "on"})
         tour = self._tour()
         self.assertEqual(tour["done_count"], 4)
-        self.assertContains(self.client.get(reverse("dashboard")), "You have tried the main parts.")
+        self.assertContains(self.client.get(reverse("dashboard")), "That is the tour.")
 
     def test_the_food_hint_is_true(self):
         from datetime import date
-        self.assertNotContains(self.client.get(reverse("dashboard")), "Food is close to its limit")
+        self.assertNotContains(self.client.get(reverse("dashboard")), "Food is near its limit")
         self.client.post(reverse("add_expense"), {"amount": "100", "date": date.today().isoformat(), "category": self.cat("Food").pk, "wallet": self.wallet.pk, "note": ""})
-        self.assertContains(self.client.get(reverse("dashboard")), "Food is close to its limit")
+        self.assertContains(self.client.get(reverse("dashboard")), "Food is near its limit")
 
     def test_the_goal_hint_names_the_exact_remaining_amount_and_it_celebrates(self):
         remaining = self.goal.target_amount - self.goal.saved_amount
         hint = [s for s in self._tour()["steps"] if s["key"] == "goal"][0]["hint"]
-        self.assertIn(f"{remaining:,.2f}", hint)
+        self.assertIn(f"{remaining:,.0f}" if remaining == remaining.to_integral_value() else f"{remaining:,.2f}", hint)
         response = self.client.post(reverse("savings_goal_add_funds", args=[self.goal.pk]), {"amount": str(remaining)})
         self.assertIn("celebrate=", response["Location"])
 
@@ -584,3 +584,52 @@ class SignInCopyTests(TestCase):
         response = self.client.post(reverse("accounts:logout"), follow=True)
         self.assertContains(response, "You are logged out.")
         self.assertNotContains(response, "successfully")
+
+
+class DemoCopyAuditTests(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def test_banner_says_when_the_demo_is_deleted_and_toast_does_not_repeat_it(self):
+        response = self.client.post(reverse("accounts:demo"), follow=True)
+        html = response.content.decode()
+        self.assertIn("Everything here is example data, so change whatever you like.", html)
+        self.assertIn("It is deleted when you log out, or after about a day.", html)
+        self.assertNotIn("when you leave", html)
+        self.assertIn("Create account →", html.split('class="container demo-banner"')[1].split("</div>")[0])
+        self.assertContains(response, "Welcome to the demo.")
+        self.assertEqual(html.count("Everything here is example data"), 1)  # banner only; the toast no longer repeats it
+        self.assertNotIn("You&#x27;re in the demo", html)
+
+    def test_each_guide_step_has_its_own_button_label_and_no_slang(self):
+        response = self.client.post(reverse("accounts:demo"), follow=True)
+        html = response.content.decode()
+        for label in ("Add expense →", "Set a budget →", "Open goals →", "Add recurring →"):
+            self.assertIn(label, html)
+        self.assertNotIn("Try it →", html)
+        import re
+        visible = re.sub(r"<[^>]+>", " ", re.sub(r"<script.*?</script>", "", html, flags=re.S))
+        self.assertNotIn("donut", visible.lower())       # class/id names are fine; the words people read are not
+        self.assertNotIn("(say 100", html)
+        self.assertNotIn("log itself", html)
+        self.assertNotIn("Export from Transactions", html)
+        self.assertNotIn("“", html)                       # no curly quotes mixed with straight ones
+
+    def test_a_ticked_step_offers_do_it_again(self):
+        from datetime import date
+        from budget.models import Category, Wallet
+        self.client.post(reverse("accounts:demo"))
+        user = User.objects.get(is_demo=True)
+        self.client.post(reverse("add_expense"), {"amount": "5", "date": date.today().isoformat(),
+                                                   "category": Category.objects.get(user=user, name="Food").pk,
+                                                   "wallet": Wallet.objects.get(user=user, name="Card").pk, "note": ""})
+        html = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn("Do it again →", html)
+        self.assertNotIn("Again →", html.replace("Do it again →", ""))
+
+    def test_goal_hint_drops_needless_decimals(self):
+        from accounts.demo import create_demo_user
+        from budget.demo import tour_steps
+        hint = [s for s in tour_steps(create_demo_user())["steps"] if s["key"] == "goal"][0]["hint"]
+        self.assertIn("2,940 RON", hint)
+        self.assertNotIn("2,940.00", hint)

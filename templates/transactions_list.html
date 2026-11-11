@@ -22,8 +22,8 @@
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         {% if has_filters or transactions %}
-        <a class="btn" href="{% url 'add_income' %}">+ Income</a>
-        <a class="btn btn--ghost" href="{% url 'add_expense' %}">- Expense</a>
+        <a class="btn" href="{% url 'add_income' %}">+ Add income</a>
+        <a class="btn btn--ghost" href="{% url 'add_expense' %}">− Add expense</a>
         {% endif %}
       </div>
     </div>
@@ -140,15 +140,14 @@
                 <span class="muted" style="font-weight:700;">· {{ t.wallet.icon|default:"💳" }} {{ t.wallet.name }}</span>
               </div>
               <div class="muted" style="font-size:13px;">
-                {{ t.date|date:"M d, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
+                {{ t.date|date:"M j, Y" }}{% if t.note %} · {{ t.note }}{% endif %}
               </div>
             </div>
           </div>
 
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
             <div class="num" style="font-weight:800;color:{% if t.type == 'income' %}#22c55e{% else %}#ef4444{% endif %};">
-              {% if t.type == 'income' %}+{% else %}-{% endif %}
-              {{ t.amount|floatformat:2|intcomma }} {{ currency }}
+              {% if t.type == 'income' %}+{% else %}-{% endif %}{{ t.amount|floatformat:2|intcomma }} {{ currency }}
             </div>
 
             <a class="btn btn--ghost" href="{% url 'transaction_edit' t.id %}">Edit</a>
@@ -164,7 +163,7 @@
         {% else %}
           {% url 'add_income' as income_url %}
           {% url 'add_expense' as expense_url %}
-          {% include "partials/empty_state.html" with art="receipt" title="No transactions yet" text="Log your first income or expense and it shows up here, ready to filter and export." url=income_url label="+ Add income" url2=expense_url label2="or add an expense" %}
+          {% include "partials/empty_state.html" with art="receipt" title="No transactions yet" text="Log your first income or expense and it shows up here, ready to filter and export." url=income_url label="+ Add income" url2=expense_url label2="− Add expense" %}
         {% endif %}
         {% endfor %}
     </div>

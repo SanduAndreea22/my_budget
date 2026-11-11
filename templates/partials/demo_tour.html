@@ -11,17 +11,17 @@
           <div class="tour-step__title">{{ step.title }}{% if step.done %} <span class="visually-hidden">(done)</span>{% endif %}</div>
           <div class="tour-step__hint">{{ step.hint }}</div>
         </div>
-        <a class="btn btn--ghost btn--sm" href="{{ step.url }}">{% if step.done %}Again{% else %}Try it{% endif %} →</a>
+        <a class="btn btn--ghost btn--sm" href="{{ step.url }}">{% if step.done %}Do it again{% else %}{{ step.cta }}{% endif %} →</a>
       </li>
     {% endfor %}
   </ol>
   <div class="demo-tour__more">
     <span>Then look around:</span>
-    <a href="{% url 'charts' %}">Charts</a> · <a href="{% url 'compare' %}">Yearly overview</a> · <a href="{% url 'transactions' %}">Export from Transactions</a>
+    <a href="{% url 'charts' %}">Charts</a>, the <a href="{% url 'compare' %}">Yearly overview</a>, or export your transactions from the <a href="{% url 'transactions' %}">Transactions</a> page.
   </div>
   {% if demo_tour.done_count == demo_tour.total %}
     <div class="demo-tour__finish">
-      <b>You have tried the main parts.</b> Create an account to keep your own data (this demo is deleted when you leave).
+      <b>That is the tour.</b> To keep your own data, create an account. This demo will be deleted.
       <a class="btn btn--sm" href="{% url 'accounts:register' %}">Create your account →</a>
     </div>
   {% endif %}

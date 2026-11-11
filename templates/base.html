@@ -76,8 +76,8 @@
 
   {% if user.is_authenticated and user.is_demo %}
     <div class="container demo-banner" role="note">
-      <span><b>Demo mode.</b> This is example data you can change freely. It is deleted when you leave. <a href="{% url 'dashboard' %}#demo-tour">Things to try</a></span>
-      <a class="btn btn--sm" href="{% url 'accounts:register' %}">Create your account →</a>
+      <span><b>Demo mode.</b> Everything here is example data, so change whatever you like. It is deleted when you log out, or after about a day. <a href="{% url 'dashboard' %}#demo-tour">See things to try</a></span>
+      <a class="btn btn--sm" href="{% url 'accounts:register' %}">Create account →</a>
     </div>
   {% endif %}
 

@@ -32,12 +32,12 @@
             <div class="muted" style="font-size:13px;">{{ entry.display }}</div>
           </div>
           <div class="muted" style="font-size:13px;white-space:nowrap;">
-            {{ entry.timestamp|date:"M d, Y H:i" }}
+            {{ entry.timestamp|date:"M j, Y, H:i" }}
           </div>
         </div>
       {% empty %}
         {% url 'add_expense' as expense_url %}
-        {% include "partials/empty_state.html" with plain=1 art="receipt" title="Nothing here yet" text="Every transaction or budget you add, change or delete is recorded here, so you can always see what happened." url=expense_url label="- Add your first expense" %}
+        {% include "partials/empty_state.html" with plain=1 art="receipt" title="Nothing here yet" text="Every transaction or budget you add, change or delete is recorded here, so you can always see what happened." url=expense_url label="− Add expense" %}
       {% endfor %}
     </div>
 

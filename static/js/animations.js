@@ -175,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const v = parseFloat(input.value);
     out.textContent = Number.isNaN(v) || v <= 0
       ? placeholder
-      : card.dataset.sign + " " + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + card.dataset.currency;
+      : card.dataset.sign + v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " " + card.dataset.currency;
   }
   input.addEventListener("input", update);
   update();

@@ -74,7 +74,7 @@ def demo_start_view(request):
     cleanup_old_demo_users()
     user = create_demo_user()
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    messages.success(request, "You're in the demo. Everything here is example data you can change freely.")
+    messages.success(request, "Welcome to the demo.")
     return redirect('dashboard')
 
 @login_required

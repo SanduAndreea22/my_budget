@@ -43,7 +43,7 @@
             </div>
           {% else %}
             {% url 'add_expense' as expense_url %}
-            {% include "partials/empty_state.html" with plain=1 art="receipt" title="No spending logged this month" text="Add an expense and you will see which categories take the biggest share." url=expense_url label="- Add expense" %}
+            {% include "partials/empty_state.html" with plain=1 art="receipt" title="No spending logged this month" text="Add an expense and you will see which categories take the biggest share." url=expense_url label="− Add expense" %}
           {% endif %}
         </div>
       </div>

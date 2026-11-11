@@ -1017,4 +1017,94 @@ class MoneyFormatConsistencyTests(TestCase):
         budgets = self.client.get(reverse("budgets"))
         self.assertContains(budgets, "1,800.00 RON")
         self.assertContains(budgets, "1,900.00 RON")
-        self.assertContains(self.client.get(reverse("dashboard")), "1,800.00 / 1,900.00 RON")
+        self.assertContains(self.client.get(reverse("dashboard")), "1,800.00 of 1,900.00 RON spent")
+
+
+class DashboardCopyAuditTests(TestCase):
+    """Copy fixes from the text audit: dashboard, transactions and shared labels."""
+
+    def setUp(self):
+        from .starter import create_starter_data
+        self.user = get_user_model().objects.create_user(username="copy.empty", email="copy.empty@example.com", password="pass12345")
+        create_starter_data(self.user)
+        self.client.force_login(self.user)
+        self.cat = Category.objects.get(user=self.user, name="Food")
+        self.wallet = Wallet.objects.get(user=self.user, name="Cash")
+
+    def _expense(self, amount="58.70", when=None):
+        return Transaction.objects.create(user=self.user, category=self.cat, wallet=self.wallet, type="expense",
+                                          amount=amount, date=when or date(2026, 11, 9), note="Pharmacy")
+
+    def test_greeting_never_shows_a_technical_username(self):
+        page = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn("Hello 👋", page)
+        self.assertNotIn("Hello, copy.empty", page)
+        self.user.first_name = "Sam"; self.user.save()
+        self.assertIn("Hello, Sam 👋", self.client.get(reverse("dashboard")).content.decode())
+
+    def test_subtitle_describes_the_page_and_empty_state_is_plain(self):
+        page = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn("Your totals, budget alerts and latest transactions.", page)
+        self.assertNotIn("overview of your current budget", page)
+        for gone in ("money story", "live picture", "logged this month"):
+            self.assertNotIn(gone, page)
+        self.assertIn("No spending this month yet. Your chart appears after your first expense.", page)
+        self.assertIn("No transactions yet", page)
+
+    def test_add_buttons_are_labelled_the_same_everywhere_with_a_real_minus(self):
+        self._expense()
+        for url in ("dashboard", "transactions"):
+            page = self.client.get(reverse(url)).content.decode()
+            self.assertIn("+ Add income", page, url)
+            self.assertIn("− Add expense", page, url)
+            for old in ("- Add expense", "- Expense", "+ Income<"):
+                self.assertNotIn(old, page, f"{old!r} on {url}")
+        for url in ("charts", "compare", "activity_log"):
+            page = self.client.get(reverse(url)).content.decode()
+            self.assertNotIn("- Add expense", page, url)
+
+    def test_dates_use_one_format_with_no_leading_zero(self):
+        tx = self._expense()
+        for url in (reverse("dashboard"), reverse("transactions"), reverse("transaction_delete", args=[tx.pk])):
+            self.assertIn("Nov 9, 2026", self.client.get(url).content.decode(), url)
+            self.assertNotIn("Nov 09, 2026", self.client.get(url).content.decode(), url)
+            self.assertNotIn("Nov. 9, 2026", self.client.get(url).content.decode(), url)
+
+    def test_budget_delete_shows_the_month_in_words_not_iso(self):
+        from .models import BudgetLimit
+        b = BudgetLimit.objects.create(user=self.user, category=self.cat, month=date(2026, 11, 1), limit=200)
+        page = self.client.get(reverse("budget_delete", args=[b.pk])).content.decode()
+        self.assertIn("Month: November 2026", page)
+        self.assertNotIn("2026-11", page)
+
+    def test_amount_signs_have_no_space_on_any_list(self):
+        self._expense()
+        for url in ("dashboard", "transactions"):
+            page = self.client.get(reverse(url)).content.decode()
+            self.assertIn("-58.70 RON", page, url)
+            self.assertNotIn("- 58.70 RON", page, url)
+
+    def test_month_chart_total_has_the_same_precision_as_the_budgets_page(self):
+        self._expense("3080.50", date.today())
+        dash = self.client.get(reverse("dashboard")).content.decode()
+        budgets = self.client.get(reverse("budgets")).content.decode()
+        self.assertIn("3,080.50", dash)
+        self.assertIn("3,080.50", budgets)
+
+    def test_alerts_say_what_the_numbers_are(self):
+        from .models import BudgetLimit
+        BudgetLimit.objects.create(user=self.user, category=self.cat, month=date.today().replace(day=1), limit=100)
+        Transaction.objects.create(user=self.user, category=self.cat, wallet=self.wallet, type="expense", amount=90, date=date.today())
+        page = self.client.get(reverse("dashboard")).content.decode()
+        self.assertIn("Food is near its limit", page)
+        self.assertNotIn("close to its limit", page)
+        self.assertIn("90.00 of 100.00 RON spent · 90% this month", page)
+        self.assertNotIn("90.00 / 100.00", page)
+        self.assertIn("Open charts →", page)
+        self.assertNotIn("Full charts", page)
+
+    def test_live_preview_sign_has_no_space(self):
+        from pathlib import Path
+        js = (Path(__file__).resolve().parent.parent / "static" / "js" / "animations.js").read_text()
+        self.assertIn("card.dataset.sign + v.toLocaleString", js)
+        self.assertNotIn('card.dataset.sign + " "', js)
