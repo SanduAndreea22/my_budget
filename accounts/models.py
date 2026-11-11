@@ -27,10 +27,10 @@ class CustomUser(AbstractUser):
         return self.username
 
     CURRENCY_CHOICES = [
-        ("RON", "RON (Romanian Leu)"),
-        ("EUR", "EUR (€)"),
-        ("USD", "USD ($)"),
-        ("GBP", "GBP (£)"),
+        ("RON", "RON · Romanian leu"),
+        ("EUR", "EUR · Euro"),
+        ("USD", "USD · US dollar"),
+        ("GBP", "GBP · British pound"),
     ]
 
     currency = models.CharField(max_length=3, choices=CURRENCY_CHOICES, default="RON")

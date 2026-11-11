@@ -5,7 +5,10 @@ from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.forms import UserCreationForm
 
 class UserRegistrationForm(UserCreationForm):
-    email = forms.EmailField(help_text='Enter a valid email address.', required=True)
+    # Django reads this message from the FORM, not from the password2 field.
+    error_messages = {**UserCreationForm.error_messages, "password_mismatch": "The two passwords don't match."}
+
+    email = forms.EmailField(required=True, error_messages={'required': 'Enter your email address.', 'invalid': 'That email address doesn\'t look right.'})
 
     class Meta:
         model = get_user_model()
@@ -16,12 +19,17 @@ class UserRegistrationForm(UserCreationForm):
         self.fields['currency'].help_text = "You can change this later in your profile."
         self.fields['first_name'].label = "First name (optional)"
         self.fields['last_name'].label = "Last name (optional)"
+        self.fields['password1'].error_messages['required'] = "Choose a password."
+        self.fields['password2'].label = "Confirm password"
+        self.fields['password2'].help_text = ""
+        self.fields['password2'].error_messages['required'] = "Type the password again."
+        self.fields['currency'].error_messages['required'] = "Choose a currency."
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         User = get_user_model()
         if email and User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("An account with this email already exists.")
+            raise forms.ValidationError("An account with this email already exists. Try logging in instead.")
         return email
 
     @staticmethod
@@ -55,10 +63,11 @@ class UserLoginForm(forms.Form):
 
     email = forms.EmailField(widget=forms.EmailInput(
         attrs={'class': 'form-control', 'placeholder': 'you@example.com', 'autofocus': True}),
-        label="Email")
+        label="Email", error_messages={'required': 'Enter your email address.'})
 
-    password = forms.CharField(widget=forms.PasswordInput(
-        attrs={'class': 'form-control', 'placeholder': 'Password'}))
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        error_messages={'required': 'Enter your password.'})
 
     def __init__(self, request=None, *args, **kwargs):
         self.request = request
@@ -72,7 +81,7 @@ class UserLoginForm(forms.Form):
         if email and password:
             self.user_cache = authenticate(self.request, username=email, password=password)
             if self.user_cache is None:
-                raise forms.ValidationError("Invalid credentials or inactive account.", code='invalid_login')
+                raise forms.ValidationError("That email and password don't match.", code='invalid_login')
         return cleaned_data
 
     def get_user(self):

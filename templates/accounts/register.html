@@ -18,7 +18,7 @@
 
   <div style="position:relative;">
     <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">Create account</h1>
-    <p class="muted" style="margin:0 0 16px;">Start controlling your money in seconds.</p>
+    <p class="muted" style="margin:0 0 16px;">Just an email and a password. A Cash wallet and common categories are ready as soon as you are in.</p>
 
     <form method="POST" novalidate style="display:grid;gap:12px;">
       {% csrf_token %}
@@ -56,12 +56,12 @@
         </button>
 
         <a class="btn btn--ghost" href="{% url 'accounts:login' %}">
-          Already have an account?
+          Log in instead
         </a>
       </div>
 
       <div class="muted" style="margin-top:8px;font-size:13px;">
-        Your budget data stays private and visible only to you. <a href="{% url 'privacy' %}">How your data is handled</a>
+        Your budget data is visible only to you. <a href="{% url 'privacy' %}">How your data is handled</a>
       </div>
     </form>
   </div>

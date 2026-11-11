@@ -152,9 +152,10 @@ class NoEmailFlowsTests(TestCase):
         self.assertEqual(self.client.get("/auth/password-reset").status_code, 404)
         self.assertEqual(self.client.get("/auth/reset/abc/def").status_code, 404)
 
-    def test_login_page_has_no_forgot_password_link(self):
+    def test_login_page_has_no_reset_link_but_says_what_to_do(self):
         response = self.client.get(reverse("accounts:login"))
-        self.assertNotContains(response, "Forgot")
+        self.assertNotContains(response, "password-reset")
+        self.assertContains(response, "There is no reset yet")
 
     def test_activation_route_is_gone(self):
         self.assertEqual(self.client.get("/auth/activate/abc/def").status_code, 404)
@@ -495,3 +496,91 @@ class DemoGuideTests(TestCase):
 
     def test_banner_links_to_the_guide(self):
         self.assertContains(self.client.get(reverse("budgets")), 'href="/app/#demo-tour"')
+
+
+class SignInCopyTests(TestCase):
+    """Copy fixes from the text audit: register and login."""
+
+    def setUp(self):
+        cache.clear()
+
+    def test_register_page_promises_only_what_it_delivers(self):
+        html = self.client.get(reverse("accounts:register")).content.decode()
+        self.assertNotIn("Start controlling", html)
+        self.assertIn("Just an email and a password.", html)
+        self.assertIn("<title>Create account · MyBudget</title>", html)
+        self.assertIn("Log in instead", html)
+        self.assertNotIn("Already have an account?", html)
+        self.assertNotIn("Enter a valid email address.", html)               # no help text duplicating the error
+        self.assertNotIn("Enter the same password as before", html)
+        self.assertIn("Confirm password", html)
+        self.assertNotIn("private and visible only to you", html)
+
+    def test_password_rules_use_one_style(self):
+        html = self.client.get(reverse("accounts:register")).content.decode()
+        for rule in ("Don&#x27;t use your name or email in your password.", "Use at least 8 characters.",
+                     "Pick something less common than", "Include at least one letter, not only numbers."):
+            self.assertIn(rule, html)
+        for old in ("At least 8 characters.", "Avoid common passwords", "Don&#x27;t reuse"):
+            self.assertNotIn(old, html)
+
+    def test_currency_options_are_written_the_same_way(self):
+        html = self.client.get(reverse("accounts:register")).content.decode()
+        for label in ("RON · Romanian leu", "EUR · Euro", "USD · US dollar", "GBP · British pound"):
+            self.assertIn(label, html)
+
+    def test_empty_submission_says_what_is_missing(self):
+        response = self.client.post(reverse("accounts:register"), {})
+        html = response.content.decode()
+        for msg in ("Enter your email address.", "Choose a password.", "Type the password again."):
+            self.assertIn(msg, html)
+        self.assertNotIn("This field is required.", html)
+
+    def test_mismatched_passwords_use_the_apps_own_wording(self):
+        response = self.client.post(reverse("accounts:register"), {"email": "a@example.com", "password1": "S3cure-Pass!23", "password2": "other"})
+        self.assertContains(response, "The two passwords don&#x27;t match.")
+        self.assertNotContains(response, "didn’t match")
+
+    def test_duplicate_email_suggests_logging_in(self):
+        User.objects.create_user(username="x", email="taken@example.com", password="pass12345")
+        response = self.client.post(reverse("accounts:register"), {"email": "taken@example.com", "currency": "RON", "password1": "S3cure-Pass!23", "password2": "S3cure-Pass!23"})
+        self.assertContains(response, "Try logging in instead.")
+
+    def test_login_failure_shows_one_plain_message_not_two(self):
+        response = self.client.post(reverse("accounts:login"), {"email": "nobody@example.com", "password": "wrong"})
+        html = response.content.decode()
+        self.assertEqual(html.count("That email and password don&#x27;t match."), 1)
+        self.assertNotIn("Invalid credentials", html)
+        self.assertNotIn("inactive account", html)
+
+    def test_login_page_drops_the_presumptuous_line_and_the_placeholder_echo(self):
+        html = self.client.get(reverse("accounts:login")).content.decode()
+        self.assertNotIn("right where you left it", html)
+        self.assertNotIn('placeholder="Password"', html)
+
+    def test_login_page_tells_you_what_to_do_if_you_forgot_your_password(self):
+        html = self.client.get(reverse("accounts:login")).content.decode()
+        self.assertIn("Forgot your password?", html)
+        self.assertIn('href="/contact"', html)
+
+    def test_welcome_messages_never_show_a_technical_username(self):
+        User.objects.create_user(username="copy.empty", email="copy.empty@example.com", password="Right-Pass-77")
+        response = self.client.post(reverse("accounts:login"), {"email": "copy.empty@example.com", "password": "Right-Pass-77"}, follow=True)
+        self.assertContains(response, "Welcome back!")
+        self.assertNotContains(response, "copy.empty!")
+        self.client.logout()
+        User.objects.create_user(username="sam", email="sam@example.com", password="Right-Pass-77", first_name="Sam")
+        response = self.client.post(reverse("accounts:login"), {"email": "sam@example.com", "password": "Right-Pass-77"}, follow=True)
+        self.assertContains(response, "Welcome back, Sam!")
+
+    def test_registration_welcome_without_a_first_name(self):
+        response = self.client.post(reverse("accounts:register"), {"email": "new.person@example.com", "currency": "RON", "password1": "S3cure-Pass!23", "password2": "S3cure-Pass!23"}, follow=True)
+        self.assertContains(response, "Welcome! Your account is ready.")
+        self.assertNotContains(response, "Welcome, new.person")
+
+    def test_logout_message_has_no_filler(self):
+        user = User.objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        self.client.force_login(user)
+        response = self.client.post(reverse("accounts:logout"), follow=True)
+        self.assertContains(response, "You are logged out.")
+        self.assertNotContains(response, "successfully")

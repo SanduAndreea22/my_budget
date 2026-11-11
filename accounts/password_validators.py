@@ -17,10 +17,10 @@ class FriendlyUserAttributeSimilarityValidator(UserAttributeSimilarityValidator)
         try:
             super().validate(password, user)
         except ValidationError:
-            raise ValidationError("Don't reuse your name or email as your password.", code="password_too_similar")
+            raise ValidationError("Don't use your name or email in your password.", code="password_too_similar")
 
     def get_help_text(self):
-        return "Don't reuse your name or email as your password."
+        return "Don't use your name or email in your password."
 
 
 class FriendlyMinimumLengthValidator(MinimumLengthValidator):
@@ -28,10 +28,10 @@ class FriendlyMinimumLengthValidator(MinimumLengthValidator):
         try:
             super().validate(password, user)
         except ValidationError:
-            raise ValidationError(f"At least {self.min_length} characters.", code="password_too_short")
+            raise ValidationError(f"Use at least {self.min_length} characters.", code="password_too_short")
 
     def get_help_text(self):
-        return f"At least {self.min_length} characters."
+        return f"Use at least {self.min_length} characters."
 
 
 class FriendlyCommonPasswordValidator(CommonPasswordValidator):
@@ -39,10 +39,10 @@ class FriendlyCommonPasswordValidator(CommonPasswordValidator):
         try:
             super().validate(password, user)
         except ValidationError:
-            raise ValidationError('Avoid common passwords like "12345678" or "password".', code="password_too_common")
+            raise ValidationError('Pick something less common than "12345678" or "password".', code="password_too_common")
 
     def get_help_text(self):
-        return 'Avoid common passwords like "12345678" or "password".'
+        return 'Pick something less common than "12345678" or "password".'
 
 
 class FriendlyNumericPasswordValidator(NumericPasswordValidator):
@@ -50,7 +50,7 @@ class FriendlyNumericPasswordValidator(NumericPasswordValidator):
         try:
             super().validate(password, user)
         except ValidationError:
-            raise ValidationError("Use at least one letter, not only numbers.", code="password_entirely_numeric")
+            raise ValidationError("Include at least one letter, not only numbers.", code="password_entirely_numeric")
 
     def get_help_text(self):
-        return "Use at least one letter, not only numbers."
+        return "Include at least one letter, not only numbers."

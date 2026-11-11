@@ -26,13 +26,13 @@ def register_view(request):
                 # Someone else registered the same email (or the same
                 # derived username) in the tiny window between the form's
                 # own uniqueness check and this save.
-                form.add_error('email', 'An account with this email already exists.')
+                form.add_error('email', 'An account with this email already exists. Try logging in instead.')
                 return render(request, 'accounts/register.html', {'form': form})
 
             create_starter_data(user)
 
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            messages.success(request, f'Welcome, {user.first_name or user.username}! Your account is ready.')
+            messages.success(request, f'Welcome, {user.first_name}! Your account is ready.' if user.first_name else 'Welcome! Your account is ready.')
             return redirect('dashboard')
     else:
         form = UserRegistrationForm()
@@ -46,9 +46,8 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            messages.success(request, f'Welcome, {user.first_name or user.username}!')
+            messages.success(request, f'Welcome back, {user.first_name}!' if user.first_name else 'Welcome back!')
             return redirect('dashboard')
-        messages.error(request, 'Invalid credentials or inactive account.')
     else:
         form = UserLoginForm()
     return render(request, 'accounts/login.html', {'form': form})
@@ -61,7 +60,7 @@ def logout_view(request):
         messages.success(request, 'Demo ended. The example data was deleted.')
         return redirect('home')
     logout(request)
-    messages.success(request, 'You have successfully logged out!')
+    messages.success(request, 'You are logged out.')
     return redirect('accounts:login')
 
 
