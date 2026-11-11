@@ -44,7 +44,7 @@
     {% if page_obj.paginator.num_pages > 1 %}
       <div style="margin-top:16px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;">
         {% if page_obj.has_previous %}
-          <a class="btn btn--ghost" href="?page={{ page_obj.previous_page_number }}">← Prev</a>
+          <a class="btn btn--ghost" href="?page={{ page_obj.previous_page_number }}">← Previous</a>
         {% endif %}
         <span class="muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}

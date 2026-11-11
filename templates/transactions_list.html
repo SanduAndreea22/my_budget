@@ -18,7 +18,7 @@
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
       <div>
         <h1 style="margin:0;font-size:34px;letter-spacing:-.03em;">Transactions</h1>
-        <p class="muted" style="margin:6px 0 0;">Filter, edit and delete your transactions.</p>
+        <p class="muted" style="margin:6px 0 0;">All your income and expenses. Filter them, edit them or export them.</p>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;">
         {% if has_filters or transactions %}
@@ -33,14 +33,15 @@
     <details class="menu" style="margin-top:14px;">
       <summary class="btn btn--ghost btn--sm">⬇ Export</summary>
       <div class="menu__panel glass-card">
-        <a href="{% url 'export_transactions_csv' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">CSV <small>for spreadsheets and scripts</small></a>
-        <a href="{% url 'export_transactions_xlsx' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">Excel <small>.xlsx workbook</small></a>
-        <a href="{% url 'export_transactions_pdf' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">PDF <small>printable report</small></a>
+        <div class="muted" style="padding:6px 12px 8px;font-size:13px;">Exports what matches your current filters.</div>
+        <a href="{% url 'export_transactions_csv' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">CSV <small>opens in any spreadsheet</small></a>
+        <a href="{% url 'export_transactions_xlsx' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">Excel <small>an .xlsx file</small></a>
+        <a href="{% url 'export_transactions_pdf' %}?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}">PDF <small>a printable report</small></a>
       </div>
     </details>
-    <div class="muted" style="font-size:13px;margin-top:6px;">Exports the transactions that match your current filters.</div>
 
     <!-- Totals -->
+    <div class="muted" style="margin-top:14px;font-size:14px;">Totals for all transactions that match your filters.</div>
     <div class="totals-grid" style="margin-top:16px;">
       <div class="glass-card" style="padding:14px;">
         <div class="muted">Income</div>
@@ -70,7 +71,7 @@
       <summary style="cursor:pointer;font-weight:900;color:rgba(255,255,255,.86);">
         Filters
         {% if filters.type or filters.category or filters.wallet or filters.from or filters.to %}
-          <span class="muted" style="font-weight:700;font-size:13px;">· active</span>
+          <span class="muted" style="font-weight:700;font-size:13px;">· {{ active_filter_count }} applied</span>
         {% endif %}
       </summary>
 
@@ -110,19 +111,19 @@
           </div>
 
           <div style="display:grid;gap:6px;">
-            <label style="font-weight:900;color:rgba(255,255,255,.86);">From</label>
+            <label style="font-weight:900;color:rgba(255,255,255,.86);">From date</label>
             <input type="date" name="from" value="{{ filters.from }}">
           </div>
 
           <div style="display:grid;gap:6px;">
-            <label style="font-weight:900;color:rgba(255,255,255,.86);">To</label>
+            <label style="font-weight:900;color:rgba(255,255,255,.86);">To date</label>
             <input type="date" name="to" value="{{ filters.to }}">
           </div>
         </div>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn" type="submit">Apply filters →</button>
-          <a class="btn btn--ghost" href="{% url 'transactions' %}">Reset</a>
+          <a class="btn btn--ghost" href="{% url 'transactions' %}">Clear filters</a>
         </div>
       </form>
     </details>
@@ -159,7 +160,7 @@
       {% empty %}
         {% if has_filters %}
           {% url 'transactions' as reset_url %}
-          {% include "partials/empty_state.html" with art="receipt" title="No matches" text="No transactions fit these filters. Clear them to see everything again." url=reset_url label="Clear filters" %}
+          {% include "partials/empty_state.html" with art="receipt" title="Nothing matches these filters" text="Try different filters, or clear them to see all your transactions." url=reset_url label="Clear filters" %}
         {% else %}
           {% url 'add_income' as income_url %}
           {% url 'add_expense' as expense_url %}
@@ -171,7 +172,7 @@
     {% if page_obj.paginator.num_pages > 1 %}
       <div style="margin-top:16px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;">
         {% if page_obj.has_previous %}
-          <a class="btn btn--ghost" href="?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">← Prev</a>
+          <a class="btn btn--ghost" href="?{% for k, v in filters.items %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">← Previous</a>
         {% endif %}
         <span class="muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
         {% if page_obj.has_next %}

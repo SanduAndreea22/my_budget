@@ -185,6 +185,12 @@ def dashboard_view(request):
     return render(request, "dashboard.html", context)
 
 
+def _owned_or_none(queryset, raw_pk):
+    """The row with this id from an already user-scoped queryset, or None for a blank or non-numeric id."""
+    raw_pk = str(raw_pk or "").strip()
+    return queryset.filter(pk=int(raw_pk)).first() if raw_pk.isdigit() else None
+
+
 def _parse_amount(raw_amount):
     try:
         amount = Decimal(str(raw_amount).strip())
@@ -212,19 +218,19 @@ def _add_transaction_view(request, tx_type, template_name):
     if request.method == "POST":
         amount = _parse_amount(request.POST.get("amount"))
         tx_date = _parse_date(request.POST.get("date"))
-        category = categories.filter(pk=request.POST.get("category")).first()
-        wallet = wallets.filter(pk=request.POST.get("wallet")).first()
+        category = _owned_or_none(categories, request.POST.get("category"))
+        wallet = _owned_or_none(wallets, request.POST.get("wallet"))
         note = request.POST.get("note", "").strip()
 
         errors = []
         if amount is None:
-            errors.append("Please enter a valid amount greater than zero.")
+            errors.append("Enter an amount above 0.")
         if tx_date is None:
-            errors.append("Please enter a valid date.")
+            errors.append("Enter a date.")
         if category is None:
-            errors.append("Please choose one of your categories.")
+            errors.append("Choose a category.")
         if wallet is None:
-            errors.append("Please choose one of your wallets.")
+            errors.append("Choose a wallet.")
 
         invalid_form_response = lambda: render(request, template_name, {
             "categories": categories,
@@ -484,6 +490,7 @@ def transactions_list_view(request):
         "wallets": wallets,
         "filters": filters,
         "has_filters": any(filters.values()),
+        "active_filter_count": sum(1 for v in filters.values() if v),
         "total_income": total_income,
         "total_expense": total_expense,
         "balance": balance,
@@ -977,7 +984,7 @@ def savings_goal_add_funds_view(request, pk):
     if request.method == "POST":
         amount = _parse_amount(request.POST.get("amount"))
         if amount is None:
-            messages.error(request, "Please enter a valid amount greater than zero.")
+            messages.error(request, "Enter an amount above 0.")
         else:
             # Locked read + a DB-side F() increment instead of a Python
             # read-modify-write, so two concurrent "add funds" submissions

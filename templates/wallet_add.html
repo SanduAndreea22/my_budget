@@ -1,9 +1,9 @@
 {% extends "base.html" %}
-{% block title %}{% if mode == "edit" %}Edit Wallet{% else %}Add Wallet{% endif %} · MyBudget{% endblock %}
+{% block title %}{% if mode == "edit" %}Edit wallet{% else %}Add wallet{% endif %} · MyBudget{% endblock %}
 
 {% block content %}
 <section class="glass-card" style="max-width:520px;margin:auto;padding:22px;">
-  <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">{% if mode == "edit" %}Edit Wallet{% else %}Add Wallet{% endif %}</h1>
+  <h1 style="margin:0 0 6px;font-size:34px;letter-spacing:-.03em;">{% if mode == "edit" %}Edit wallet{% else %}Add wallet{% endif %}</h1>
   <p class="muted" style="margin:0 0 14px;">Card, cash, savings — whatever accounts you use.</p>
 
   <form method="POST" style="display:grid;gap:12px;">

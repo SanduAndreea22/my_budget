@@ -13,6 +13,7 @@ class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ["name", "type", "icon", "color"]
+        error_messages = {"name": {"required": "Give the category a name."}}
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "Category name (e.g. Salary, Food)"}),
             "color": forms.TextInput(attrs={"type": "color"}),
@@ -27,7 +28,7 @@ class CategoryForm(forms.ModelForm):
     def clean_name(self):
         name = self.cleaned_data["name"].strip()
         if not name:
-            raise ValidationError("Category name is required.")
+            raise ValidationError("Give the category a name.")
         return name
 
     def clean(self):
@@ -59,6 +60,7 @@ class WalletForm(forms.ModelForm):
     class Meta:
         model = Wallet
         fields = ["name", "icon"]
+        error_messages = {"name": {"required": "Give the wallet a name."}}
         widgets = {
             "name": forms.TextInput(attrs={"placeholder": "Wallet name (e.g. Card, Cash, Savings)"}),
         }
@@ -70,7 +72,7 @@ class WalletForm(forms.ModelForm):
     def clean_name(self):
         name = self.cleaned_data["name"].strip()
         if not name:
-            raise ValidationError("Wallet name is required.")
+            raise ValidationError("Give the wallet a name.")
         return name
 
     def clean(self):
@@ -108,6 +110,10 @@ class TransactionForm(forms.ModelForm):
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(user=user).order_by("name")
             self.fields["wallet"].queryset = Wallet.objects.filter(user=user).order_by("name")
+        self.fields["category"].empty_label = "Choose a category"
+        self.fields["wallet"].empty_label = "Choose a wallet"
+        self.fields["type"].choices = [c for c in self.fields["type"].choices if c[0]]
+        self.fields["note"].label = "Note (optional)"
 
 class BudgetLimitForm(forms.ModelForm):
     month = forms.DateField(
@@ -130,6 +136,8 @@ class BudgetLimitForm(forms.ModelForm):
             self.fields["category"].queryset = Category.objects.filter(
                 user=self.user, type=Category.EXPENSE
             ).order_by("name")
+        self.fields["category"].empty_label = "Choose a category"
+        self.fields["limit"].label = "Monthly limit"
 
     def clean(self):
         cleaned_data = super().clean()
@@ -141,7 +149,7 @@ class BudgetLimitForm(forms.ModelForm):
             if self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
-                self.add_error(None, "You already have a limit set for this category and month.")
+                self.add_error(None, "You already have a budget for this category and month.")
         return cleaned_data
 
 
@@ -154,11 +162,12 @@ class SavingsGoalForm(forms.ModelForm):
             "target_date": forms.DateInput(attrs={"type": "date"}),
             "target_amount": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
         }
+        labels = {"target_date": "Target date (optional)"}
 
     def clean_target_amount(self):
         target_amount = self.cleaned_data["target_amount"]
         if target_amount <= 0:
-            raise ValidationError("Target amount must be greater than zero.")
+            raise ValidationError("Enter a target above 0.")
         return target_amount
 
 
@@ -171,6 +180,8 @@ class RecurringTransactionForm(forms.ModelForm):
             "day_of_month": forms.NumberInput(attrs={"min": 1, "max": 28}),
             "amount": forms.NumberInput(attrs={"min": "0.01", "step": "0.01"}),
         }
+        labels = {"note": "Note (optional)", "is_active": "Active", "day_of_month": "Day of the month", "start_date": "Starts on"}
+        help_texts = {"is_active": "Untick to pause it without deleting it.", "day_of_month": "From 1 to 28, so it works in every month."}
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop("user", None)
@@ -178,9 +189,12 @@ class RecurringTransactionForm(forms.ModelForm):
         if user is not None:
             self.fields["category"].queryset = Category.objects.filter(user=user).order_by("name")
             self.fields["wallet"].queryset = Wallet.objects.filter(user=user).order_by("name")
+        self.fields["category"].empty_label = "Choose a category"
+        self.fields["wallet"].empty_label = "Choose a wallet"
+        self.fields["type"].choices = [c for c in self.fields["type"].choices if c[0]]
 
     def clean_amount(self):
         amount = self.cleaned_data["amount"]
         if amount <= 0:
-            raise ValidationError("Amount must be greater than zero.")
+            raise ValidationError("Enter an amount above 0.")
         return amount

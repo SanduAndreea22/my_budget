@@ -432,7 +432,7 @@ class BudgetLimitFormTests(TestCase):
             "limit": "700",
         })
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "already have a limit set")
+        self.assertContains(response, "already have a budget for this category and month")
         self.assertEqual(BudgetLimit.objects.filter(user=self.user, category=self.category, month=date(2026, 3, 1)).count(), 1)
 
     def test_editing_a_limit_to_clash_with_another_shows_error_instead_of_crashing(self):
@@ -444,7 +444,7 @@ class BudgetLimitFormTests(TestCase):
             "limit": "300",
         })
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "already have a limit set")
+        self.assertContains(response, "already have a budget for this category and month")
         other.refresh_from_db()
         self.assertEqual(other.month, date(2026, 4, 1))
 
@@ -1108,3 +1108,124 @@ class DashboardCopyAuditTests(TestCase):
         js = (Path(__file__).resolve().parent.parent / "static" / "js" / "animations.js").read_text()
         self.assertIn("card.dataset.sign + v.toLocaleString", js)
         self.assertNotIn('card.dataset.sign + " "', js)
+
+
+class FormsAndListsCopyAuditTests(TestCase):
+    """Copy fixes from the text audit: transactions, add income/expense and the shared forms."""
+
+    def setUp(self):
+        from .starter import create_starter_data
+        self.user = get_user_model().objects.create_user(username="sam", email="sam@example.com", password="pass12345")
+        create_starter_data(self.user)
+        self.client.force_login(self.user)
+        self.food = Category.objects.get(user=self.user, name="Food")
+        self.cash = Wallet.objects.get(user=self.user, name="Cash")
+
+    def _page(self, name, *args):
+        return self.client.get(reverse(name, args=args)).content.decode()
+
+    def test_titles_use_sentence_case(self):
+        import re
+        tx = Transaction.objects.create(user=self.user, category=self.food, wallet=self.cash, type="expense", amount=5, date=date.today())
+        pages = [self._page("add_income"), self._page("add_expense"), self._page("category_add"), self._page("wallet_add"),
+                 self._page("budget_add"), self._page("savings_goal_add"), self._page("recurring_add"),
+                 self._page("transaction_edit", tx.pk), self._page("transaction_delete", tx.pk), self._page("savings_goals")]
+        for html in pages:
+            title = re.search(r"<title>(.*?) · MyBudget</title>", html).group(1)
+            h1 = re.search(r"<h1[^>]*>(.*?)</h1>", html, flags=re.S).group(1).strip()
+            for text in (title, h1):
+                words = text.split()
+                self.assertFalse(any(w[0].isupper() for w in words[1:] if w.isalpha()), f"Title Case: {text!r}")
+
+    def test_transactions_page_describes_itself_and_the_export(self):
+        Transaction.objects.create(user=self.user, category=self.food, wallet=self.cash, type="expense", amount=5, date=date.today())
+        page = self._page("transactions")
+        self.assertIn("All your income and expenses. Filter them, edit them or export them.", page)
+        self.assertNotIn("Filter, edit and delete your transactions.", page)
+        self.assertIn("Totals for all transactions that match your filters.", page)
+        self.assertIn("Exports what matches your current filters.", page)
+        self.assertEqual(page.count("Exports what matches your current filters."), 1)         # the note lives inside the menu only
+        for gone in ("for spreadsheets and scripts", ".xlsx workbook"):
+            self.assertNotIn(gone, page)
+        self.assertIn("opens in any spreadsheet", page)
+
+    def test_filters_say_how_many_are_applied_and_use_one_word_for_clearing(self):
+        Transaction.objects.create(user=self.user, category=self.food, wallet=self.cash, type="expense", amount=5, date=date.today())
+        plain = self._page("transactions")
+        self.assertNotIn("applied", plain.split("Filters")[1][:200])
+        filtered = self.client.get(reverse("transactions"), {"type": "expense", "wallet": self.cash.pk}).content.decode()
+        self.assertIn("· 2 applied", filtered)
+        self.assertNotIn("· active", filtered)
+        for label in ("From date", "To date", "Clear filters"):
+            self.assertIn(label, filtered)
+        self.assertNotIn(">Reset<", filtered)
+
+    def test_nothing_matches_message_and_previous_link(self):
+        page = self.client.get(reverse("transactions"), {"type": "income", "from": "2020-01-01", "to": "2020-01-02"}).content.decode()
+        self.assertIn("Nothing matches these filters", page)
+        self.assertNotIn("No matches", page)
+        for i in range(55):
+            Transaction.objects.create(user=self.user, category=self.food, wallet=self.cash, type="expense", amount=1, date=date.today())
+        page2 = self.client.get(reverse("transactions"), {"page": 2}).content.decode()
+        self.assertIn("← Previous", page2)
+        self.assertNotIn("← Prev<", page2)
+
+    def test_add_forms_drop_the_obvious_tip_and_explain_the_preview(self):
+        income, expense = self._page("add_income"), self._page("add_expense")
+        self.assertNotIn("you can use decimals", income)
+        self.assertIn("Preview (updates as you type)", income)
+        self.assertIn("Type an amount", expense)
+        self.assertNotIn("+ amount", income)
+        self.assertNotIn("- amount", expense)
+        self.assertIn("Add an expense instead", income)
+        self.assertIn("Add income instead", expense)
+        self.assertNotIn("Switch to", income + expense)
+        self.assertIn("e.g. Groceries, rent, coffee", expense)
+
+
+    def test_selects_say_what_to_do_instead_of_dashes(self):
+        for name in ("budget_add", "recurring_add"):
+            page = self._page(name)
+            self.assertNotIn("---------", page, name)
+            self.assertIn("Choose a category", page, name)
+        recurring = self._page("recurring_add")
+        self.assertIn("Choose a wallet", recurring)
+        # the type select no longer starts with an empty choice
+        type_select = recurring.split('name="type"')[1].split("</select>")[0]
+        self.assertNotIn('value=""', type_select)
+
+    def test_optional_fields_are_marked_the_same_way_everywhere(self):
+        tx = Transaction.objects.create(user=self.user, category=self.food, wallet=self.cash, type="expense", amount=5, date=date.today())
+        self.assertIn("Note (optional)", self._page("transaction_edit", tx.pk))
+        self.assertIn("Note (optional)", self._page("recurring_add"))
+        self.assertIn("Target date (optional)", self._page("savings_goal_add"))
+
+    def test_budget_form_uses_budget_and_limit_consistently(self):
+        page = self._page("budget_add")
+        self.assertIn("Monthly limit (RON)", page)
+        BudgetLimit.objects.create(user=self.user, category=self.food, month=date.today().replace(day=1), limit=100)
+        response = self.client.post(reverse("budget_add"), {"category": self.food.pk, "month": date.today().strftime("%Y-%m"), "limit": "50"})
+        self.assertContains(response, "You already have a budget for this category and month.")
+
+    def test_recurring_form_has_plain_labels_and_help(self):
+        page = self._page("recurring_add")
+        self.assertIn("Active", page)
+        self.assertNotIn("Is active", page)
+        self.assertIn("Untick to pause it without deleting it.", page)
+        self.assertIn("From 1 to 28, so it works in every month.", page)
+        self.assertIn("Day of the month", page)
+        self.assertIn("Starts on", page)
+
+    def test_validation_messages_are_short_and_direct(self):
+        response = self.client.post(reverse("add_expense"), {"amount": "0", "date": "", "category": "", "wallet": ""})
+        html = response.content.decode()
+        for msg in ("Enter an amount above 0.", "Choose a category.", "Choose a wallet.", "Enter a date."):
+            self.assertIn(msg, html)
+        for old in ("greater than zero", "Please choose one of your", "Please enter a valid"):
+            self.assertNotIn(old, html)
+        r2 = self.client.post(reverse("savings_goal_add"), {"name": "Trip", "target_amount": "0"})
+        self.assertContains(r2, "Enter a target above 0.")
+        r3 = self.client.post(reverse("category_add"), {"name": "", "type": "expense"})
+        self.assertContains(r3, "Give the category a name.")
+        r4 = self.client.post(reverse("wallet_add"), {"name": ""})
+        self.assertContains(r4, "Give the wallet a name.")
