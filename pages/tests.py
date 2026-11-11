@@ -259,13 +259,16 @@ class TrustPagesTests(TestCase):
         self.assertContains(response, "Hello from the form")
 
     # --- about, what's new, footer ---------------------------------------
-    def test_about_says_who_is_behind_it_without_inventing_anything(self):
-        html = self.client.get("/about").content.decode()
+    def test_old_about_link_lands_on_contact(self):
+        response = self.client.get("/about")
+        self.assertRedirects(response, "/contact", status_code=301)
+
+    def test_contact_says_who_makes_it_without_inventing_anything(self):
+        html = self.client.get("/contact").content.decode()
         self.assertIn("Andreea Sandu", html)
         self.assertIn("Andreea Tech", html)
         self.assertIn("github.com/SanduAndreea22/my_budget", html)
-        self.assertIn("Work with me", html)
-        for forbidden in ("accounting", "contabil", "years of experience", "clients", "testimonial"):
+        for forbidden in ("accounting", "contabil", "years of experience", "testimonial"):
             self.assertNotIn(forbidden, html.lower())
 
     def test_whats_new_lists_dated_changes(self):
@@ -274,11 +277,12 @@ class TrustPagesTests(TestCase):
         self.assertIn("delete your account yourself", html)
 
     def test_footer_links_to_the_trust_pages_on_every_kind_of_page(self):
-        for url in ("/", "/privacy", "/about", "/contact", "/auth/login"):
+        for url in ("/", "/privacy", "/contact", "/auth/login"):
             html = self.client.get(url).content.decode()
             footer = html.split('class="container site-footer"')[1]
-            for href in ('href="/about"', 'href="/whats-new"', 'href="/contact"', 'href="/privacy"'):
+            for href in ('href="/whats-new"', 'href="/contact"', 'href="/privacy"', "linkedin.com/in/andreealuizasandu"):
                 self.assertIn(href, footer, f"{href} missing on {url}")
+            self.assertNotIn('href="/about"', footer)
 
     # --- landing wording --------------------------------------------------
     def test_landing_repeats_testing_less_and_answers_what_comes_after(self):
@@ -377,8 +381,9 @@ class NavigationAndFooterCopyTests(TestCase):
         footer = self.client.get("/").content.decode().split('class="container site-footer"')[1]
         self.assertNotIn("personal budget tracker", footer)
         self.assertIn("websites and web apps", footer)
-        for label in ("About", "What's new", "Contact", "Privacy"):
+        for label in ("What's new", "Contact", "Privacy"):
             self.assertIn(f">{label}</a>", footer)
+        self.assertNotIn(">About</a>", footer)
 
     def test_every_in_text_link_to_privacy_uses_the_same_label(self):
         import re
@@ -456,20 +461,6 @@ class TrustPagesCopyAuditTests(TestCase):
         html = self.client.get("/privacy").content.decode()
         self.assertIn("automatically about a day after it was created", html)
         self.assertNotIn("is kept", html.split("Demo accounts")[1].split("How it is protected")[0])
-
-    def test_about_speaks_in_the_first_person_throughout(self):
-        import re
-        html = self.client.get("/about").content.decode()
-        text = re.sub(r"<[^>]+>", " ", html.split("<main")[1].split("</main>")[0])
-        self.assertIn("I make MyBudget", text)
-        self.assertNotIn("is built and run by", text)
-        self.assertNotIn("Django developer", text)             # jargon for an app user
-        self.assertNotIn("from the first sketch", text)
-        self.assertNotIn("and more", text)
-        self.assertIn("Message me on LinkedIn", text)
-        self.assertIn("My GitHub profile", text)
-        self.assertNotIn("digital products", text)
-        self.assertNotIn("built to work correctly", text)
 
     def test_contact_has_no_label_placeholder_echo_and_speaks_as_one_person(self):
         html = self.client.get("/contact").content.decode()

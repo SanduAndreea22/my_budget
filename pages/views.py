@@ -25,10 +25,6 @@ def _cleanup_demo_users_occasionally():
         cleanup_old_demo_users()
 
 
-def about_view(request):
-    return render(request, "pages/about.html")
-
-
 def whats_new_view(request):
     return render(request, "pages/whats_new.html")
 
