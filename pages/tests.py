@@ -74,7 +74,7 @@ class LandingSectionsTests(TestCase):
         self.assertEqual(self.html.count('class="glass-card faq__item"'), 11)
         self.assertIn("RON, EUR, USD or GBP", self.html)
         self.assertIn("free while it is in testing", self.html)
-        self.assertIn("no automatic password reset", self.html)
+        self.assertIn("no password reset yet", self.html)
 
     def test_public_navbar_links_to_the_sections(self):
         self.assertIn('href="/#how-it-works"', self.html)
@@ -109,14 +109,14 @@ class HeroFirstImpressionTests(TestCase):
         self.assertGreaterEqual(self.hero.count("<svg"), 3)
 
     def test_trust_row_makes_only_checkable_claims(self):
-        for text in ("Each account sees only its own data", "No ads, trackers or third-party scripts", "Export to CSV, Excel or PDF anytime"):
+        for text in ("Each account sees only its own data", "No ads or trackers", "No third-party scripts on any page", "Export anytime"):
             self.assertIn(text, self.hero)
         for vague in ("Add transactions in seconds", "what&#x27;s left at a glance", "at a glance"):
             self.assertNotIn(vague, self.hero)
 
     def test_wallet_claim_no_longer_suggests_a_currency_per_wallet(self):
         self.assertNotIn("Separate wallets, in RON", self.html)
-        self.assertIn("Separate wallets for card, cash and savings", self.hero)
+        self.assertIn("Wallets for your card, your cash and your savings", self.hero)
 
 
 class BrandMarkTests(TestCase):
@@ -148,18 +148,19 @@ class AudienceAndDifferenceTests(TestCase):
         self.hero = self.html.split('id="why"')[0]
 
     def test_hero_says_who_it_is_for(self):
-        self.assertIn("Made for people who log their money by hand", self.hero)
-        self.assertIn("without connecting a bank", self.hero)
+        self.assertIn("Made for people who enter their own transactions", self.hero)
+        self.assertIn("would rather not connect a bank", self.hero)
 
     def test_why_section_has_three_points_and_the_limits(self):
         why = self.html.split('id="why"')[1].split('id="screenshots"')[0]
         self.assertEqual(why.count('class="glass-card why__item"'), 3)
-        self.assertIn("No formulas to maintain", why)
-        self.assertIn("no bank sync, uses one currency per account, and is made for one person per account", why)
+        self.assertIn("No formulas to keep up", why)
+        self.assertIn("What it does not do:", why)
+        self.assertIn("sync with a bank, use more than one currency per account, or share an account between people", why)
 
     def test_faq_answers_the_bank_question_without_overclaiming(self):
         self.assertIn("Does it connect to my bank?", self.html)
-        self.assertIn("nothing is pulled from your bank", self.html)
+        self.assertIn("nothing is imported from your bank", self.html)
 
     def test_no_competitor_names_or_usage_claims(self):
         lowered = self.html.lower()
@@ -181,7 +182,7 @@ class ScreenshotTrustTests(TestCase):
         self.assertIn("Enlarge", self.html)
 
     def test_section_is_upfront_that_the_example_account_is_staged(self):
-        self.assertIn("set up on purpose to show one warning and one over-budget category", self.html)
+        self.assertIn("arranged to show one warning and one over-budget category", self.html)
 
     def test_screenshots_can_be_refreshed_with_one_documented_command(self):
         from pathlib import Path
@@ -282,8 +283,8 @@ class TrustPagesTests(TestCase):
         html = self.client.get("/").content.decode()
         self.assertLessEqual(html.lower().count("testing"), 3)
         self.assertIn("What happens after testing?", html)
-        self.assertIn("No pricing has been decided", html)
-        self.assertIn("Who builds it, and how do I reach them?", html)
+        self.assertIn("Pricing hasn't been decided yet", html)
+        self.assertIn("Who makes MyBudget, and how do I get in touch?", html)
 
     def test_private_claim_links_to_its_proof(self):
         html = self.client.get("/").content.decode()
@@ -384,6 +385,47 @@ class NavigationAndFooterCopyTests(TestCase):
             body = html.split("<main")[1].split("</main>")[0]
             labels = [re.sub(r"\s+", " ", m).strip() for m in re.findall(r'<a [^>]*href="/privacy"[^>]*>([^<]+)</a>', body)]
             for label in labels:
-                self.assertIn(label, ("How your data is handled", "How your data is handled →"), f"{url}: {label!r}")
+                self.assertIn(label, ("How your data is handled", "Read the details →"), f"{url}: {label!r}")
             self.assertTrue(labels, url)
         self.assertIn("<h1", self.client.get("/privacy").content.decode())
+
+
+class LandingCopyAuditTests(TestCase):
+    """Guards for the copy problems found in the text audit (landing)."""
+
+    def setUp(self):
+        self.html = self.client.get("/").content.decode()
+        self.text = self.html.lower()
+
+    def test_cliches_and_vague_phrases_are_gone(self):
+        for phrase in ("in one place", "exactly what", "log themselves", "log itself", "good to know", "at a glance",
+                       "something real", "built in, not built by you", "the goal celebrates", "tells you before the month does",
+                       "yours to take", "your data stays yours", "stored hashed", "in production", "recurring bills"):
+            self.assertNotIn(phrase, self.text, phrase)
+
+    def test_each_enlarge_link_has_the_full_description_as_its_accessible_name(self):
+        import re
+        pairs = re.findall(r'aria-label="Enlarge screenshot: ([^"]+)"><img[^>]*alt="([^"]+)"', self.html)
+        self.assertEqual(len(pairs), 3)
+        for label, alt in pairs:
+            self.assertEqual(label, alt)
+            self.assertTrue(label.endswith("."), label)  # not cut off mid-sentence
+
+    def test_the_chart_is_called_a_chart_not_a_donut(self):
+        self.assertNotIn("donut", self.text)
+
+    def test_faq_starts_with_the_price_questions_and_uses_one_name_for_recurring(self):
+        import re
+        questions = re.findall(r"<summary>([^<]+)</summary>", self.html)
+        self.assertEqual(questions[:3], ["Is it free?", "What happens after testing?", "Can I try it without signing up?"])
+        self.assertIn("How do recurring transactions work?", questions)
+
+    def test_how_it_works_includes_the_step_that_makes_recurring_work(self):
+        self.assertIn("Set up your salary or a subscription once and it is added every month.", self.html)
+
+    def test_register_and_login_have_their_own_meta_descriptions(self):
+        import re
+        pages = {u: self.client.get(u).content.decode() for u in ("/auth/register", "/auth/login")}
+        found = {u: re.search(r'<meta name="description" content="([^"]+)"', h).group(1) for u, h in pages.items()}
+        self.assertEqual(len(set(found.values())), 2)
+        self.assertTrue(all("recurring bills" not in d for d in found.values()))
